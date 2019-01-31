@@ -7,14 +7,15 @@ import '../utils/time.dart';
 class DisclosureListItem extends StatelessWidget {
   const DisclosureListItem({
     Key key,
+    this.showDate = false,
     @required this.item,
   }) : super(key: key);
 
   final DocumentSnapshot item;
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
-    print(item.data);
     return ListTile(
       title: Row(
         children: <Widget>[
@@ -25,7 +26,7 @@ class DisclosureListItem extends StatelessWidget {
             [
               (item.data['tags']?.keys ?? []).join(' | '),
               (item.data['view_count']),
-              toTime(item.data['time']),
+              toTime(item.data['time'], showDate: showDate),
             ].where((e) => e != null && e != '').join(' | '),
             style: TextStyle(
               color: Colors.grey,

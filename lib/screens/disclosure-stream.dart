@@ -33,7 +33,8 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
     return StreamBuilder<List<DocumentSnapshot>>(
       stream: bloc.disclosure$,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return LinearProgressIndicator();
+        if (!snapshot.hasData || snapshot.data == null)
+          return LinearProgressIndicator();
         return _buildList(context, snapshot.data);
       },
     );
@@ -71,7 +72,13 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
         title: Text("適時開示一覧 (${formatter.format(date)})"),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.calendar_today),
+            icon: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                Text(date.day.toString()),
+                Icon(Icons.calendar_today),
+              ],
+            ),
             onPressed: () async {
               final _date = await showDatePicker(
                 context: context,

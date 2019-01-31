@@ -4,6 +4,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
+  Widget _avator(String url) {
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    return CircleAvatar(
+      backgroundImage: NetworkImage(url),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
@@ -15,6 +24,7 @@ class AppDrawer extends StatelessWidget {
             builder: (context, snapshot) => UserAccountsDrawerHeader(
                   accountEmail: Text(snapshot.data?.email ?? ''),
                   accountName: Text(snapshot.data?.displayName ?? ''),
+                  currentAccountPicture: _avator(snapshot.data?.photoUrl),
                 ),
             stream: bloc.user$,
           ),
@@ -32,6 +42,8 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             title: Text('お気に入り'),
             leading: Icon(Icons.star),
+            onTap: () =>
+                Navigator.of(context).pushReplacementNamed('/favorites'),
           ),
           ListTile(
             title: Text('保存した開示情報'),
@@ -40,6 +52,8 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.settings),
             title: Text('設定'),
+            onTap: () =>
+                Navigator.of(context).pushReplacementNamed('/settings'),
           ),
           AboutListTile()
         ],

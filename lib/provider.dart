@@ -1,6 +1,5 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/bloc/company_list_bloc.dart';
 import 'package:flutter/material.dart';
 
 class AppProvider extends StatelessWidget {
@@ -11,10 +10,7 @@ class AppProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       creator: (context, _bag) => AppBloc(),
-      child: BlocProvider(
-        creator: (context, _bag) => CompanyListBloc(),
-        child: this.child,
-      ),
+      child: this.child,
     );
   }
 }

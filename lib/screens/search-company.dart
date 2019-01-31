@@ -1,5 +1,5 @@
 import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/company_list_bloc.dart';
+import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
   }
 
   Widget _buildBody(BuildContext context) {
-    final _bloc = BlocProvider.of<CompanyListBloc>(context);
+    final _bloc = BlocProvider.of<AppBloc>(context);
     return StreamBuilder<List<Company>>(
       stream: _bloc.filteredCompany$,
       builder: (context, snapshot) => Column(
