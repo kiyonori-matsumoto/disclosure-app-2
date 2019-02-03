@@ -1,6 +1,8 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
+import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:flutter/material.dart';
 
@@ -39,7 +41,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   child: ListView(
                       children: snapshot.data.map((fav) {
                     return Dismissible(
-                      child: ListTile(title: Text(fav.toString())),
+                      child: ListTile(
+                        title: Text(fav.toString()),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => DisclosureCompanyScreen(
+                                    company: Company(fav.code, name: fav.name),
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
                       key: fav.key,
                       onDismissed: (direction) {
                         bloc.removeFavorite.add(fav.code);

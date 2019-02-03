@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'screens/disclosure-stream.dart';
 
@@ -61,7 +62,14 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '適時開示(TDNet) Notifier',
-      locale: Locale('ja', 'JP'),
+      // locale: Locale('ja', 'JP'),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('ja', ''),
+      ],
       theme: ThemeData(
         primarySwatch: Colors.teal,
       ),

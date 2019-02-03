@@ -69,14 +69,18 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text("適時開示一覧 (${formatter.format(date)})"),
+        title: Text("${formatter.format(date)}"),
         actions: <Widget>[
           IconButton(
             icon: Stack(
               alignment: Alignment.center,
               children: <Widget>[
-                Text(date.day.toString()),
                 Icon(Icons.calendar_today),
+                Text(
+                  date.day.toString(),
+                  style: TextStyle(
+                      color: Colors.orange, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
             onPressed: () async {
@@ -93,15 +97,34 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
               bloc.date.add(date);
             },
           ),
-          IconButton(
-            icon: Icon(Icons.filter_list),
-            onPressed: () async {
-              final result = await showDialog(
-                context: context,
-                builder: (context) => _dialog(context, bloc),
-              );
-              print(result);
-            },
+          StreamBuilder(
+            builder: (context, snapshot) => IconButton(
+                  icon: Stack(
+                    children: [
+                      Icon(Icons.filter_list),
+                      snapshot.data != null && snapshot.data > 0
+                          ? Container(
+                              decoration: ShapeDecoration(
+                                  color: Colors.red, shape: CircleBorder()),
+                              child: Text(
+                                snapshot.data.toString(),
+                                style: TextStyle(fontSize: 10.0),
+                              ),
+                              padding: EdgeInsets.all(4.0),
+                            )
+                          : null,
+                    ].where((w) => w != null).toList(),
+                    alignment: Alignment.bottomRight,
+                  ),
+                  onPressed: () async {
+                    final result = await showDialog(
+                      context: context,
+                      builder: (context) => _dialog(context, bloc),
+                    );
+                    print(result);
+                  },
+                ),
+            stream: bloc.filterCount$,
           ),
         ],
       ),

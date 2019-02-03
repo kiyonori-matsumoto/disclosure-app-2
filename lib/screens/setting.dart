@@ -19,7 +19,7 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('設定')),
+      appBar: AppBar(title: Text('設定今骨累直')),
       drawer: AppDrawer(),
       body: Builder(builder: _buildBody),
     );
@@ -102,9 +102,9 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Future<FirebaseUser> _handleSignIn(BuildContext context) async {
-    GoogleSignInAccount googleUser = await _googleSignIn.signIn();
-    GoogleSignInAuthentication googleAuth = await googleUser.authentication;
     try {
+      GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+      GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final providers =
           await _auth.fetchProvidersForEmail(email: googleUser.email);
 
@@ -128,6 +128,10 @@ class _SettingScreenState extends State<SettingScreen> {
       return user;
     } catch (e) {
       print('exception');
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text('アカウント連携に失敗しました'),
+        duration: Duration(seconds: 5),
+      ));
     }
   }
 

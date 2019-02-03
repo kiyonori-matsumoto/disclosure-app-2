@@ -68,26 +68,26 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   Widget build(BuildContext context) {
     final appBloc = BlocProvider.of<AppBloc>(context);
 
-    return StreamBuilder<List<Favorite>>(
-      stream: appBloc.favoritesWithName$,
-      builder: (context, snapshot) {
-        final isFavorite = snapshot.hasData &&
-            snapshot.data.any((fav) => fav.code == this.code);
-        return Scaffold(
-            appBar: AppBar(
-              title: Text("${this.company.name} (${this.code})"),
-              actions: <Widget>[
-                IconButton(
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("${this.company.name} (${this.code})"),
+          actions: <Widget>[
+            StreamBuilder<List<Favorite>>(
+              stream: appBloc.favoritesWithName$,
+              builder: (context, snapshot) {
+                final isFavorite = snapshot.hasData &&
+                    snapshot.data.any((fav) => fav.code == this.code);
+                return IconButton(
                   icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                   onPressed: () {
                     appBloc.switchFavorite.add(this.code);
                   },
-                )
-              ],
+                );
+              },
             ),
-            body: _buildBody(context));
-      },
-    );
+          ],
+        ),
+        body: _buildBody(context));
   }
 
   @override

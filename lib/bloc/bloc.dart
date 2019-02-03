@@ -21,7 +21,7 @@ class AppBloc extends Bloc {
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
   final _disclosureController =
       BehaviorSubject<List<DocumentSnapshot>>(seedValue: []);
-  final _filterController = BehaviorSubject<List<Filter>>();
+  final _filter$ = BehaviorSubject<List<Filter>>();
   final StreamController<String> _filterChangeController = StreamController();
 
   // users
@@ -55,7 +55,9 @@ class AppBloc extends Bloc {
   Sink<DateTime> get date => _dateController.sink;
   Sink<String> get addFilter => _filterChangeController.sink;
   ValueObservable<FirebaseUser> get user$ => _userController.stream;
-  ValueObservable<List<Filter>> get filter$ => _filterController.stream;
+  ValueObservable<List<Filter>> get filter$ => _filter$.stream;
+  Observable<int> get filterCount$ =>
+      _filter$.map((f) => f.where((_f) => _f.isSelected).length);
 
   ValueObservable<Map<String, dynamic>> get settings$ => _setting$.stream;
   Observable<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
@@ -126,7 +128,7 @@ class AppBloc extends Bloc {
           .toList();
     }).pipe(_disclosureController);
 
-    filters$.pipe(_filterController);
+    filters$.pipe(_filter$);
 
     FirebaseAuth.instance.onAuthStateChanged
         .where((u) => u != null)
@@ -184,7 +186,7 @@ class AppBloc extends Bloc {
             .collection('users')
             .document(user.uid)
             .snapshots())
-        .map((res) => res.data)
+        .map((res) => res.data ?? {})
         .pipe(_setting$);
 
     _setting$
@@ -304,7 +306,7 @@ class AppBloc extends Bloc {
     _disclosureController.close();
     _userController.close();
     _filterChangeController.close();
-    _filterController.close();
+    _filter$.close();
     _addFavoriteController.close();
     _removeFavoriteController.close();
     _switchFavoriteController.close();
