@@ -35,6 +35,17 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data == null)
           return LinearProgressIndicator();
+        else if (snapshot.data.length == 0) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.event_busy),
+                Text("この日の適時開示は0件です"),
+              ],
+            ),
+          );
+        }
         return _buildList(context, snapshot.data);
       },
     );
