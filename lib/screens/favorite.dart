@@ -3,6 +3,7 @@ import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
+import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
 import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:flutter/material.dart';
 
@@ -12,8 +13,6 @@ class FavoriteScreen extends StatefulWidget {
 }
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
-  TextEditingController _controller = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,18 +60,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                   }).toList()),
                 ),
                 Divider(),
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    hintText: "証券コード",
-                    border: InputBorder.none,
-                    suffixIcon: IconButton(
-                      onPressed: () =>
-                          this._handleSubmit(bloc, this._controller.text),
-                      icon: Icon(Icons.add),
-                    ),
-                  ),
-                  onSubmitted: (code) => this._handleSubmit(bloc, code),
+                BottomTextFieldWithIcon(
+                  onSubmit: (code) {
+                    this._handleSubmit(bloc, code);
+                  },
+                  hintText: '証券コード',
                   keyboardType: TextInputType.number,
                 )
               ],
@@ -82,6 +74,5 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   void _handleSubmit(AppBloc bloc, String code) {
     bloc.addFavorite.add(code);
-    _controller.clear();
   }
 }

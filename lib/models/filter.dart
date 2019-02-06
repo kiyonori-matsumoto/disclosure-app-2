@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
+
 class Filter {
   bool isSelected;
-  String title;
+  final bool isCustom;
+  final String title;
 
-  Filter(this.title, {this.isSelected = false});
+  Filter(this.title, {this.isSelected = false, this.isCustom = false});
 
   toggle() {
     this.isSelected = !this.isSelected;
@@ -12,4 +15,6 @@ class Filter {
   String toString() {
     return "$title $isSelected";
   }
+
+  Key get key => ObjectKey({'title': this.title, 'isCustom': this.isCustom});
 }

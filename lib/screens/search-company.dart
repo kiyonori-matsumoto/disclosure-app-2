@@ -37,6 +37,11 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
                   suffixIcon: Icon(Icons.search),
                 ),
                 onChanged: (text) => _bloc.changeFilter.add(text),
+                onSubmitted: (code) => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            DisclosureCompanyScreen(company: Company(code)))),
               ),
               snapshot.hasData
                   ? new CompanyListView(snapshot.data)

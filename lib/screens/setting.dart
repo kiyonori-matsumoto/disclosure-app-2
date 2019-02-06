@@ -1,5 +1,6 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/notification-setting.dart';
 import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -58,6 +59,10 @@ class _SettingScreenState extends State<SettingScreen> {
         ListTile(
           title: Text('カスタムタグ設定'),
           leading: Icon(Icons.local_offer),
+          onTap: () {
+            Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => CustomTagScreen()));
+          },
         ),
         Divider(),
         ListHeader(

@@ -1,37 +1,31 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
+import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
-import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:flutter/material.dart';
 
-class NotificationSettingScreen extends StatefulWidget {
+class CustomTagScreen extends StatefulWidget {
   @override
-  _NotificationSettingScreenState createState() =>
-      _NotificationSettingScreenState();
+  _CustomTagScreenState createState() => _CustomTagScreenState();
 }
 
-class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
-  TextEditingController _controller = TextEditingController();
-
+class _CustomTagScreenState extends State<CustomTagScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("通知設定")),
-      body: _buildBody(context),
-    );
+        appBar: AppBar(title: Text("カスタムタグ設定")), body: _buildBody(context));
   }
 
   _buildBody(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
-    return StreamBuilder<List<Company>>(
-      stream: bloc.notifications$,
+    return StreamBuilder<List<Filter>>(
+      stream: bloc.customFilters$,
       builder: (context, snapshot) => _builder(context, snapshot, bloc),
     );
   }
 
-  Widget _builder(BuildContext context, AsyncSnapshot<List<Company>> snapshot,
+  Widget _builder(BuildContext context, AsyncSnapshot<List<Filter>> snapshot,
       AppBloc bloc) {
     return (!snapshot.hasData || snapshot.data == null)
         ? LinearProgressIndicator()
@@ -40,12 +34,14 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
               children: [
                 Expanded(
                   child: ListView(
-                      children: snapshot.data.map((notification) {
+                      children: snapshot.data.map((filter) {
                     return Dismissible(
-                      child: ListTile(title: Text(notification.toString())),
-                      key: notification.key,
-                      onDismissed: (direction) {
-                        bloc.removeNotification.add(notification.code);
+                      child: ListTile(
+                        title: Text(filter.title),
+                      ),
+                      key: filter.key,
+                      onDismissed: (dir) {
+                        bloc.removeCustomFilter.add(filter);
                       },
                     );
                   }).toList()),
@@ -55,8 +51,7 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
                   onSubmit: (code) {
                     this._handleSubmit(bloc, code);
                   },
-                  hintText: '証券コード',
-                  keyboardType: TextInputType.number,
+                  hintText: 'タグ名',
                 )
               ],
             ),
@@ -64,7 +59,6 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
   }
 
   void _handleSubmit(AppBloc bloc, String code) {
-    bloc.addNotification.add(code);
-    _controller.clear();
+    bloc.addCustomFilter.add(code);
   }
 }

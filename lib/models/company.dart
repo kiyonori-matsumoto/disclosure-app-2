@@ -15,6 +15,6 @@ class Company {
 
   @override
   String toString() {
-    return '$code $name';
+    return '${code.length > 4 ? code.substring(0, 4) : code} $name';
   }
 }

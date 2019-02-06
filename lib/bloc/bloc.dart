@@ -19,9 +19,15 @@ final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新�
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
-  final _disclosureController =
-      BehaviorSubject<List<DocumentSnapshot>>(seedValue: []);
+  final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
+  final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
+
+  final StreamController<String> _addCustomFilterController =
+      StreamController();
+  final StreamController<Filter> _removeCustomFilterController =
+      StreamController();
+
   final StreamController<String> _filterChangeController = StreamController();
 
   // users
@@ -49,15 +55,20 @@ class AppBloc extends Bloc {
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
   final _addNotificationController = StreamController<String>();
+  final _removeNotificationController = StreamController<String>();
+  final _switchNotificationController = StreamController<String>();
 
   ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
-      _disclosureController.stream;
+      _disclosure$.stream;
   Sink<DateTime> get date => _dateController.sink;
   Sink<String> get addFilter => _filterChangeController.sink;
   ValueObservable<FirebaseUser> get user$ => _userController.stream;
   ValueObservable<List<Filter>> get filter$ => _filter$.stream;
   Observable<int> get filterCount$ =>
       _filter$.map((f) => f.where((_f) => _f.isSelected).length);
+  ValueObservable<List<Filter>> get customFilters$ => _customFilter$.stream;
+  Sink<String> get addCustomFilter => _addCustomFilterController.sink;
+  Sink<Filter> get removeCustomFilter => _removeCustomFilterController.sink;
 
   ValueObservable<Map<String, dynamic>> get settings$ => _setting$.stream;
   Observable<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
@@ -77,6 +88,8 @@ class AppBloc extends Bloc {
 
   ValueObservable<List<Company>> get notifications$ => _notifications$.stream;
   Sink<String> get addNotification => _addNotificationController.sink;
+  Sink<String> get removeNotification => _removeNotificationController.sink;
+  Sink<String> get switchNotification => _switchNotificationController.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
@@ -87,9 +100,48 @@ class AppBloc extends Bloc {
     final store = Firestore.instance;
     final initialFilters = filterStrings.map((str) => Filter(str)).toList();
 
-    final filters$ = Observable(_filterChangeController.stream)
-        .scan<List<Filter>>(_handleFilterChange, initialFilters)
-        .shareValue(seedValue: initialFilters);
+    _setting$
+        .map<List<String>>((data) {
+          print(data);
+          return data != null ? data["tags"].cast<String>() : [];
+        })
+        .distinct()
+        .doOnEach(print)
+        .map((l) => l.map((str) => Filter(str)).toList())
+        .pipe(_customFilter$);
+
+    final _change = PublishSubject<String>();
+    _filterChangeController.stream.pipe(_change.sink);
+
+    _customFilter$
+        .map((v) => initialFilters + v)
+        .doOnEach(print)
+        .switchMap((list) => _change
+            .scan<List<Filter>>(_handleFilterChange, list)
+            .startWith(list))
+        .pipe(_filter$);
+
+    // _customFilter$.add([]);
+
+    _addCustomFilterController.stream.listen((name) async {
+      final user = await _userController.first;
+      final customTag = await this._customFilter$.first;
+      Firestore.instance.collection('users').document(user.uid).setData({
+        "tags": customTag.map((t) => t.title).toList() + [name]
+      }, merge: true);
+    });
+
+    _removeCustomFilterController.stream.listen((filter) async {
+      final user = await _userController.first;
+      final customTag = await this._customFilter$.first;
+      Firestore.instance.collection('users').document(user.uid).setData(
+          {"tags": customTag.where((f) => f.key != filter.key)},
+          merge: true);
+    });
+
+    // _filter$
+    //     .map((filters) => filters.where((f) => f.isCustom).toList())
+    //     .pipe(_customFilter$);
 
     final store$ = _userController
         .share()
@@ -108,9 +160,10 @@ class AppBloc extends Bloc {
     });
 
     Observable.combineLatest3<List<Filter>, QuerySnapshot, bool,
-            List<DocumentSnapshot>>(filters$, store$, _hideDailyDisclosure$,
+            List<DocumentSnapshot>>(
+        this._filter$, store$, _hideDailyDisclosure$,
         (_filters, d, _hideDaily) {
-      print(_filters);
+      print("combinelatest3 $_filters , $d , $_hideDaily");
       if (d == null) return null;
       final isNotFilterSelected =
           _filters.where((filter) => filter.isSelected).length == 0;
@@ -126,9 +179,7 @@ class AppBloc extends Bloc {
               isNotFilterSelected ||
               selectedFilterStr.any((str) => doc.data['tags'][str] == true))
           .toList();
-    }).pipe(_disclosureController);
-
-    filters$.pipe(_filter$);
+    }).pipe(_disclosure$);
 
     FirebaseAuth.instance.onAuthStateChanged
         .where((u) => u != null)
@@ -258,6 +309,8 @@ class AppBloc extends Bloc {
   void _createNotificationStreams() {
     final messaging = FirebaseMessaging();
 
+    Set<String> notifications = Set();
+
     final _toTopic = (code) => "code_$code";
 
     final _notificationString$ = BehaviorSubject<List<String>>();
@@ -276,6 +329,8 @@ class AppBloc extends Bloc {
                 .map((key) => _toCode(key))
                 .toList() ??
             [];
+        notifications = topics.toSet();
+        print('notifications = $notifications');
         return topics;
       } else {
         return [].cast<String>();
@@ -286,7 +341,6 @@ class AppBloc extends Bloc {
       _notificationString$,
       _companies$.stream,
       (_topics, _comps) {
-        print('notification combinelatest2');
         return _topics.map((_topic) {
           return _comps.firstWhere((_conp) => _conp.code == '${_topic}0',
               orElse: () => Company(_topic, name: '???'));
@@ -295,17 +349,36 @@ class AppBloc extends Bloc {
     ).pipe(_notifications$);
 
     this._addNotificationController.stream.listen((code) {
-      print('add notification controller $code');
+      print('add notification $code');
       messaging.subscribeToTopic(_toTopic(code));
+      notifications.add(code);
+      _notificationString$.add(notifications.toList());
+    });
+
+    this._removeNotificationController.stream.listen((code) {
+      print('remove notification $code');
+      messaging.unsubscribeFromTopic(_toTopic(code));
+      notifications.remove(code);
+      _notificationString$.add(notifications.toList());
+    });
+
+    this._switchNotificationController.stream.listen((code) {
+      if (notifications.contains(code)) {
+        this._addNotificationController.add(code);
+      } else {
+        this._removeFavoriteController.add(code);
+      }
     });
   }
 
   @override
   void dispose() {
     _dateController.close();
-    _disclosureController.close();
+    _disclosure$.close();
     _userController.close();
     _filterChangeController.close();
+    _addCustomFilterController.close();
+    _removeCustomFilterController.close();
     _filter$.close();
     _addFavoriteController.close();
     _removeFavoriteController.close();
@@ -320,6 +393,9 @@ class AppBloc extends Bloc {
     _codeStrController.close();
     _notifications$.close();
     _addNotificationController.close();
+    _removeNotificationController.close();
+    _switchNotificationController.close();
+    _customFilter$.close();
   }
 
   String _toCode(String topic) {

@@ -57,7 +57,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
               title: Text('filter'),
               children: (snapshot.data ?? [])
                   .map(
-                    (filter) => SimpleDialogOption(
+                    (filter) => Container(
                           child: CheckboxListTile(
                             title: Text(filter.title),
                             value: filter.isSelected,
@@ -65,9 +65,11 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
                               bloc.addFilter.add(filter.title);
                             },
                           ),
+                          padding: EdgeInsets.only(left: 16.0),
                         ),
                   )
                   .toList(),
+              contentPadding: EdgeInsets.zero,
             ),
         stream: bloc.filter$,
       );
