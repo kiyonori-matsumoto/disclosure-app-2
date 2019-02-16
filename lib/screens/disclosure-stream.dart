@@ -158,11 +158,11 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
-        child: _buildBody(context),
-      ),
+      body: _buildBody(context),
       drawer: AppDrawer(),
+      persistentFooterButtons: <Widget>[
+        Container(height: getSmartBannerHeight(mediaQuery)),
+      ],
     );
   }
 }

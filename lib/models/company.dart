@@ -10,7 +10,7 @@ class Company {
   }
 
   bool match(String text) {
-    return this.name.contains(text) || this.code.startsWith(text);
+    return this.name.toLowerCase().contains(text) || this.code.startsWith(text);
   }
 
   @override

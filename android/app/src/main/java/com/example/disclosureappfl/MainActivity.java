@@ -1,4 +1,4 @@
-package com.example.disclosureappfl;
+package com.disclosure.android;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

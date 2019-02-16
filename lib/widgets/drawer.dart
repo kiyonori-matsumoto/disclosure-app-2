@@ -57,7 +57,11 @@ class AppDrawer extends StatelessWidget {
             onTap: () =>
                 Navigator.of(context).pushReplacementNamed('/settings'),
           ),
-          AboutListTile()
+          AboutListTile(
+            applicationLegalese: '(c) 2019 Matsukiyo Lab.',
+            child: Text('このアプリについて'),
+            icon: Icon(Icons.info),
+          )
         ],
       ),
     );

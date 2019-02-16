@@ -313,12 +313,13 @@ class AppBloc extends Bloc {
             .toList())
         .pipe(_companies$);
 
-    Observable.combineLatest2<List<dynamic>, String, List<Company>>(
+    Observable.combineLatest2<List<Company>, String, List<Company>>(
       _companies$.stream,
       _codeStrController.stream,
       (data, str) {
         if (str.length < 2) return [];
-        return data.where((d) => d.match(str)).toList();
+        final lowerStr = str.toLowerCase();
+        return data.where((d) => d.match(lowerStr)).toList();
       },
     ).pipe(_filtetrdCompanies$);
   }

@@ -92,6 +92,9 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                 icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                 onPressed: () {
                   appBloc.switchFavorite.add(this.code);
+                  Scaffold.of(context).showSnackBar(SnackBar(
+                    content: Text(isFavorite ? 'お気に入りを解除しました' : 'お気に入りに追加しました'),
+                  ));
                 },
               );
             },
@@ -116,10 +119,12 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
           )
         ],
       ),
-      body: Padding(
-        padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
-        child: _buildBody(context),
-      ),
+      body: _buildBody(context),
+      persistentFooterButtons: <Widget>[
+        Container(
+          height: getSmartBannerHeight(mediaQuery),
+        )
+      ],
     );
   }
 
