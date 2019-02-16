@@ -22,6 +22,7 @@ class AppBloc extends Bloc {
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
+  final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
@@ -91,6 +92,9 @@ class AppBloc extends Bloc {
   Sink<String> get removeNotification => _removeNotificationController.sink;
   Sink<String> get switchNotification => _switchNotificationController.sink;
 
+  ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
+      _savedDisclosure$.stream;
+
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
     return prev;
@@ -103,7 +107,7 @@ class AppBloc extends Bloc {
     _setting$
         .map<List<String>>((data) {
           print(data);
-          return data != null ? data["tags"].cast<String>() : [];
+          return data != null ? data["tags"]?.cast<String>() ?? [] : [];
         })
         .distinct()
         .doOnEach(print)
@@ -132,11 +136,15 @@ class AppBloc extends Bloc {
     });
 
     _removeCustomFilterController.stream.listen((filter) async {
+      print('removing custom filter $filter');
       final user = await _userController.first;
       final customTag = await this._customFilter$.first;
-      Firestore.instance.collection('users').document(user.uid).setData(
-          {"tags": customTag.where((f) => f.key != filter.key)},
-          merge: true);
+      Firestore.instance.collection('users').document(user.uid).setData({
+        "tags": customTag
+            .where((f) => f.title != filter.title)
+            .map((t) => t.title)
+            .toList()
+      }, merge: true);
     });
 
     // _filter$
@@ -190,6 +198,8 @@ class AppBloc extends Bloc {
     _createCompanyListStreams();
 
     _createNotificationStreams();
+
+    _createSavedDisclosureStreams();
   }
 
   void _createSettingStream() {
@@ -241,8 +251,8 @@ class AppBloc extends Bloc {
         .pipe(_setting$);
 
     _setting$
-        .map<List<String>>(
-            (data) => data != null ? data["favorites"].cast<String>() : [])
+        .map<List<String>>((data) =>
+            data != null ? data["favorites"]?.cast<String>() ?? [] : [])
         .pipe(_favorit$);
 
     _setting$
@@ -261,7 +271,7 @@ class AppBloc extends Bloc {
       (_favs, _conps) {
         return _favs.map((_fav) {
           final _name = _conps
-              .firstWhere((_conp) => _conp.code == '${_fav}0',
+              .firstWhere((_conp) => _conp.code == _fav,
                   orElse: () => Company(_fav, name: '???'))
               .name;
           return Favorite(_name, _fav);
@@ -291,9 +301,12 @@ class AppBloc extends Bloc {
       }
     }
 
-    Observable.fromFuture(_handleOpenFile())
-        .map((data) =>
-            data.map((d) => Company(d['code'], name: d['name'])).toList())
+    Observable.fromFuture(
+            _userController.first.then((user) => _handleOpenFile()))
+        .map((data) => data
+            .map((d) =>
+                Company((d['code'] as String).substring(0, 4), name: d['name']))
+            .toList())
         .pipe(_companies$);
 
     Observable.combineLatest2<List<dynamic>, String, List<Company>>(
@@ -342,7 +355,7 @@ class AppBloc extends Bloc {
       _companies$.stream,
       (_topics, _comps) {
         return _topics.map((_topic) {
-          return _comps.firstWhere((_conp) => _conp.code == '${_topic}0',
+          return _comps.firstWhere((_conp) => _conp.code == _topic,
               orElse: () => Company(_topic, name: '???'));
         }).toList();
       },
@@ -364,9 +377,9 @@ class AppBloc extends Bloc {
 
     this._switchNotificationController.stream.listen((code) {
       if (notifications.contains(code)) {
-        this._addNotificationController.add(code);
+        this._removeNotificationController.add(code);
       } else {
-        this._removeFavoriteController.add(code);
+        this._addNotificationController.add(code);
       }
     });
   }
@@ -396,9 +409,22 @@ class AppBloc extends Bloc {
     _removeNotificationController.close();
     _switchNotificationController.close();
     _customFilter$.close();
+    _savedDisclosure$.close();
   }
 
   String _toCode(String topic) {
     return topic.replaceAll(RegExp(r'^code_'), '');
+  }
+
+  void _createSavedDisclosureStreams() {
+    _userController
+        .switchMap((user) => Firestore.instance
+            .collection('users')
+            .document(user.uid)
+            .collection('disclosures')
+            .orderBy('add_at', descending: true)
+            .snapshots())
+        .map((snapshot) => snapshot.documents)
+        .pipe(_savedDisclosure$);
   }
 }

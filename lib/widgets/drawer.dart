@@ -48,6 +48,8 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             title: Text('保存した開示情報'),
             leading: Icon(Icons.bookmark),
+            onTap: () =>
+                Navigator.of(context).pushReplacementNamed('/savedDisclosures'),
           ),
           ListTile(
             leading: Icon(Icons.settings),

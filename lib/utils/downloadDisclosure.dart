@@ -1,17 +1,28 @@
 import 'dart:io';
 
+import 'package:disclosure_app_fl/models/disclosure.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 final _storage = FirebaseStorage.instance;
-Future<Null> downloadAndOpenDisclosure(String document) async {
-  final ref = _storage.ref().child('disclosures').child("${document}.pdf");
-  final url = ref.getDownloadURL();
+final _analytics = FirebaseAnalytics();
+
+Future<Null> downloadAndOpenDisclosure(Disclosure item) async {
+  final pdf = "${item.document}.pdf";
+  final ref = _storage.ref().child('disclosures').child(pdf);
+  // final url = ref.getDownloadURL();
   // final http.Response downloadData = await http.get(url);
-  final Directory systemTempDir = Directory.systemTemp;
-  final File tempFile = File('${systemTempDir.path}/${document}.pdf');
+  // final Directory systemTempDir = Directory.systemTemp;
+  final Directory systemTempDir = await getTemporaryDirectory();
+  final File tempFile = File('${systemTempDir.path}/$pdf');
   if (!tempFile.existsSync()) {
+    _analytics.logEvent(name: 'select_content', parameters: {
+      'content_type': 'disclosure_pdf',
+      'item_id': item.document,
+      'code': item.code
+    });
     await tempFile.create();
     final StorageFileDownloadTask task = ref.writeToFile(tempFile);
     final int byteCount = (await task.future).totalByteCount;

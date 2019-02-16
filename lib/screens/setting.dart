@@ -20,7 +20,7 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('設定今骨累直')),
+      appBar: AppBar(title: Text('設定')),
       drawer: AppDrawer(),
       body: Builder(builder: _buildBody),
     );

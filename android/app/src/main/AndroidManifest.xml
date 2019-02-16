@@ -16,6 +16,9 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="disclosure_app_fl"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-5131663294295156~3067610804"/>
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

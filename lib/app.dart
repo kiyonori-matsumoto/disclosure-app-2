@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
+import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
+import 'package:firebase_admob/firebase_admob.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/disclosure-stream.dart';
 
 class AppRootWidget extends StatefulWidget {
@@ -18,9 +25,14 @@ class AppRootWidget extends StatefulWidget {
 }
 
 class AppRootWidgetState extends State<AppRootWidget> {
+  final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey(debugLabel: "Main Navigation");
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging();
+  final _admob = FirebaseAdMob.instance
+      .initialize(appId: 'ca-app-pub-5131663294295156/8292017322');
+  BannerAd _bannerAd;
 
   @override
   void initState() {
@@ -44,25 +56,60 @@ class AppRootWidgetState extends State<AppRootWidget> {
       onMessage: _handleNotification,
       onResume: _handleNotification,
     );
+
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-5131663294295156/8292017322',
+      size: AdSize.smartBanner,
+    );
+    _bannerAd
+      ..load()
+      ..show();
+
+    // initializeDateFormatting('ja_JP');
     // _auth.signInAnonymously().then(print);
   }
 
-  Future<void> _handleNotification(message) {
+  Future<void> _handleNotification(message) async {
+    print("###notification handler ###");
     print(message);
-    final code = message['data']['code'] ?? '';
+    print(navigatorKey.currentContext);
+    final code = message['code'] ?? '';
     final company = Company(code, name: message['name'] ?? '');
-    return Navigator.push(
-      context,
+    await Navigator.pop(navigatorKey.currentContext);
+    return Navigator.of(navigatorKey.currentContext).push(
       MaterialPageRoute(
           builder: (context) => DisclosureCompanyScreen(company: company)),
     );
   }
 
+  double getSmartBannerHeight(MediaQueryData mediaQuery) {
+    // https://developers.google.com/admob/android/banner#smart_banners
+    if (Platform.isAndroid) {
+      if (mediaQuery.size.height > 720) return 90.0;
+      if (mediaQuery.size.height > 400) return 50.0;
+      return 32.0;
+    }
+    // https://developers.google.com/admob/ios/banner#smart_banners
+    // Smart Banners on iPhones have a height of 50 points in portrait and 32 points in landscape.
+    // On iPads, height is 90 points in both portrait and landscape.
+    if (Platform.isIOS) {
+      // TODO use https://pub.dartlang.org/packages/device_info to detect iPhone/iPad?
+      // if (iPad) return 90.0;
+      if (mediaQuery.orientation == Orientation.portrait) return 50.0;
+      return 32.0;
+    }
+    // No idea, just return a common value.
+    return 50.0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    FirebaseAnalytics analytics = FirebaseAnalytics();
+
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: '適時開示(TDNet) Notifier',
-      // locale: Locale('ja', 'JP'),
+      locale: Locale('ja', 'JP'),
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -78,7 +125,23 @@ class AppRootWidgetState extends State<AppRootWidget> {
         '/companies': (context) => SearchCompanyScreen(),
         '/favorites': (context) => FavoriteScreen(),
         '/settings': (context) => SettingScreen(),
+        '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+      },
+      navigatorObservers: [FirebaseAnalyticsObserver(analytics: analytics)],
+      // add padding to all contents due to https://github.com/flutter/flutter/issues/14222
+      builder: (BuildContext context, Widget widget) {
+        var mediaQuery = MediaQuery.of(context);
+        return new Padding(
+          child: widget,
+          padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
+        );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 }

@@ -77,7 +77,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
   @override
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
-    final formatter = DateFormat.yMd();
+    final formatter = DateFormat.yMd('ja');
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
