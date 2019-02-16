@@ -4,11 +4,13 @@ class BottomTextFieldWithIcon extends StatefulWidget {
   const BottomTextFieldWithIcon({
     Key key,
     @required this.onSubmit,
+    this.onChanged,
     this.hintText,
     this.keyboardType,
   }) : super(key: key);
 
   final void Function(String) onSubmit;
+  final void Function(String) onChanged;
   final String hintText;
   final TextInputType keyboardType;
 
@@ -41,6 +43,7 @@ class BottomTextFieldWithIconState extends State<BottomTextFieldWithIcon> {
           ),
           // contentPadding: EdgeInsets.all(4.0),
         ),
+        onChanged: this.widget.onChanged,
         onSubmitted: this._handleSubmit,
         keyboardType: this.widget.keyboardType,
       ),

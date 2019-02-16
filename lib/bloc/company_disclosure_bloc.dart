@@ -8,7 +8,7 @@ class CompanyDisclosureBloc extends Bloc {
   final path = 'disclosures';
   final StreamController<String> _reloadController = StreamController();
   final StreamController _loadNextController = StreamController();
-  final BehaviorSubject<List<DocumentSnapshot>> _disclosuresController =
+  final BehaviorSubject<List<DocumentSnapshot>> _disclosures$ =
       BehaviorSubject();
   final BehaviorSubject<bool> _isLoadingController =
       BehaviorSubject(seedValue: true);
@@ -16,7 +16,7 @@ class CompanyDisclosureBloc extends Bloc {
   Sink<String> get reload => _reloadController.sink;
   Sink get loadNext => _loadNextController.sink;
   ValueObservable<List<DocumentSnapshot>> get disclosures$ =>
-      _disclosuresController.stream;
+      _disclosures$.stream;
   ValueObservable<bool> get isLoading$ => _isLoadingController.stream;
 
   String code = "";
@@ -45,7 +45,7 @@ class CompanyDisclosureBloc extends Bloc {
       _items.addAll(data.documents);
       print(data.documents.last.data);
 
-      _disclosuresController.add(_items);
+      _disclosures$.add(_items);
     } on StateError catch (e) {
       _isLastDocument = true;
     } finally {
@@ -61,7 +61,7 @@ class CompanyDisclosureBloc extends Bloc {
     _isLoadingController.add(true);
     try {
       // code = _code;
-      _disclosuresController.add(_items);
+      _disclosures$.add(null);
 
       final data = await Firestore.instance
           .collection(path)
@@ -72,7 +72,7 @@ class CompanyDisclosureBloc extends Bloc {
 
       _items.addAll(data.documents);
 
-      _disclosuresController.add(_items);
+      _disclosures$.add(_items);
     } finally {
       _isLoading = false;
       _isLoadingController.add(false);
@@ -83,7 +83,7 @@ class CompanyDisclosureBloc extends Bloc {
   void dispose() {
     _reloadController.close();
     _loadNextController.close();
-    _disclosuresController.close();
+    _disclosures$.close();
     _isLoadingController.close();
   }
 }

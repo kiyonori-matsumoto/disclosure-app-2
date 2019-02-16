@@ -1,7 +1,9 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
+import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +20,19 @@ class DisclosureStreamScreen extends StatefulWidget {
 
 class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
   DateTime date = DateTime.now();
+  BannerAd banner;
+
+  @override
+  initState() {
+    super.initState();
+    banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+  }
+
+  @override
+  dispose() {
+    banner?.dispose();
+    super.dispose();
+  }
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return ListView.builder(
@@ -78,6 +93,8 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
     final formatter = DateFormat.yMd('ja');
+
+    final mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -141,7 +158,10 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
           ),
         ],
       ),
-      body: _buildBody(context),
+      body: Padding(
+        padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
+        child: _buildBody(context),
+      ),
       drawer: AppDrawer(),
     );
   }

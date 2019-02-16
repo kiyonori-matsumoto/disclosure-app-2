@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'screens/disclosure-stream.dart';
 
 class AppRootWidget extends StatefulWidget {
@@ -31,8 +30,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging();
   final _admob = FirebaseAdMob.instance
-      .initialize(appId: 'ca-app-pub-5131663294295156/8292017322');
-  BannerAd _bannerAd;
+      .initialize(appId: 'ca-app-pub-5131663294295156~3067610804');
 
   @override
   void initState() {
@@ -53,17 +51,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     _message.configure(
       onLaunch: _handleNotification,
-      onMessage: _handleNotification,
+      onMessage: _handleNotification, //TODO:
       onResume: _handleNotification,
     );
-
-    _bannerAd = BannerAd(
-      adUnitId: 'ca-app-pub-5131663294295156/8292017322',
-      size: AdSize.smartBanner,
-    );
-    _bannerAd
-      ..load()
-      ..show();
 
     // initializeDateFormatting('ja_JP');
     // _auth.signInAnonymously().then(print);
@@ -75,8 +65,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print(navigatorKey.currentContext);
     final code = message['code'] ?? '';
     final company = Company(code, name: message['name'] ?? '');
-    await Navigator.pop(navigatorKey.currentContext);
-    return Navigator.of(navigatorKey.currentContext).push(
+    navigatorKey.currentState.pop();
+    return navigatorKey.currentState.push(
       MaterialPageRoute(
           builder: (context) => DisclosureCompanyScreen(company: company)),
     );
@@ -128,20 +118,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
         '/savedDisclosures': (context) => SavedDisclosuresScreen(),
       },
       navigatorObservers: [FirebaseAnalyticsObserver(analytics: analytics)],
-      // add padding to all contents due to https://github.com/flutter/flutter/issues/14222
-      builder: (BuildContext context, Widget widget) {
-        var mediaQuery = MediaQuery.of(context);
-        return new Padding(
-          child: widget,
-          padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
-        );
-      },
     );
   }
 
   @override
   void dispose() {
-    _bannerAd?.dispose();
     super.dispose();
   }
 }

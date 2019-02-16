@@ -2,6 +2,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
+import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
 import 'package:flutter/material.dart';
 import '../widgets/drawer.dart';
 
@@ -26,26 +27,22 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
       stream: _bloc.filteredCompany$,
       builder: (context, snapshot) => Column(
             children: <Widget>[
-              TextField(
-                autocorrect: true,
-                decoration: InputDecoration(
-                  hintText: "証券コード or 会社名",
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 16.0,
-                  ),
-                  suffixIcon: Icon(Icons.search),
-                ),
+              (!snapshot.hasData || snapshot.data == null)
+                  ? LinearProgressIndicator()
+                  : Expanded(child: CompanyListView(snapshot.data)),
+              Divider(),
+              BottomTextFieldWithIcon(
                 onChanged: (text) => _bloc.changeFilter.add(text),
-                onSubmitted: (code) => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            DisclosureCompanyScreen(company: Company(code)))),
-              ),
-              snapshot.hasData
-                  ? new CompanyListView(snapshot.data)
-                  : CircularProgressIndicator(),
+                onSubmit: (code) {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              DisclosureCompanyScreen(company: Company(code))));
+                },
+                hintText: '証券コード or 会社名',
+                keyboardType: TextInputType.text,
+              )
             ],
           ),
     );
@@ -62,8 +59,7 @@ class CompanyListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: ListView.builder(
+    return ListView.builder(
       itemBuilder: (context, index) => ListTile(
             title: Text(companies[index].name),
             onTap: () => Navigator.push(
@@ -73,6 +69,6 @@ class CompanyListView extends StatelessWidget {
                         DisclosureCompanyScreen(company: companies[index]))),
           ),
       itemCount: companies.length,
-    ));
+    );
   }
 }

@@ -4,7 +4,9 @@ import 'package:disclosure_app_fl/bloc/company_disclosure_bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
+import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -22,9 +24,16 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   final Company company;
   String code;
   CompanyDisclosureBloc bloc;
+  BannerAd banner;
+
+  @override
+  initState() {
+    super.initState();
+    banner = showBanner("ca-app-pub-5131663294295156/4027309882");
+  }
 
   _DisclosureCompanyScreenState({this.company}) {
-    this.code = this.company.code.substring(0, 4);
+    this.code = this.company.code;
     this.bloc = CompanyDisclosureBloc(this.code);
   }
 
@@ -58,7 +67,8 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     return StreamBuilder<List<DocumentSnapshot>>(
       stream: bloc.disclosures$,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return LinearProgressIndicator();
+        if (!snapshot.hasData || snapshot.data == null)
+          return LinearProgressIndicator();
         return _buildList(context, snapshot.data);
       },
     );
@@ -67,46 +77,55 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   @override
   Widget build(BuildContext context) {
     final appBloc = BlocProvider.of<AppBloc>(context);
+    final mediaQuery = MediaQuery.of(context);
 
     return Scaffold(
-        appBar: AppBar(
-          title: Text("${this.company.name} (${this.code})"),
-          actions: <Widget>[
-            StreamBuilder<List<Favorite>>(
-              stream: appBloc.favoritesWithName$,
-              builder: (context, snapshot) {
-                final isFavorite = snapshot.hasData &&
-                    snapshot.data.any((fav) => fav.code == this.code);
-                return IconButton(
-                  icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-                  onPressed: () {
-                    appBloc.switchFavorite.add(this.code);
-                  },
-                );
-              },
-            ),
-            StreamBuilder<List<Company>>(
-              stream: appBloc.notifications$,
-              builder: (context, snapshot) {
-                final hasNotification = snapshot.hasData &&
-                    snapshot.data.any((comp) => comp.code == this.code);
-                return IconButton(
-                  icon: Icon(hasNotification
-                      ? Icons.notifications
-                      : Icons.notifications_off),
-                  onPressed: () {
-                    appBloc.switchNotification.add(this.code);
-                  },
-                );
-              },
-            )
-          ],
-        ),
-        body: _buildBody(context));
+      appBar: AppBar(
+        title: Text("${this.company.name} (${this.code})"),
+        actions: <Widget>[
+          StreamBuilder<List<Favorite>>(
+            stream: appBloc.favoritesWithName$,
+            builder: (context, snapshot) {
+              final isFavorite = snapshot.hasData &&
+                  snapshot.data.any((fav) => fav.code == this.code);
+              return IconButton(
+                icon: Icon(isFavorite ? Icons.star : Icons.star_border),
+                onPressed: () {
+                  appBloc.switchFavorite.add(this.code);
+                },
+              );
+            },
+          ),
+          StreamBuilder<List<Company>>(
+            stream: appBloc.notifications$,
+            builder: (context, snapshot) {
+              final hasNotification = snapshot.hasData &&
+                  snapshot.data.any((comp) => comp.code == this.code);
+              return IconButton(
+                icon: Icon(hasNotification
+                    ? Icons.notifications
+                    : Icons.notifications_off),
+                onPressed: () {
+                  appBloc.switchNotification.add(this.code);
+                  Scaffold.of(context).showSnackBar(SnackBar(
+                    content: Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),
+                  ));
+                },
+              );
+            },
+          )
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.only(bottom: getSmartBannerHeight(mediaQuery)),
+        child: _buildBody(context),
+      ),
+    );
   }
 
   @override
   void dispose() {
+    banner?.dispose();
     bloc.dispose();
     super.dispose();
   }

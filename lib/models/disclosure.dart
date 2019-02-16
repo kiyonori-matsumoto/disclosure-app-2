@@ -30,12 +30,27 @@ class Disclosure {
     title = item['title'];
     document = item['document'];
     exchanges = item['exchanges'];
-    time = item['time'];
+    time = ((v) => v is String ? int.parse(v) : v)(item['time']);
     viewCount = item['view_count'];
-    tags = item['tags'].keys.toList().cast<String>();
+    tags = (item['tags'] ?? {}).keys.toList().cast<String>();
     isSelected = false;
     if (item.containsKey('add_at')) {
       addAt = DateTime.fromMicrosecondsSinceEpoch(item['add_at']);
     }
+  }
+
+  Map<String, dynamic> toObject() {
+    return {
+      'code': code,
+      'company': company,
+      'title': title,
+      'document': document,
+      'exchanges': exchanges,
+      'time': time,
+      'tags': tags.fold({}, (obj, tag) {
+        obj[tag] = true;
+        return obj;
+      }),
+    };
   }
 }

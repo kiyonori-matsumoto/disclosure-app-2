@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +24,8 @@ class AppBloc extends Bloc {
   final _filter$ = BehaviorSubject<List<Filter>>();
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
+  final StreamController<Disclosure> _saveDisclosureController =
+      StreamController();
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
@@ -94,6 +97,7 @@ class AppBloc extends Bloc {
 
   ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
       _savedDisclosure$.stream;
+  Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
@@ -410,6 +414,7 @@ class AppBloc extends Bloc {
     _switchNotificationController.close();
     _customFilter$.close();
     _savedDisclosure$.close();
+    _saveDisclosureController.close();
   }
 
   String _toCode(String topic) {
@@ -417,14 +422,21 @@ class AppBloc extends Bloc {
   }
 
   void _createSavedDisclosureStreams() {
+    final collection = (FirebaseUser user) => Firestore.instance
+        .collection('users')
+        .document(user.uid)
+        .collection('disclosures');
     _userController
-        .switchMap((user) => Firestore.instance
-            .collection('users')
-            .document(user.uid)
-            .collection('disclosures')
-            .orderBy('add_at', descending: true)
-            .snapshots())
+        .switchMap((user) =>
+            collection(user).orderBy('add_at', descending: true).snapshots())
         .map((snapshot) => snapshot.documents)
         .pipe(_savedDisclosure$);
+
+    _saveDisclosureController.stream.listen((disclosure) async {
+      final user = await _userController.first;
+      final obj = disclosure.toObject();
+      obj['add_at'] = DateTime.now().millisecondsSinceEpoch;
+      await collection(user).document(disclosure.document).setData(obj);
+    });
   }
 }
