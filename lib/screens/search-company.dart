@@ -27,9 +27,19 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
       stream: _bloc.filteredCompany$,
       builder: (context, snapshot) => Column(
             children: <Widget>[
-              (!snapshot.hasData || snapshot.data == null)
-                  ? LinearProgressIndicator()
-                  : Expanded(child: CompanyListView(snapshot.data)),
+              Expanded(
+                child: (!snapshot.hasData || snapshot.data == null)
+                    ? Container(
+                        alignment: AlignmentDirectional.center,
+                        child: Column(
+                          children: <Widget>[
+                            CircularProgressIndicator(),
+                            Text('会社情報をダウンロード中です…')
+                          ],
+                        ),
+                      )
+                    : CompanyListView(snapshot.data),
+              ),
               Divider(),
               BottomTextFieldWithIcon(
                 onChanged: (text) => _bloc.changeFilter.add(text),

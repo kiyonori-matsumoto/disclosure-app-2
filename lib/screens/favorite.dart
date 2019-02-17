@@ -37,27 +37,34 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: ListView(
-                      children: snapshot.data.map((fav) {
-                    return Dismissible(
-                      child: ListTile(
-                        title: Text(fav.toString()),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => DisclosureCompanyScreen(
-                                    company: Company(fav.code, name: fav.name),
+                  child: snapshot.data.length > 0
+                      ? ListView(
+                          children: snapshot.data.map((fav) {
+                          return Dismissible(
+                            child: ListTile(
+                              title: Text(fav.toString()),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DisclosureCompanyScreen(
+                                          company:
+                                              Company(fav.code, name: fav.name),
+                                        ),
                                   ),
+                                );
+                              },
                             ),
+                            key: fav.key,
+                            onDismissed: (direction) {
+                              bloc.removeFavorite.add(fav.code);
+                            },
                           );
-                        },
-                      ),
-                      key: fav.key,
-                      onDismissed: (direction) {
-                        bloc.removeFavorite.add(fav.code);
-                      },
-                    );
-                  }).toList()),
+                        }).toList())
+                      : Container(
+                          alignment: AlignmentDirectional.center,
+                          child: Text('お気に入りはありません'),
+                        ),
                 ),
                 Divider(),
                 BottomTextFieldWithIcon(

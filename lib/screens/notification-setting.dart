@@ -39,16 +39,22 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: ListView(
-                      children: snapshot.data.map((notification) {
-                    return Dismissible(
-                      child: ListTile(title: Text(notification.toString())),
-                      key: notification.key,
-                      onDismissed: (direction) {
-                        bloc.removeNotification.add(notification.code);
-                      },
-                    );
-                  }).toList()),
+                  child: snapshot.data.length > 0
+                      ? ListView(
+                          children: snapshot.data.map((notification) {
+                          return Dismissible(
+                            child:
+                                ListTile(title: Text(notification.toString())),
+                            key: notification.key,
+                            onDismissed: (direction) {
+                              bloc.removeNotification.add(notification.code);
+                            },
+                          );
+                        }).toList())
+                      : Container(
+                          alignment: AlignmentDirectional.center,
+                          child: Text("通知はありません"),
+                        ),
                 ),
                 Divider(),
                 BottomTextFieldWithIcon(

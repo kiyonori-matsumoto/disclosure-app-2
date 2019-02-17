@@ -33,18 +33,23 @@ class _CustomTagScreenState extends State<CustomTagScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: ListView(
-                      children: snapshot.data.map((filter) {
-                    return Dismissible(
-                      child: ListTile(
-                        title: Text(filter.title),
-                      ),
-                      key: filter.key,
-                      onDismissed: (dir) {
-                        bloc.removeCustomFilter.add(filter);
-                      },
-                    );
-                  }).toList()),
+                  child: snapshot.data.length > 0
+                      ? ListView(
+                          children: snapshot.data.map((filter) {
+                          return Dismissible(
+                            child: ListTile(
+                              title: Text(filter.title),
+                            ),
+                            key: filter.key,
+                            onDismissed: (dir) {
+                              bloc.removeCustomFilter.add(filter);
+                            },
+                          );
+                        }).toList())
+                      : Container(
+                          alignment: AlignmentDirectional.center,
+                          child: Text("カスタムタグはありません"),
+                        ),
                 ),
                 Divider(),
                 BottomTextFieldWithIcon(

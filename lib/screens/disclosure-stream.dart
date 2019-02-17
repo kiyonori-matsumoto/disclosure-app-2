@@ -9,8 +9,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../widgets/drawer.dart';
 
-final Filters = ["株主優待", "決算", "配当", "業績予想", "新株", "自己株式", "日々の開示事項"];
-
 class DisclosureStreamScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -99,11 +97,24 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
         stream: bloc.date$,
         builder: (context, snapshot) {
           if (snapshot.data == null) return Container();
+          final changeDate = () async {
+            final _date = await showDatePicker(
+              context: context,
+              initialDate: snapshot.data,
+              firstDate: DateTime(2017, 1, 1),
+              lastDate: DateTime.now(),
+            );
+            if (_date == null) return;
+            bloc.date.add(_date);
+          };
           return Scaffold(
             appBar: AppBar(
               // Here we take the value from the MyHomePage object that was created by
               // the App.build method, and use it to set our appbar title.
-              title: Text("${formatter.format(snapshot.data)}"),
+              title: GestureDetector(
+                child: Text("${formatter.format(snapshot.data)}"),
+                onTap: changeDate,
+              ),
               actions: <Widget>[
                 IconButton(
                   icon: Stack(
@@ -117,16 +128,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
                       ),
                     ],
                   ),
-                  onPressed: () async {
-                    final _date = await showDatePicker(
-                      context: context,
-                      initialDate: snapshot.data,
-                      firstDate: DateTime(2017, 1, 1),
-                      lastDate: DateTime.now(),
-                    );
-                    if (_date == null) return;
-                    bloc.date.add(_date);
-                  },
+                  onPressed: changeDate,
                 ),
                 StreamBuilder(
                   builder: (context, snapshot) => IconButton(
