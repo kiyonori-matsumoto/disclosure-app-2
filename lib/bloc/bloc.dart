@@ -65,6 +65,7 @@ class AppBloc extends Bloc {
   ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
       _disclosure$.stream;
   Sink<DateTime> get date => _dateController.sink;
+  ValueObservable<DateTime> get date$ => _dateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
   ValueObservable<FirebaseUser> get user$ => _userController.stream;
   ValueObservable<List<Filter>> get filter$ => _filter$.stream;

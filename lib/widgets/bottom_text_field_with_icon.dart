@@ -7,12 +7,14 @@ class BottomTextFieldWithIcon extends StatefulWidget {
     this.onChanged,
     this.hintText,
     this.keyboardType,
+    this.iconData = Icons.add,
   }) : super(key: key);
 
   final void Function(String) onSubmit;
   final void Function(String) onChanged;
   final String hintText;
   final TextInputType keyboardType;
+  final IconData iconData;
 
   @override
   BottomTextFieldWithIconState createState() {
@@ -39,7 +41,7 @@ class BottomTextFieldWithIconState extends State<BottomTextFieldWithIcon> {
           border: InputBorder.none,
           suffixIcon: IconButton(
             onPressed: () => this._handleSubmit(this._controller.text),
-            icon: Icon(Icons.add),
+            icon: Icon(this.widget.iconData),
           ),
           // contentPadding: EdgeInsets.all(4.0),
         ),

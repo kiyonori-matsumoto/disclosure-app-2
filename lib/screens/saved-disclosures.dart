@@ -5,6 +5,7 @@ import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/drawer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
@@ -14,6 +15,13 @@ class SavedDisclosuresScreen extends StatefulWidget {
 }
 
 class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
+  CollectionReference _collection(FirebaseUser user) {
+    return Firestore.instance
+        .collection('users')
+        .document(user.uid)
+        .collection('disclosures');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,12 +37,8 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
     final appBloc = BlocProvider.of<AppBloc>(context);
     return StreamBuilder<Map<String, List<DocumentSnapshot>>>(
       stream: appBloc.user$
-          .switchMap((user) => Firestore.instance
-              .collection('users')
-              .document(user.uid)
-              .collection('disclosures')
-              .orderBy('add_at', descending: true)
-              .snapshots())
+          .switchMap((user) =>
+              _collection(user).orderBy('add_at', descending: true).snapshots())
           .map((snapshot) =>
               groupBy(snapshot.documents, (e) => toDate(e['add_at']))),
       builder: (context, snapshot) => snapshot.hasData
@@ -58,8 +62,20 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                                     item: entry.value[i],
                                     showDate: true,
                                   ),
-                                  onDismissed: ((direction) async {
-                                    await entry.value[i].reference.delete();
+                                  onDismissed: ((direction) {
+                                    final entryBack = entry.value[i].data;
+                                    final entryRef = entry.value[i].reference;
+                                    entry.value[i].reference.delete();
+                                    final revert = () {
+                                      entryRef.setData(entryBack);
+                                    };
+                                    Scaffold.of(context).showSnackBar(SnackBar(
+                                      content: Text('削除しました'),
+                                      action: SnackBarAction(
+                                        onPressed: revert,
+                                        label: "取り消す",
+                                      ),
+                                    ));
                                   }),
                                 ),
                             childCount: entry.value.length,

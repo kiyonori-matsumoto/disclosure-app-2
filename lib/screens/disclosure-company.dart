@@ -122,7 +122,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
       body: _buildBody(context),
       persistentFooterButtons: <Widget>[
         Container(
-          height: getSmartBannerHeight(mediaQuery),
+          height: getSmartBannerHeight(mediaQuery) - 5,
         )
       ],
     );

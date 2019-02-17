@@ -4,8 +4,10 @@ import 'package:disclosure_app_fl/provider.dart';
 import 'package:flutter/material.dart';
 import 'app.dart';
 import 'package:flutter_crashlytics/flutter_crashlytics.dart';
+import 'package:flutter/rendering.dart';
 
 void main() async {
+  // debugPaintSizeEnabled = true;
   FlutterError.onError = (FlutterErrorDetails details) {
     if (isInDebugMode) {
       // In development mode simply print to console.

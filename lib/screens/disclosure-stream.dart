@@ -95,74 +95,77 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
     final formatter = DateFormat.yMd('ja');
 
     final mediaQuery = MediaQuery.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text("${formatter.format(date)}"),
-        actions: <Widget>[
-          IconButton(
-            icon: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                Icon(Icons.calendar_today),
-                Text(
-                  date.day.toString(),
-                  style: TextStyle(
-                      color: Colors.orange, fontWeight: FontWeight.w500),
+    return StreamBuilder<DateTime>(
+        stream: bloc.date$,
+        builder: (context, snapshot) {
+          if (snapshot.data == null) return Container();
+          return Scaffold(
+            appBar: AppBar(
+              // Here we take the value from the MyHomePage object that was created by
+              // the App.build method, and use it to set our appbar title.
+              title: Text("${formatter.format(snapshot.data)}"),
+              actions: <Widget>[
+                IconButton(
+                  icon: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Icon(Icons.calendar_today),
+                      Text(
+                        snapshot.data.day.toString(),
+                        style: TextStyle(
+                            color: Colors.orange, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                  onPressed: () async {
+                    final _date = await showDatePicker(
+                      context: context,
+                      initialDate: snapshot.data,
+                      firstDate: DateTime(2017, 1, 1),
+                      lastDate: DateTime.now(),
+                    );
+                    if (_date == null) return;
+                    bloc.date.add(_date);
+                  },
+                ),
+                StreamBuilder(
+                  builder: (context, snapshot) => IconButton(
+                        icon: Stack(
+                          children: [
+                            Icon(Icons.filter_list),
+                            snapshot.data != null && snapshot.data > 0
+                                ? Container(
+                                    decoration: ShapeDecoration(
+                                        color: Colors.red,
+                                        shape: CircleBorder()),
+                                    child: Text(
+                                      snapshot.data.toString(),
+                                      style: TextStyle(fontSize: 10.0),
+                                    ),
+                                    padding: EdgeInsets.all(4.0),
+                                  )
+                                : null,
+                          ].where((w) => w != null).toList(),
+                          alignment: Alignment.bottomRight,
+                        ),
+                        onPressed: () async {
+                          final result = await showDialog(
+                            context: context,
+                            builder: (context) => _dialog(context, bloc),
+                          );
+                          print(result);
+                        },
+                      ),
+                  stream: bloc.filterCount$,
                 ),
               ],
             ),
-            onPressed: () async {
-              final _date = await showDatePicker(
-                context: context,
-                initialDate: date,
-                firstDate: DateTime(2017, 1, 1),
-                lastDate: DateTime.now(),
-              );
-              if (_date == null) return;
-              setState(() {
-                this.date = _date;
-              });
-              bloc.date.add(date);
-            },
-          ),
-          StreamBuilder(
-            builder: (context, snapshot) => IconButton(
-                  icon: Stack(
-                    children: [
-                      Icon(Icons.filter_list),
-                      snapshot.data != null && snapshot.data > 0
-                          ? Container(
-                              decoration: ShapeDecoration(
-                                  color: Colors.red, shape: CircleBorder()),
-                              child: Text(
-                                snapshot.data.toString(),
-                                style: TextStyle(fontSize: 10.0),
-                              ),
-                              padding: EdgeInsets.all(4.0),
-                            )
-                          : null,
-                    ].where((w) => w != null).toList(),
-                    alignment: Alignment.bottomRight,
-                  ),
-                  onPressed: () async {
-                    final result = await showDialog(
-                      context: context,
-                      builder: (context) => _dialog(context, bloc),
-                    );
-                    print(result);
-                  },
-                ),
-            stream: bloc.filterCount$,
-          ),
-        ],
-      ),
-      body: _buildBody(context),
-      drawer: AppDrawer(),
-      persistentFooterButtons: <Widget>[
-        Container(height: getSmartBannerHeight(mediaQuery)),
-      ],
-    );
+            body: _buildBody(context),
+            drawer: AppDrawer(),
+            persistentFooterButtons: <Widget>[
+              Container(height: getSmartBannerHeight(mediaQuery) - 5),
+            ],
+          );
+        });
   }
 }

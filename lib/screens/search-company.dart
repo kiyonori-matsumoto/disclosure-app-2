@@ -42,6 +42,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
                 },
                 hintText: '証券コード or 会社名',
                 keyboardType: TextInputType.text,
+                iconData: Icons.search,
               )
             ],
           ),
