@@ -17,7 +17,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: Text("お気に入り")),
-        drawer: AppDrawer(),
+        // drawer: AppDrawer(),
         body: _buildBody(context));
   }
 

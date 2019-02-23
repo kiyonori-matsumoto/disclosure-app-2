@@ -29,7 +29,7 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
         title: Text("保存したドキュメント"),
       ),
       body: _buildBody(context),
-      drawer: AppDrawer(),
+      // drawer: AppDrawer(),
     );
   }
 

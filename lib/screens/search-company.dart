@@ -16,7 +16,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('会社検索')),
-      drawer: AppDrawer(),
+      // drawer: AppDrawer(),
       body: _buildBody(context),
     );
   }

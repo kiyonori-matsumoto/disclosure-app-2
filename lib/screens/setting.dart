@@ -21,7 +21,7 @@ class _SettingScreenState extends State<SettingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('設定')),
-      drawer: AppDrawer(),
+      // drawer: AppDrawer(),
       body: Builder(builder: _buildBody),
     );
   }

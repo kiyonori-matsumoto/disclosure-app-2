@@ -22,6 +22,7 @@ class AppBloc extends Bloc {
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
+  final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final StreamController<Disclosure> _saveDisclosureController =
@@ -74,6 +75,9 @@ class AppBloc extends Bloc {
   ValueObservable<List<Filter>> get customFilters$ => _customFilter$.stream;
   Sink<String> get addCustomFilter => _addCustomFilterController.sink;
   Sink<Filter> get removeCustomFilter => _removeCustomFilterController.sink;
+
+  Sink<bool> get setShowOnlyFavorites => _showOnlyFavorites$.sink;
+  ValueObservable<bool> get showOnlyFavorites$ => _showOnlyFavorites$.stream;
 
   ValueObservable<Map<String, dynamic>> get settings$ => _setting$.stream;
   Observable<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
@@ -172,10 +176,17 @@ class AppBloc extends Bloc {
           .startWith(null);
     });
 
-    Observable.combineLatest3<List<Filter>, QuerySnapshot, bool,
+    final showingFavorite = _showOnlyFavorites$.switchMap((val) {
+      if (val) {
+        return _favorit$;
+      }
+      return Observable.just(<String>[]);
+    });
+
+    Observable.combineLatest4<List<Filter>, QuerySnapshot, bool, List<String>,
             List<DocumentSnapshot>>(
-        this._filter$, store$, _hideDailyDisclosure$,
-        (_filters, d, _hideDaily) {
+        this._filter$, store$, _hideDailyDisclosure$, showingFavorite,
+        (_filters, d, _hideDaily, _favorites) {
       print("combinelatest3 $_filters , $d , $_hideDaily");
       if (d == null) return null;
       final isNotFilterSelected =
@@ -191,6 +202,9 @@ class AppBloc extends Bloc {
           .where((doc) =>
               isNotFilterSelected ||
               selectedFilterStr.any((str) => doc.data['tags'][str] == true))
+          .where((doc) => _favorites.length == 0
+              ? true
+              : _favorites.contains(doc.data['code']))
           .toList();
     }).pipe(_disclosure$);
 
@@ -417,6 +431,7 @@ class AppBloc extends Bloc {
     _customFilter$.close();
     _savedDisclosure$.close();
     _saveDisclosureController.close();
+    _showOnlyFavorites$.close();
   }
 
   String _toCode(String topic) {

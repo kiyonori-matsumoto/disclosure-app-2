@@ -2,6 +2,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
+import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
@@ -16,9 +17,17 @@ class DisclosureStreamScreen extends StatefulWidget {
   }
 }
 
-class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
+class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
+    with RouteAware {
   DateTime date = DateTime.now();
   BannerAd banner;
+  MyRouteObserver routeObserver = MyRouteObserver();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context));
+  }
 
   @override
   initState() {
@@ -28,8 +37,18 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
 
   @override
   dispose() {
+    print('dispose disclosure-stream');
+    routeObserver.unsubscribe(this);
     banner?.dispose();
     super.dispose();
+  }
+
+  void didPopNext() {
+    banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+  }
+
+  void didPushNext() {
+    banner?.dispose();
   }
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
@@ -97,77 +116,215 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen> {
         stream: bloc.date$,
         builder: (context, snapshot) {
           if (snapshot.data == null) return Container();
-          final changeDate = () async {
-            final _date = await showDatePicker(
-              context: context,
-              initialDate: snapshot.data,
-              firstDate: DateTime(2017, 1, 1),
-              lastDate: DateTime.now(),
-            );
-            if (_date == null) return;
-            bloc.date.add(_date);
-          };
+
           return Scaffold(
-            appBar: AppBar(
-              // Here we take the value from the MyHomePage object that was created by
-              // the App.build method, and use it to set our appbar title.
-              title: GestureDetector(
-                child: Text("${formatter.format(snapshot.data)}"),
-                onTap: changeDate,
-              ),
-              actions: <Widget>[
-                IconButton(
-                  icon: Stack(
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Icon(Icons.calendar_today),
-                      Text(
-                        snapshot.data.day.toString(),
-                        style: TextStyle(
-                            color: Colors.orange, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                  onPressed: changeDate,
-                ),
-                StreamBuilder(
-                  builder: (context, snapshot) => IconButton(
-                        icon: Stack(
-                          children: [
-                            Icon(Icons.filter_list),
-                            snapshot.data != null && snapshot.data > 0
-                                ? Container(
-                                    decoration: ShapeDecoration(
-                                        color: Colors.red,
-                                        shape: CircleBorder()),
-                                    child: Text(
-                                      snapshot.data.toString(),
-                                      style: TextStyle(fontSize: 10.0),
-                                    ),
-                                    padding: EdgeInsets.all(4.0),
-                                  )
-                                : null,
-                          ].where((w) => w != null).toList(),
-                          alignment: Alignment.bottomRight,
-                        ),
-                        onPressed: () async {
-                          final result = await showDialog(
-                            context: context,
-                            builder: (context) => _dialog(context, bloc),
-                          );
-                          print(result);
-                        },
-                      ),
-                  stream: bloc.filterCount$,
-                ),
-              ],
-            ),
-            body: _buildBody(context),
+            // appBar: buildAppBar(formatter, snapshot, changeDate, bloc),
+            // body: _buildBody(context),
+            body: buildSliverBody(context, bloc: bloc),
             drawer: AppDrawer(),
             persistentFooterButtons: <Widget>[
               Container(height: getSmartBannerHeight(mediaQuery) - 5),
             ],
           );
         });
+  }
+
+  AppBar buildAppBar(DateFormat formatter, AsyncSnapshot<DateTime> snapshot,
+      Future<dynamic> changeDate(), AppBloc bloc) {
+    return AppBar(
+      // Here we take the value from the MyHomePage object that was created by
+      // the App.build method, and use it to set our appbar title.
+      title: GestureDetector(
+        child: Text("${formatter.format(snapshot.data)}"),
+        onTap: changeDate,
+      ),
+      actions: <Widget>[
+        IconButton(
+          icon: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Icon(Icons.calendar_today),
+              Text(
+                snapshot.data.day.toString(),
+                style: TextStyle(
+                    color: Colors.orange, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          onPressed: changeDate,
+        ),
+        StreamBuilder(
+          builder: (context, snapshot) => IconButton(
+                icon: Stack(
+                  children: [
+                    Icon(Icons.filter_list),
+                    snapshot.data != null && snapshot.data > 0
+                        ? Container(
+                            decoration: ShapeDecoration(
+                                color: Colors.red, shape: CircleBorder()),
+                            child: Text(
+                              snapshot.data.toString(),
+                              style: TextStyle(fontSize: 10.0),
+                            ),
+                            padding: EdgeInsets.all(4.0),
+                          )
+                        : null,
+                  ].where((w) => w != null).toList(),
+                  alignment: Alignment.bottomRight,
+                ),
+                onPressed: () async {
+                  final result = await showDialog(
+                    context: context,
+                    builder: (context) => _dialog(context, bloc),
+                  );
+                  print(result);
+                },
+              ),
+          stream: bloc.filterCount$,
+        ),
+      ],
+    );
+  }
+
+  buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
+    final formatter = DateFormat.yMd('ja');
+    final appbar = SliverAppBar(
+      title: Text('適時開示一覧'),
+      pinned: false,
+    );
+    return SafeArea(
+      child: CustomScrollView(
+        slivers: <Widget>[
+          appbar,
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverAppBarDelegate(
+              child: ListView(
+                padding: EdgeInsets.all(8.0),
+                scrollDirection: Axis.horizontal,
+                children: <Widget>[
+                  StreamBuilder<DateTime>(
+                    stream: bloc.date$,
+                    builder: (context, snapshot) => Container(
+                          padding: EdgeInsets.all(4.0),
+                          child: ActionChip(
+                            avatar: Icon(Icons.calendar_today),
+                            label: Text(snapshot.hasData
+                                ? formatter.format(snapshot.data)
+                                : ''),
+                            onPressed: () {
+                              changeDate(bloc, initial: snapshot.data);
+                            },
+                          ),
+                        ),
+                  ),
+                  StreamBuilder<int>(
+                    stream: bloc.filterCount$,
+                    builder: (context, snapshot) => Container(
+                          padding: EdgeInsets.all(4.0),
+                          child: ActionChip(
+                            label: Text(snapshot.data?.toString() ?? '0'),
+                            avatar: Icon(Icons.filter_list),
+                            onPressed: () async {
+                              final result = await showDialog(
+                                context: context,
+                                builder: (context) => _dialog(context, bloc),
+                              );
+                              print(result);
+                            },
+                          ),
+                        ),
+                  ),
+                  StreamBuilder<bool>(
+                    stream: bloc.showOnlyFavorites$,
+                    builder: (context, snapshot) => Container(
+                          padding: EdgeInsets.all(4.0),
+                          child: ChoiceChip(
+                            avatar: Icon(Icons.favorite),
+                            label: Text('お気に入りのみ表示する'),
+                            selected: snapshot.hasData && snapshot.data,
+                            onSelected: (val) =>
+                                bloc.setShowOnlyFavorites.add(val),
+                          ),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          StreamBuilder<List<DocumentSnapshot>>(
+            stream: bloc.disclosure$,
+            builder: (context, snapshot) => snapshot.hasData &&
+                    snapshot.data != null
+                ? snapshot.data.length > 0
+                    ? SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                            (context, idx) =>
+                                DisclosureListItem(item: snapshot.data[idx]),
+                            childCount: snapshot.data.length),
+                      )
+                    : SliverFillRemaining(
+                        child: Container(
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Icon(Icons.event_busy),
+                              Text("この日の適時開示は0件です"),
+                            ],
+                          ),
+                        ),
+                      )
+                : SliverToBoxAdapter(
+                    child: LinearProgressIndicator(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  changeDate(AppBloc bloc, {DateTime initial}) async {
+    final _date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2017, 1, 1),
+      lastDate: DateTime.now(),
+    );
+    if (_date == null) return;
+    bloc.date.add(_date);
+  }
+}
+
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate({
+    @required this.child,
+  });
+
+  final Widget child;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(
+      child: Container(
+          child: child, color: Theme.of(context).secondaryHeaderColor
+          // decoration: BoxDecoration(
+          //     border:
+          //         Border(bottom: BorderSide(color: Colors.black, width: 1.0))),
+          // color: Theme.of(context).backgroundColor,
+          ),
+    );
+  }
+
+  @override
+  double get maxExtent => 60;
+
+  @override
+  double get minExtent => 60;
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return child != oldDelegate.child;
   }
 }

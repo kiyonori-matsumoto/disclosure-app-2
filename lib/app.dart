@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
+import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
@@ -32,6 +33,15 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final _admob = FirebaseAdMob.instance
       .initialize(appId: 'ca-app-pub-5131663294295156~3067610804');
 
+  AppRootWidgetState() {
+    print('configure');
+    _message.configure(
+      onLaunch: _handleNotification,
+      onMessage: _handleNotification, //TODO:
+      onResume: _handleNotification,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,12 +59,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
       }
     }).then(print);
 
-    _message.configure(
-      onLaunch: _handleNotification,
-      onMessage: _handleNotification, //TODO:
-      onResume: _handleNotification,
-    );
-
     // initializeDateFormatting('ja_JP');
     // _auth.signInAnonymously().then(print);
   }
@@ -65,7 +69,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print(navigatorKey.currentContext);
     final code = message['code'] ?? '';
     final company = Company(code, name: message['name'] ?? '');
-    navigatorKey.currentState.pop();
+    await Future.delayed(Duration(milliseconds: 500));
+    // navigatorKey.currentState.pop();
     return navigatorKey.currentState.push(
       MaterialPageRoute(
           builder: (context) => DisclosureCompanyScreen(company: company)),
@@ -95,6 +100,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   @override
   Widget build(BuildContext context) {
     FirebaseAnalytics analytics = FirebaseAnalytics();
+    final routeObserver = MyRouteObserver();
 
     return MaterialApp(
       navigatorKey: navigatorKey,
@@ -117,7 +123,10 @@ class AppRootWidgetState extends State<AppRootWidget> {
         '/settings': (context) => SettingScreen(),
         '/savedDisclosures': (context) => SavedDisclosuresScreen(),
       },
-      navigatorObservers: [FirebaseAnalyticsObserver(analytics: analytics)],
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: analytics),
+        routeObserver
+      ],
     );
   }
 
