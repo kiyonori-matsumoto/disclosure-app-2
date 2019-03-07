@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:rxdart/rxdart.dart';
 
 class CompanyDisclosureBloc extends Bloc {
@@ -13,11 +14,16 @@ class CompanyDisclosureBloc extends Bloc {
   final BehaviorSubject<bool> _isLoadingController =
       BehaviorSubject(seedValue: true);
 
+  final BehaviorSubject<CompanySettlement> _companySettlement$ =
+      BehaviorSubject();
+
   Sink<String> get reload => _reloadController.sink;
   Sink get loadNext => _loadNextController.sink;
   ValueObservable<List<DocumentSnapshot>> get disclosures$ =>
       _disclosures$.stream;
   ValueObservable<bool> get isLoading$ => _isLoadingController.stream;
+  ValueObservable<CompanySettlement> get companySettlement$ =>
+      _companySettlement$.stream;
 
   String code = "";
   List<DocumentSnapshot> _items = [];
@@ -27,7 +33,26 @@ class CompanyDisclosureBloc extends Bloc {
   CompanyDisclosureBloc(this.code) {
     _reloadController.stream.forEach(_reloadControllerHandler);
     _loadNextController.stream.forEach(_loadNextControllerHandler);
+    _settlementControllerHandler(this.code);
     _reloadController.add(code);
+  }
+
+  void _settlementControllerHandler(String code) {
+    Firestore.instance
+        .collection('dev-companies')
+        .document(code)
+        .get()
+        .then((doc) {
+      if (doc.exists && doc.data != null && doc.data['settlement'] != null) {
+        print(doc.data);
+        print(CompanySettlement.fromDocumentSnapshot(doc));
+        this
+            ._companySettlement$
+            .add(CompanySettlement.fromDocumentSnapshot(doc));
+      } else {
+        this._companySettlement$.add(null);
+      }
+    });
   }
 
   void _loadNextControllerHandler(_) async {
@@ -85,5 +110,6 @@ class CompanyDisclosureBloc extends Bloc {
     _loadNextController.close();
     _disclosures$.close();
     _isLoadingController.close();
+    _companySettlement$.close();
   }
 }

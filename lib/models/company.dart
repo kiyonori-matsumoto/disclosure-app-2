@@ -5,7 +5,8 @@ class Company {
   String code;
   Key key;
 
-  Company(this.code, {this.name}) {
+  Company(this.code, {String name = ''}) {
+    this.name = name.trim();
     this.key = Key(this.code);
   }
 

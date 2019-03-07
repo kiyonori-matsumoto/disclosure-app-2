@@ -22,6 +22,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   DateTime date = DateTime.now();
   BannerAd banner;
   MyRouteObserver routeObserver = MyRouteObserver();
+  bool searching = false;
 
   @override
   void didChangeDependencies() {
@@ -32,7 +33,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   @override
   initState() {
     super.initState();
-    banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    if (banner == null) {
+      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    }
   }
 
   @override
@@ -40,15 +43,19 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     print('dispose disclosure-stream');
     routeObserver.unsubscribe(this);
     banner?.dispose();
+    banner = null;
     super.dispose();
   }
 
   void didPopNext() {
-    banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    if (banner == null) {
+      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    }
   }
 
   void didPushNext() {
     banner?.dispose();
+    banner = null;
   }
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
@@ -73,7 +80,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(Icons.event_busy),
-                Text("この日の適時開示は0件です"),
+                Text("選択した条件の適時開示は0件です"),
               ],
             ),
           );
@@ -191,7 +198,20 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     final appbar = SliverAppBar(
       title: Text('適時開示一覧'),
       pinned: false,
+      floating: true,
+      snap: true,
+      // actions: <Widget>[
+      //   IconButton(
+      //     icon: Icon(Icons.search),
+      //     onPressed: () {
+      //       setState(() {
+      //         searching = true;
+      //       });
+      //     },
+      //   )
+      // ],
     );
+
     return SafeArea(
       child: CustomScrollView(
         slivers: <Widget>[
@@ -220,20 +240,24 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                   ),
                   StreamBuilder<int>(
                     stream: bloc.filterCount$,
-                    builder: (context, snapshot) => Container(
-                          padding: EdgeInsets.all(4.0),
-                          child: ActionChip(
-                            label: Text(snapshot.data?.toString() ?? '0'),
-                            avatar: Icon(Icons.filter_list),
-                            onPressed: () async {
-                              final result = await showDialog(
-                                context: context,
-                                builder: (context) => _dialog(context, bloc),
-                              );
-                              print(result);
-                            },
-                          ),
+                    builder: (context, snapshot) {
+                      final text = snapshot.data?.toString() ?? '0';
+                      return Container(
+                        padding: EdgeInsets.all(4.0),
+                        child: ChoiceChip(
+                          label: Text(text),
+                          avatar: Icon(Icons.filter_list),
+                          onSelected: (v) async {
+                            final result = await showDialog(
+                              context: context,
+                              builder: (context) => _dialog(context, bloc),
+                            );
+                            print(result);
+                          },
+                          selected: text != '0',
                         ),
+                      );
+                    },
                   ),
                   StreamBuilder<bool>(
                     stream: bloc.showOnlyFavorites$,
@@ -270,7 +294,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
                               Icon(Icons.event_busy),
-                              Text("この日の適時開示は0件です"),
+                              Text("選択した条件の適時開示は0件です"),
                             ],
                           ),
                         ),
@@ -307,8 +331,8 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return SizedBox.expand(
-      child: Container(
-          child: child, color: Theme.of(context).secondaryHeaderColor
+      child: Card(child: child, color: Theme.of(context).secondaryHeaderColor
+
           // decoration: BoxDecoration(
           //     border:
           //         Border(bottom: BorderSide(color: Colors.black, width: 1.0))),

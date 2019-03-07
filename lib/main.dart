@@ -25,10 +25,14 @@ void main() async {
       child: AppRootWidget(),
     ));
   }, onError: (error, stackTrace) async {
-    // Whenever an error occurs, call the `reportCrash` function. This will send
-    // Dart errors to our dev console or Crashlytics depending on the environment.
-    await FlutterCrashlytics()
-        .reportCrash(error, stackTrace, forceCrash: false);
+    if (isInDebugMode) {
+      print(stackTrace);
+    } else {
+      // Whenever an error occurs, call the `reportCrash` function. This will send
+      // Dart errors to our dev console or Crashlytics depending on the environment.
+      await FlutterCrashlytics()
+          .reportCrash(error, stackTrace, forceCrash: false);
+    }
   });
 }
 

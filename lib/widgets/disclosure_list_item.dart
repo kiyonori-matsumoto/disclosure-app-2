@@ -116,19 +116,19 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               //     Rect.fromPoints(point, point), Offset.zero & renderBox.size),
               items: [
                 PopupMenuItem(
-                  child: Row(
-                    children: <Widget>[
-                      Icon(
-                        Icons.save,
-                        color: Colors.grey,
-                      ),
-                      Text('保存'),
-                    ],
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.save,
+                      color: Colors.grey,
+                    ),
+                    title: Text('保存'),
                   ),
                   value: 0,
                 ),
                 PopupMenuItem(
-                  child: Text('${disclosure.code}の適時開示情報'),
+                  child: ListTile(
+                    title: Text('${disclosure.code}の適時開示情報'),
+                  ),
                   value: 1,
                 ),
               ],

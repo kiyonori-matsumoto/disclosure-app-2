@@ -36,8 +36,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
   AppRootWidgetState() {
     print('configure');
     _message.configure(
+      onMessage: _handleNotificationMsg, //TODO:
       onLaunch: _handleNotification,
-      onMessage: _handleNotification, //TODO:
       onResume: _handleNotification,
     );
   }
@@ -69,12 +69,27 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print(navigatorKey.currentContext);
     final code = message['code'] ?? '';
     final company = Company(code, name: message['name'] ?? '');
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(Duration(milliseconds: 1000));
     // navigatorKey.currentState.pop();
     return navigatorKey.currentState.push(
       MaterialPageRoute(
           builder: (context) => DisclosureCompanyScreen(company: company)),
     );
+  }
+
+  Future<void> _handleNotificationMsg(message) async {
+    print("###notificationMsg handler ###");
+    print(message);
+    print(navigatorKey.currentContext);
+    final data = message['data'] ?? {};
+    final code = data['code'] ?? '';
+    final company = Company(code, name: data['name'] ?? '');
+
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+            title: Text(message['notification']['title']),
+            content: Text(message['notification']['body'])));
   }
 
   double getSmartBannerHeight(MediaQueryData mediaQuery) {
@@ -114,7 +129,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
         Locale('ja', ''),
       ],
       theme: ThemeData(
-        primarySwatch: Colors.teal,
+        primarySwatch: Colors.deepOrange,
       ),
       routes: {
         '/': (context) => DisclosureStreamScreen(),

@@ -1,6 +1,7 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/company_disclosure_bloc.dart';
+import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
@@ -40,21 +41,34 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return RefreshIndicator(
       child: Scrollbar(
-          child: NotificationListener<ScrollNotification>(
-        onNotification: (scrollInfo) {
-          if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-            this.bloc.loadNext.add(code);
-          }
-        },
-        child: ListView.builder(
-          itemBuilder: (context, index) => new DisclosureListItem(
-                item: snapshot[index],
-                showDate: true,
-                key: Key(snapshot[index]['document']),
-              ),
-          itemCount: snapshot.length,
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (scrollInfo) {
+            if (scrollInfo.metrics.pixels ==
+                scrollInfo.metrics.maxScrollExtent) {
+              this.bloc.loadNext.add(code);
+            }
+          },
+          child: ListView.builder(
+            itemBuilder: (context, index) => index == snapshot.length
+                ? StreamBuilder(
+                    stream: bloc.isLoading$,
+                    builder: (context, snapshot) => snapshot.data
+                        ? Container(
+                            alignment: Alignment.center,
+                            child: CircularProgressIndicator(),
+                          )
+                        : Container(),
+                    initialData: false,
+                  )
+                : new DisclosureListItem(
+                    item: snapshot[index],
+                    showDate: true,
+                    key: Key(snapshot[index]['document']),
+                  ),
+            itemCount: snapshot.length + 1,
+          ),
         ),
-      )),
+      ),
       onRefresh: () {
         bloc.reload.add(this.company.code);
         // return Future.value(true);
@@ -69,7 +83,37 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data == null)
           return LinearProgressIndicator();
-        return _buildList(context, snapshot.data);
+        return Column(
+          children: <Widget>[
+            StreamBuilder<CompanySettlement>(
+                stream: bloc.companySettlement$,
+                builder: (context, snapshot) {
+                  print("data = ${snapshot.data}");
+                  if (!snapshot.hasData ||
+                      snapshot.data == null ||
+                      snapshot.data.schedule
+                          .add(Duration(days: 1))
+                          .isBefore(DateTime.now())) {
+                    return Container();
+                  }
+                  return Card(
+                    child: Column(
+                      children: <Widget>[
+                        ListTile(
+                          leading: Icon(
+                            Icons.announcement,
+                            color: Theme.of(context).backgroundColor,
+                          ),
+                          title: Text(snapshot.data.toMessage()),
+                        )
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(),
+                  );
+                }),
+            Expanded(child: _buildList(context, snapshot.data)),
+          ],
+        );
       },
     );
   }

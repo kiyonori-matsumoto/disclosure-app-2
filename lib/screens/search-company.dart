@@ -4,7 +4,6 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
 import 'package:flutter/material.dart';
-import '../widgets/drawer.dart';
 
 class SearchCompanyScreen extends StatefulWidget {
   @override
@@ -12,10 +11,39 @@ class SearchCompanyScreen extends StatefulWidget {
 }
 
 class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
+  final TextEditingController _controller = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    final _bloc = BlocProvider.of<AppBloc>(context);
     return Scaffold(
-      appBar: AppBar(title: Text('会社検索')),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        iconTheme: Theme.of(context).iconTheme.copyWith(color: Colors.black),
+        title: TextField(
+          autofocus: true,
+          style: Theme.of(context).textTheme.title,
+          decoration: InputDecoration.collapsed(hintText: '証券コード or 会社名'),
+          controller: _controller,
+          onChanged: (text) => _bloc.changeFilter.add(text),
+          onSubmitted: (code) {
+            _controller.clear();
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        DisclosureCompanyScreen(company: Company(code))));
+          },
+        ),
+        actions: <Widget>[
+          IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: () {
+                _controller.clear();
+                _bloc.changeFilter.add('');
+              })
+        ],
+      ),
       // drawer: AppDrawer(),
       body: _buildBody(context),
     );
@@ -25,37 +53,18 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
     final _bloc = BlocProvider.of<AppBloc>(context);
     return StreamBuilder<List<Company>>(
       stream: _bloc.filteredCompany$,
-      builder: (context, snapshot) => Column(
-            children: <Widget>[
-              Expanded(
-                child: (!snapshot.hasData || snapshot.data == null)
-                    ? Container(
-                        alignment: AlignmentDirectional.center,
-                        child: Column(
-                          children: <Widget>[
-                            CircularProgressIndicator(),
-                            Text('会社情報をダウンロード中です…')
-                          ],
-                        ),
-                      )
-                    : CompanyListView(snapshot.data),
-              ),
-              Divider(),
-              BottomTextFieldWithIcon(
-                onChanged: (text) => _bloc.changeFilter.add(text),
-                onSubmit: (code) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              DisclosureCompanyScreen(company: Company(code))));
-                },
-                hintText: '証券コード or 会社名',
-                keyboardType: TextInputType.text,
-                iconData: Icons.search,
-              )
-            ],
-          ),
+      builder: (context, snapshot) =>
+          (!snapshot.hasData || snapshot.data == null)
+              ? Container(
+                  alignment: AlignmentDirectional.center,
+                  child: Column(
+                    children: <Widget>[
+                      CircularProgressIndicator(),
+                      Text('会社情報をダウンロード中です…')
+                    ],
+                  ),
+                )
+              : CompanyListView(snapshot.data),
     );
   }
 }

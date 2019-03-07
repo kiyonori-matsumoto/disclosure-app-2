@@ -77,6 +77,9 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                                       ),
                                     ));
                                   }),
+                                  background: Container(
+                                    color: Colors.green,
+                                  ),
                                 ),
                             childCount: entry.value.length,
                           ),
