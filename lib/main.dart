@@ -26,17 +26,17 @@ void main() async {
     runApp(AppProvider(
       child: AppRootWidget(),
     ));
-    // }, onError: (error, stackTrace) async {
-    //   print("runZoned onerror handler");
-    //   if (isInDebugMode) {
-    //     print(error);
-    //     print(stackTrace);
-    //   } else {
-    //     // Whenever an error occurs, call the `reportCrash` function. This will send
-    //     // Dart errors to our dev console or Crashlytics depending on the environment.
-    //     await FlutterCrashlytics()
-    //         .reportCrash(error, stackTrace, forceCrash: false);
-    //   }
+  }, onError: (error, stackTrace) async {
+    print("runZoned onerror handler");
+    if (isInDebugMode) {
+      print(error);
+      print(stackTrace);
+    } else {
+      // Whenever an error occurs, call the `reportCrash` function. This will send
+      // Dart errors to our dev console or Crashlytics depending on the environment.
+      await FlutterCrashlytics()
+          .reportCrash(error, stackTrace, forceCrash: false);
+    }
   });
 }
 
