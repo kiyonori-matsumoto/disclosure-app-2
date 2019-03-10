@@ -4,7 +4,6 @@ import 'package:collection/collection.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
-import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';

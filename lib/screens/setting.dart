@@ -71,7 +71,7 @@ class _SettingScreenState extends State<SettingScreen> {
         StreamBuilder<FirebaseUser>(
           stream: bloc.user$,
           builder: (context, snapshot) => RaisedButton(
-                color: Colors.red,
+                color: Color(0xff4285f4),
                 textColor: Colors.white,
                 onPressed: () {
                   snapshot.hasData &&

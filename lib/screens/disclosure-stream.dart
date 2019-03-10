@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
@@ -58,37 +60,37 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     banner = null;
   }
 
-  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return ListView.builder(
-      itemBuilder: (context, index) =>
-          new DisclosureListItem(item: snapshot[index]),
-      itemCount: snapshot.length,
-    );
-  }
+  // Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+  //   return ListView.builder(
+  //     itemBuilder: (context, index) =>
+  //         new DisclosureListItem(item: snapshot[index]),
+  //     itemCount: snapshot.length,
+  //   );
+  // }
 
-  Widget _buildBody(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
+  // Widget _buildBody(BuildContext context) {
+  //   final bloc = BlocProvider.of<AppBloc>(context);
 
-    return StreamBuilder<List<DocumentSnapshot>>(
-      stream: bloc.disclosure$,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null)
-          return LinearProgressIndicator();
-        else if (snapshot.data.length == 0) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(Icons.event_busy),
-                Text("選択した条件の適時開示は0件です"),
-              ],
-            ),
-          );
-        }
-        return _buildList(context, snapshot.data);
-      },
-    );
-  }
+  //   return StreamBuilder<List<DocumentSnapshot>>(
+  //     stream: bloc.disclosure$,
+  //     builder: (context, snapshot) {
+  //       if (!snapshot.hasData || snapshot.data == null)
+  //         return LinearProgressIndicator();
+  //       else if (snapshot.data.length == 0) {
+  //         return Center(
+  //           child: Column(
+  //             mainAxisAlignment: MainAxisAlignment.center,
+  //             children: <Widget>[
+  //               Icon(Icons.event_busy),
+  //               Text("選択した条件の適時開示は0件です"),
+  //             ],
+  //           ),
+  //         );
+  //       }
+  //       return _buildList(context, snapshot.data);
+  //     },
+  //   );
+  // }
 
   Widget _dialog(BuildContext context, AppBloc bloc) =>
       StreamBuilder<List<Filter>>(
@@ -115,83 +117,94 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
-    final formatter = DateFormat.yMd('ja');
+    return runZoned(() {
+      final bloc = BlocProvider.of<AppBloc>(context);
+      final formatter = DateFormat.yMd('ja');
 
-    final mediaQuery = MediaQuery.of(context);
-    return StreamBuilder<DateTime>(
-        stream: bloc.date$,
-        builder: (context, snapshot) {
-          if (snapshot.data == null) return Container();
+      final mediaQuery = MediaQuery.of(context);
+      return StreamBuilder<DateTime>(
+          stream: bloc.date$,
+          builder: (context, snapshot) {
+            if (snapshot.data == null) return Container();
 
-          return Scaffold(
-            // appBar: buildAppBar(formatter, snapshot, changeDate, bloc),
-            // body: _buildBody(context),
-            body: buildSliverBody(context, bloc: bloc),
-            drawer: AppDrawer(),
-            persistentFooterButtons: <Widget>[
-              Container(height: getSmartBannerHeight(mediaQuery) - 5),
-            ],
-          );
-        });
+            return Scaffold(
+              // appBar: buildAppBar(formatter, snapshot, changeDate, bloc),
+              // body: _buildBody(context),
+              body: buildSliverBody(context, bloc: bloc),
+              drawer: AppDrawer(),
+              persistentFooterButtons: <Widget>[
+                Container(height: getSmartBannerHeight(mediaQuery) - 5),
+              ],
+            );
+          });
+    }, onError: (error, stacktrace) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: Text(error.toString()),
+              content: Text(stacktrace.toString()),
+            ),
+      );
+      throw (error);
+    });
   }
 
-  AppBar buildAppBar(DateFormat formatter, AsyncSnapshot<DateTime> snapshot,
-      Future<dynamic> changeDate(), AppBloc bloc) {
-    return AppBar(
-      // Here we take the value from the MyHomePage object that was created by
-      // the App.build method, and use it to set our appbar title.
-      title: GestureDetector(
-        child: Text("${formatter.format(snapshot.data)}"),
-        onTap: changeDate,
-      ),
-      actions: <Widget>[
-        IconButton(
-          icon: Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              Icon(Icons.calendar_today),
-              Text(
-                snapshot.data.day.toString(),
-                style: TextStyle(
-                    color: Colors.orange, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-          onPressed: changeDate,
-        ),
-        StreamBuilder(
-          builder: (context, snapshot) => IconButton(
-                icon: Stack(
-                  children: [
-                    Icon(Icons.filter_list),
-                    snapshot.data != null && snapshot.data > 0
-                        ? Container(
-                            decoration: ShapeDecoration(
-                                color: Colors.red, shape: CircleBorder()),
-                            child: Text(
-                              snapshot.data.toString(),
-                              style: TextStyle(fontSize: 10.0),
-                            ),
-                            padding: EdgeInsets.all(4.0),
-                          )
-                        : null,
-                  ].where((w) => w != null).toList(),
-                  alignment: Alignment.bottomRight,
-                ),
-                onPressed: () async {
-                  final result = await showDialog(
-                    context: context,
-                    builder: (context) => _dialog(context, bloc),
-                  );
-                  print(result);
-                },
-              ),
-          stream: bloc.filterCount$,
-        ),
-      ],
-    );
-  }
+  // AppBar buildAppBar(DateFormat formatter, AsyncSnapshot<DateTime> snapshot,
+  //     Future<dynamic> changeDate(), AppBloc bloc) {
+  //   return AppBar(
+  //     // Here we take the value from the MyHomePage object that was created by
+  //     // the App.build method, and use it to set our appbar title.
+  //     title: GestureDetector(
+  //       child: Text("${formatter.format(snapshot.data)}"),
+  //       onTap: changeDate,
+  //     ),
+  //     actions: <Widget>[
+  //       IconButton(
+  //         icon: Stack(
+  //           alignment: Alignment.center,
+  //           children: <Widget>[
+  //             Icon(Icons.calendar_today),
+  //             Text(
+  //               snapshot.data.day.toString(),
+  //               style: TextStyle(
+  //                   color: Colors.orange, fontWeight: FontWeight.w500),
+  //             ),
+  //           ],
+  //         ),
+  //         onPressed: changeDate,
+  //       ),
+  //       StreamBuilder(
+  //         builder: (context, snapshot) => IconButton(
+  //               icon: Stack(
+  //                 children: [
+  //                   Icon(Icons.filter_list),
+  //                   snapshot.data != null && snapshot.data > 0
+  //                       ? Container(
+  //                           decoration: ShapeDecoration(
+  //                               color: Colors.red, shape: CircleBorder()),
+  //                           child: Text(
+  //                             snapshot.data.toString(),
+  //                             style: TextStyle(fontSize: 10.0),
+  //                           ),
+  //                           padding: EdgeInsets.all(4.0),
+  //                         )
+  //                       : null,
+  //                 ].where((w) => w != null).toList(),
+  //                 alignment: Alignment.bottomRight,
+  //               ),
+  //               onPressed: () async {
+  //                 final result = await showDialog(
+  //                   context: context,
+  //                   builder: (context) => _dialog(context, bloc),
+  //                 );
+  //                 print(result);
+  //               },
+  //             ),
+  //         stream: bloc.filterCount$,
+  //       ),
+  //     ],
+  //   );
+  // }
 
   buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
     final formatter = DateFormat.yMd('ja');
@@ -278,30 +291,45 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           ),
           StreamBuilder<List<DocumentSnapshot>>(
             stream: bloc.disclosure$,
-            builder: (context, snapshot) => snapshot.hasData &&
-                    snapshot.data != null
-                ? snapshot.data.length > 0
-                    ? SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                            (context, idx) =>
-                                DisclosureListItem(item: snapshot.data[idx]),
-                            childCount: snapshot.data.length),
-                      )
-                    : SliverFillRemaining(
-                        child: Container(
-                          alignment: Alignment.center,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Icon(Icons.event_busy),
-                              Text("選択した条件の適時開示は0件です"),
-                            ],
-                          ),
-                        ),
-                      )
-                : SliverToBoxAdapter(
-                    child: LinearProgressIndicator(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return SliverFillRemaining(
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.event_busy),
+                        Text(snapshot.error.toString()),
+                      ],
+                    ),
                   ),
+                );
+              }
+              return (snapshot.hasData && snapshot.data != null)
+                  ? snapshot.data.length > 0
+                      ? SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                              (context, idx) =>
+                                  DisclosureListItem(item: snapshot.data[idx]),
+                              childCount: snapshot.data.length),
+                        )
+                      : SliverFillRemaining(
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Icon(Icons.event_busy),
+                                Text("選択した条件の適時開示は0件です"),
+                              ],
+                            ),
+                          ),
+                        )
+                  : SliverToBoxAdapter(
+                      child: LinearProgressIndicator(),
+                    );
+            },
           ),
         ],
       ),

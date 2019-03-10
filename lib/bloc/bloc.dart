@@ -111,6 +111,7 @@ class AppBloc extends Bloc {
 
   AppBloc() {
     final store = Firestore.instance;
+    store.settings(persistenceEnabled: false);
     final initialFilters = filterStrings.map((str) => Filter(str)).toList();
 
     _setting$
@@ -348,27 +349,32 @@ class AppBloc extends Bloc {
 
     final _notificationString$ = BehaviorSubject<List<String>>();
 
-    messaging.getToken().then((token) {
-      print(token);
-      return http.post(
-          'https://us-central1-disclosure-app.cloudfunctions.net/listTopics',
-          body: json.encode({'IID_TOKEN': token}),
-          headers: {'Content-Type': 'application/json'});
-    }).then((res) {
-      if (res.body != '') {
-        final data = json.decode(res.body);
-        final List<String> topics = (data['topics'] as Map<String, dynamic>)
-                .keys
-                .map((key) => _toCode(key))
-                .toList() ??
-            [];
-        notifications = topics.toSet();
-        print('notifications = $notifications');
-        return topics;
-      } else {
-        return [].cast<String>();
-      }
-    }).then((topics) => _notificationString$.add(topics));
+    messaging
+        .getToken()
+        .then((token) {
+          print(token);
+          return http.post(
+              'https://us-central1-disclosure-app.cloudfunctions.net/listTopics',
+              body: json.encode({'IID_TOKEN': token}),
+              headers: {'Content-Type': 'application/json'});
+        })
+        .then((res) {
+          if (res.body != '') {
+            final data = json.decode(res.body);
+            final List<String> topics = (data['topics'] as Map<String, dynamic>)
+                    .keys
+                    .map((key) => _toCode(key))
+                    .toList() ??
+                [];
+            notifications = topics.toSet();
+            print('notifications = $notifications');
+            return topics;
+          } else {
+            return [].cast<String>();
+          }
+        })
+        .then((topics) => _notificationString$.add(topics))
+        .catchError(_notificationString$.addError);
 
     Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
       _notificationString$,

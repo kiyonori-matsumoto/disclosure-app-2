@@ -36,7 +36,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   AppRootWidgetState() {
     print('configure');
     _message.configure(
-      onMessage: _handleNotificationMsg, //TODO:
+      onMessage: _handleNotification, //TODO:
       onLaunch: _handleNotification,
       onResume: _handleNotification,
     );
@@ -80,16 +80,17 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Future<void> _handleNotificationMsg(message) async {
     print("###notificationMsg handler ###");
     print(message);
-    print(navigatorKey.currentContext);
     final data = message['data'] ?? {};
     final code = data['code'] ?? '';
     final company = Company(code, name: data['name'] ?? '');
 
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-            title: Text(message['notification']['title']),
-            content: Text(message['notification']['body'])));
+    final res = await showDialog(
+      context: navigatorKey.currentContext,
+      builder: (context) => AlertDialog(
+          title: Text(message['notification']['title']),
+          content: Text(message['notification']['body'])),
+    );
+    print(res);
   }
 
   double getSmartBannerHeight(MediaQueryData mediaQuery) {

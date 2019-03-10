@@ -9,6 +9,8 @@ import 'package:flutter/rendering.dart';
 void main() async {
   // debugPaintSizeEnabled = true;
   FlutterError.onError = (FlutterErrorDetails details) {
+    print("FlutterError onerror handler");
+    print(isInDebugMode);
     if (isInDebugMode) {
       // In development mode simply print to console.
       FlutterError.dumpErrorToConsole(details);
@@ -24,15 +26,17 @@ void main() async {
     runApp(AppProvider(
       child: AppRootWidget(),
     ));
-  }, onError: (error, stackTrace) async {
-    if (isInDebugMode) {
-      print(stackTrace);
-    } else {
-      // Whenever an error occurs, call the `reportCrash` function. This will send
-      // Dart errors to our dev console or Crashlytics depending on the environment.
-      await FlutterCrashlytics()
-          .reportCrash(error, stackTrace, forceCrash: false);
-    }
+    // }, onError: (error, stackTrace) async {
+    //   print("runZoned onerror handler");
+    //   if (isInDebugMode) {
+    //     print(error);
+    //     print(stackTrace);
+    //   } else {
+    //     // Whenever an error occurs, call the `reportCrash` function. This will send
+    //     // Dart errors to our dev console or Crashlytics depending on the environment.
+    //     await FlutterCrashlytics()
+    //         .reportCrash(error, stackTrace, forceCrash: false);
+    //   }
   });
 }
 
