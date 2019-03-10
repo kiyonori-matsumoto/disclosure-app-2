@@ -44,15 +44,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             child: ListTile(
                               title: Text(fav.toString()),
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        DisclosureCompanyScreen(
-                                          company:
-                                              Company(fav.code, name: fav.name),
-                                        ),
-                                  ),
-                                );
+                                final company =
+                                    Company(fav.code, name: fav.name);
+                                return Navigator.pushNamed(
+                                    context, '/company-disclosures',
+                                    arguments: company);
                               },
                             ),
                             key: fav.key,

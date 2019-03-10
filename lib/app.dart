@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bloc_provider/bloc_provider.dart';
+import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
@@ -59,6 +61,18 @@ class AppRootWidgetState extends State<AppRootWidget> {
       }
     }).then(print);
 
+    final bloc = BlocProvider.of<AppBloc>(context);
+
+    bloc.notifications$.listen((data) {}, onError: (error) {
+      showDialog(
+        context: navigatorKey.currentState.overlay.context,
+        builder: (context) => AlertDialog(
+              title: Text("エラー！"),
+              content: Text(error.toString()),
+            ),
+      );
+      print("notification onerror $error");
+    });
     // initializeDateFormatting('ja_JP');
     // _auth.signInAnonymously().then(print);
   }
@@ -85,7 +99,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
     final company = Company(code, name: data['name'] ?? '');
 
     final res = await showDialog(
-      context: navigatorKey.currentContext,
+      context: navigatorKey.currentState.overlay.context,
       builder: (context) => AlertDialog(
           title: Text(message['notification']['title']),
           content: Text(message['notification']['body'])),
@@ -117,7 +131,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Widget build(BuildContext context) {
     FirebaseAnalytics analytics = FirebaseAnalytics();
     final routeObserver = MyRouteObserver();
-
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: '適時開示(TDNet) Notifier',
@@ -138,6 +151,15 @@ class AppRootWidgetState extends State<AppRootWidget> {
         '/favorites': (context) => FavoriteScreen(),
         '/settings': (context) => SettingScreen(),
         '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+      },
+      onGenerateRoute: (route) {
+        print("onGenerateRoute $route");
+        if (route.name.startsWith('/company-disclosures')) {
+          return MaterialPageRoute(
+            builder: (context) =>
+                DisclosureCompanyScreen(company: route.arguments),
+          );
+        }
       },
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: analytics),

@@ -137,14 +137,10 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               return bloc.saveDisclosure.add(disclosure);
             }
             if (choice == 1) {
-              return Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DisclosureCompanyScreen(
-                      company:
-                          Company(disclosure.code, name: disclosure.company)),
-                ),
-              );
+              final company =
+                  Company(disclosure.code, name: disclosure.company);
+              return Navigator.pushNamed(context, '/company-disclosures',
+                  arguments: company);
             }
           },
         ),

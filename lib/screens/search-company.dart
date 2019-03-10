@@ -28,11 +28,9 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
           onChanged: (text) => _bloc.changeFilter.add(text),
           onSubmitted: (code) {
             _controller.clear();
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        DisclosureCompanyScreen(company: Company(code))));
+            final company = Company(code);
+            return Navigator.pushNamed(context, '/company-disclosures',
+                arguments: company);
           },
         ),
         actions: <Widget>[
@@ -81,13 +79,14 @@ class CompanyListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemBuilder: (context, index) => ListTile(
-            title: Text(companies[index].name),
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        DisclosureCompanyScreen(company: companies[index]))),
-          ),
+          title: Text(companies[index].name),
+          onTap: () {
+            return Navigator.pushNamed(
+              context,
+              '/company-disclosures',
+              arguments: companies[index],
+            );
+          }),
       itemCount: companies.length,
     );
   }
