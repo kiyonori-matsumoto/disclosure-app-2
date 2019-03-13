@@ -18,7 +18,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
     final _bloc = BlocProvider.of<AppBloc>(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).secondaryHeaderColor,
         iconTheme: Theme.of(context).iconTheme.copyWith(color: Colors.black),
         title: TextField(
           autofocus: true,

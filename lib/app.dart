@@ -143,7 +143,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
         Locale('ja', ''),
       ],
       theme: ThemeData(
-        primarySwatch: Colors.deepOrange,
+        primarySwatch: Colors.deepPurple,
+        // brightness: Brightness.dark,
       ),
       routes: {
         '/': (context) => DisclosureStreamScreen(),
