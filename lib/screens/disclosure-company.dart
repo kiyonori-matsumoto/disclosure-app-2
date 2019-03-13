@@ -48,25 +48,60 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
               this.bloc.loadNext.add(code);
             }
           },
-          child: ListView.builder(
-            itemBuilder: (context, index) => index == snapshot.length
-                ? StreamBuilder(
-                    stream: bloc.isLoading$,
-                    builder: (context, snapshot) => snapshot.data
-                        ? Container(
-                            alignment: Alignment.center,
-                            child: CircularProgressIndicator(),
-                          )
-                        : Container(),
-                    initialData: false,
-                  )
-                : new DisclosureListItem(
-                    item: snapshot[index],
-                    showDate: true,
-                    key: Key(snapshot[index]['document']),
-                  ),
-            itemCount: snapshot.length + 1,
-          ),
+          child: CustomScrollView(slivers: <Widget>[
+            StreamBuilder<CompanySettlement>(
+                stream: bloc.companySettlement$,
+                builder: (context, snapshot) {
+                  return SliverList(
+                    delegate: SliverChildListDelegate(
+                      (!snapshot.hasData ||
+                              snapshot.data == null ||
+                              snapshot.data.schedule
+                                  .add(Duration(days: 1))
+                                  .isBefore(DateTime.now()))
+                          ? []
+                          : [
+                              Card(
+                                child: Column(
+                                  children: <Widget>[
+                                    ListTile(
+                                      leading: Icon(
+                                        Icons.announcement,
+                                        color:
+                                            Theme.of(context).backgroundColor,
+                                      ),
+                                      title: Text(snapshot.data.toMessage()),
+                                    )
+                                  ],
+                                ),
+                                shape: RoundedRectangleBorder(),
+                              )
+                            ],
+                    ),
+                  );
+                }),
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => index == snapshot.length
+                    ? StreamBuilder(
+                        stream: bloc.isLoading$,
+                        builder: (context, snapshot) => snapshot.data
+                            ? Container(
+                                alignment: Alignment.center,
+                                child: CircularProgressIndicator(),
+                              )
+                            : Container(),
+                        initialData: false,
+                      )
+                    : new DisclosureListItem(
+                        item: snapshot[index],
+                        showDate: true,
+                        key: Key(snapshot[index]['document']),
+                      ),
+                childCount: snapshot.length + 1,
+              ),
+            ),
+          ]),
         ),
       ),
       onRefresh: () {
@@ -81,39 +116,10 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     return StreamBuilder<List<DocumentSnapshot>>(
       stream: bloc.disclosures$,
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null)
+        if (!snapshot.hasData || snapshot.data == null) {
           return LinearProgressIndicator();
-        return Column(
-          children: <Widget>[
-            StreamBuilder<CompanySettlement>(
-                stream: bloc.companySettlement$,
-                builder: (context, snapshot) {
-                  print("data = ${snapshot.data}");
-                  if (!snapshot.hasData ||
-                      snapshot.data == null ||
-                      snapshot.data.schedule
-                          .add(Duration(days: 1))
-                          .isBefore(DateTime.now())) {
-                    return Container();
-                  }
-                  return Card(
-                    child: Column(
-                      children: <Widget>[
-                        ListTile(
-                          leading: Icon(
-                            Icons.announcement,
-                            color: Theme.of(context).backgroundColor,
-                          ),
-                          title: Text(snapshot.data.toMessage()),
-                        )
-                      ],
-                    ),
-                    shape: RoundedRectangleBorder(),
-                  );
-                }),
-            Expanded(child: _buildList(context, snapshot.data)),
-          ],
-        );
+        }
+        return _buildList(context, snapshot.data);
       },
     );
   }
