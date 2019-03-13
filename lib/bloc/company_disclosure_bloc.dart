@@ -39,11 +39,11 @@ class CompanyDisclosureBloc extends Bloc {
 
   void _settlementControllerHandler(String code) {
     Firestore.instance
-        .collection('dev-companies')
+        .collection('settlements')
         .document(code)
         .get()
         .then((doc) {
-      if (doc.exists && doc.data != null && doc.data['settlement'] != null) {
+      if (doc.exists && doc.data != null) {
         print(doc.data);
         print(CompanySettlement.fromDocumentSnapshot(doc));
         this

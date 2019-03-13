@@ -133,7 +133,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
               body: buildSliverBody(context, bloc: bloc),
               drawer: AppDrawer(),
               persistentFooterButtons: <Widget>[
-                Container(height: getSmartBannerHeight(mediaQuery) - 5),
+                SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
               ],
             );
           });

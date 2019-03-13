@@ -134,6 +134,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                   snapshot.data.any((fav) => fav.code == this.code);
               return IconButton(
                 icon: Icon(isFavorite ? Icons.star : Icons.star_border),
+                tooltip: 'お気に入り',
                 onPressed: () {
                   appBloc.switchFavorite.add(this.code);
                   Scaffold.of(context).showSnackBar(SnackBar(
@@ -152,6 +153,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                 icon: Icon(hasNotification
                     ? Icons.notifications
                     : Icons.notifications_off),
+                tooltip: '通知',
                 onPressed: () {
                   appBloc.switchNotification.add(this.code);
                   Scaffold.of(context).showSnackBar(SnackBar(
