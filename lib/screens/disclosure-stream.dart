@@ -213,16 +213,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       pinned: false,
       floating: true,
       snap: true,
-      // actions: <Widget>[
-      //   IconButton(
-      //     icon: Icon(Icons.search),
-      //     onPressed: () {
-      //       setState(() {
-      //         searching = true;
-      //       });
-      //     },
-      //   )
-      // ],
     );
 
     return SafeArea(

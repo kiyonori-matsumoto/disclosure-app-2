@@ -2,7 +2,6 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/notification-setting.dart';
-import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -88,7 +87,9 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
         ),
         ListTile(
-          title: Text('プライバシーポリシー'),
+          title: Row(
+            children: <Widget>[Text('プライバシーポリシー'), Icon(Icons.open_in_browser)],
+          ),
           onTap: () {
             _launchURL();
           },

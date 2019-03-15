@@ -134,7 +134,11 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ],
             );
             if (choice == 0) {
-              return bloc.saveDisclosure.add(disclosure);
+              bloc.saveDisclosure.add(disclosure);
+              return Scaffold.of(context).showSnackBar(SnackBar(
+                content: Text('保存しました'),
+                duration: Duration(seconds: 3),
+              ));
             }
             if (choice == 1) {
               final company =
