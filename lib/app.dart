@@ -53,11 +53,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
       if (googleUser == null) {
         return _auth.signInAnonymously();
       } else {
-        return googleUser.authentication
-            .then((googleAuth) => _auth.signInWithGoogle(
-                  accessToken: googleAuth.accessToken,
-                  idToken: googleAuth.idToken,
-                ));
+        return googleUser.authentication.then((googleAuth) =>
+            _auth.signInWithCredential(GoogleAuthProvider.getCredential(
+              accessToken: googleAuth.accessToken,
+              idToken: googleAuth.idToken,
+            )));
       }
     }).then(print);
 

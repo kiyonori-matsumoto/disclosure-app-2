@@ -112,19 +112,20 @@ class _SettingScreenState extends State<SettingScreen> {
       GoogleSignInAccount googleUser = await _googleSignIn.signIn();
       GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final providers =
-          await _auth.fetchProvidersForEmail(email: googleUser.email);
+          await _auth.fetchSignInMethodsForEmail(email: googleUser.email);
 
       FirebaseUser user;
       if (providers.contains('google.com')) {
-        user = await _auth.signInWithGoogle(
+        user =
+            await _auth.signInWithCredential(GoogleAuthProvider.getCredential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
-        );
+        ));
       } else {
-        user = await _auth.linkWithGoogleCredential(
+        user = await _auth.linkWithCredential(GoogleAuthProvider.getCredential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
-        );
+        ));
       }
       print(user.providerId);
       Scaffold.of(context).showSnackBar(SnackBar(
@@ -142,8 +143,10 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   _handleSignOut(BuildContext context) async {
+    final user = await _auth.currentUser();
+    await user.unlinkFromProvider('google.com');
     SnackBar snackBar = SnackBar(
-      content: Text('現在サインアウトできません'),
+      content: Text('連携を解除しました'),
       duration: Duration(seconds: 10),
     );
     Scaffold.of(context).showSnackBar(snackBar);
