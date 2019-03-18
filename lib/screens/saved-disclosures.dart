@@ -46,6 +46,7 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                   .map((entry) => SliverStickyHeader(
                         header: Container(
                           height: 50.0,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           alignment: Alignment.centerLeft,
                           padding: EdgeInsets.only(left: 10.0),
                           child: Text(
