@@ -56,6 +56,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                     delegate: SliverChildListDelegate(
                       (!snapshot.hasData ||
                               snapshot.data == null ||
+                              snapshot.data.schedule == null ||
                               snapshot.data.schedule
                                   .add(Duration(days: 1))
                                   .isBefore(DateTime.now()))

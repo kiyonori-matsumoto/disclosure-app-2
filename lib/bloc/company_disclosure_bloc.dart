@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 
 class CompanyDisclosureBloc extends Bloc {
@@ -38,11 +39,13 @@ class CompanyDisclosureBloc extends Bloc {
   }
 
   void _settlementControllerHandler(String code) {
-    Firestore.instance
-        .collection('settlements')
-        .document(code)
-        .get()
-        .then((doc) {
+    FirebaseAuth.instance.onAuthStateChanged
+        .where((user) => user != null)
+        .first
+        .then((user) {
+      print(user);
+      return Firestore.instance.collection('settlements').document(code).get();
+    }).then((doc) {
       if (doc.exists && doc.data != null) {
         print(doc.data);
         print(CompanySettlement.fromDocumentSnapshot(doc));
