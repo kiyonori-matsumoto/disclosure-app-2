@@ -94,7 +94,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Future<void> _handleNotificationMsg(message) async {
     print("###notificationMsg handler ###");
     print(message);
-    final data = message['data'] ?? {};
+    final data = message ?? {};
     final code = data['code'] ?? '';
     final company = Company(code, name: data['name'] ?? '');
 

@@ -44,6 +44,8 @@ dev_dependencies:
 
   flutter_launcher_icons: "^0.7.0"
 
+  test:
+
 flutter_icons:
   android: "ic_launcher"
   ios: false
