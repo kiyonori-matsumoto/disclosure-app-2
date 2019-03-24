@@ -209,120 +209,210 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
-      title: Text('適時開示一覧'),
-      pinned: false,
-      floating: true,
-      snap: true,
-    );
+        title: Text('適時開示一覧'),
+        pinned: false,
+        floating: true,
+        snap: true,
+        bottom: TabBar(
+          tabs: <Widget>[
+            Tab(
+              text: "TDNET",
+            ),
+            Tab(text: "EDINET")
+          ],
+        ));
 
     return SafeArea(
-      child: CustomScrollView(
-        slivers: <Widget>[
-          appbar,
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _SliverAppBarDelegate(
-              child: ListView(
-                padding: EdgeInsets.all(8.0),
-                scrollDirection: Axis.horizontal,
-                children: <Widget>[
-                  StreamBuilder<DateTime>(
-                    stream: bloc.date$,
-                    builder: (context, snapshot) => Container(
-                          padding: EdgeInsets.all(4.0),
-                          child: ActionChip(
-                            avatar: Icon(Icons.calendar_today),
-                            label: Text(snapshot.hasData
-                                ? formatter.format(snapshot.data)
-                                : ''),
-                            onPressed: () {
-                              changeDate(bloc, initial: snapshot.data);
-                            },
-                          ),
-                        ),
+      child: DefaultTabController(
+        length: 2,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, inner) {
+            return [
+              appbar,
+            ];
+          },
+          body: TabBarView(
+            children: [
+              SafeArea(
+                top: false,
+                bottom: false,
+                child: Builder(builder: (context) {
+                  return CustomScrollView(
+                    slivers: <Widget>[
+                      filterToolbar(bloc, formatter),
+                      tdnetList(bloc),
+                    ],
+                  );
+                }),
+              ),
+              SafeArea(
+                top: false,
+                bottom: false,
+                child: Builder(builder: (context) {
+                  return CustomScrollView(
+                    slivers: <Widget>[
+                      filterToolbar(bloc, formatter),
+                      edinetList(bloc),
+                    ],
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  SliverPersistentHeader filterToolbar(AppBloc bloc, DateFormat formatter) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _SliverAppBarDelegate(
+        child: ListView(
+          padding: EdgeInsets.all(8.0),
+          scrollDirection: Axis.horizontal,
+          children: <Widget>[
+            StreamBuilder<DateTime>(
+              stream: bloc.date$,
+              builder: (context, snapshot) => Container(
+                    padding: EdgeInsets.all(4.0),
+                    child: ActionChip(
+                      avatar: Icon(Icons.calendar_today),
+                      label: Text(snapshot.hasData
+                          ? formatter.format(snapshot.data)
+                          : ''),
+                      onPressed: () {
+                        changeDate(bloc, initial: snapshot.data);
+                      },
+                    ),
                   ),
-                  StreamBuilder<int>(
-                    stream: bloc.filterCount$,
-                    builder: (context, snapshot) {
-                      final text = snapshot.data?.toString() ?? '0';
-                      return Container(
-                        padding: EdgeInsets.all(4.0),
-                        child: ChoiceChip(
-                          label: Text(text),
-                          avatar: Icon(Icons.filter_list),
-                          onSelected: (v) async {
-                            final result = await showDialog(
-                              context: context,
-                              builder: (context) => _dialog(context, bloc),
-                            );
-                            print(result);
-                          },
-                          selected: text != '0',
-                        ),
+            ),
+            StreamBuilder<int>(
+              stream: bloc.filterCount$,
+              builder: (context, snapshot) {
+                final text = snapshot.data?.toString() ?? '0';
+                return Container(
+                  padding: EdgeInsets.all(4.0),
+                  child: ChoiceChip(
+                    label: Text(text),
+                    avatar: Icon(Icons.filter_list),
+                    onSelected: (v) async {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (context) => _dialog(context, bloc),
                       );
+                      print(result);
                     },
+                    selected: text != '0',
                   ),
-                  StreamBuilder<bool>(
-                    stream: bloc.showOnlyFavorites$,
-                    builder: (context, snapshot) => Container(
-                          padding: EdgeInsets.all(4.0),
-                          child: ChoiceChip(
-                            avatar: Icon(Icons.favorite),
-                            label: Text('お気に入りのみ表示する'),
-                            selected: snapshot.hasData && snapshot.data,
-                            onSelected: (val) =>
-                                bloc.setShowOnlyFavorites.add(val),
-                          ),
-                        ),
+                );
+              },
+            ),
+            StreamBuilder<bool>(
+              stream: bloc.showOnlyFavorites$,
+              builder: (context, snapshot) => Container(
+                    padding: EdgeInsets.all(4.0),
+                    child: ChoiceChip(
+                      avatar: Icon(Icons.favorite),
+                      label: Text('お気に入りのみ表示する'),
+                      selected: snapshot.hasData && snapshot.data,
+                      onSelected: (val) => bloc.setShowOnlyFavorites.add(val),
+                    ),
                   ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  StreamBuilder<List<DocumentSnapshot>> tdnetList(AppBloc bloc) {
+    return StreamBuilder<List<DocumentSnapshot>>(
+      stream: bloc.disclosure$,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return SliverFillRemaining(
+            child: Container(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.event_busy),
+                  Text(snapshot.error.toString()),
                 ],
               ),
             ),
-          ),
-          StreamBuilder<List<DocumentSnapshot>>(
-            stream: bloc.disclosure$,
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  child: Container(
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.event_busy),
-                        Text(snapshot.error.toString()),
-                      ],
+          );
+        }
+        return (snapshot.hasData && snapshot.data != null)
+            ? snapshot.data.length > 0
+                ? SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                        (context, idx) =>
+                            DisclosureListItem(item: snapshot.data[idx]),
+                        childCount: snapshot.data.length),
+                  )
+                : SliverFillRemaining(
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.event_busy),
+                          Text("選択した条件の適時開示は0件です"),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
-              return (snapshot.hasData && snapshot.data != null)
-                  ? snapshot.data.length > 0
-                      ? SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                              (context, idx) =>
-                                  DisclosureListItem(item: snapshot.data[idx]),
-                              childCount: snapshot.data.length),
-                        )
-                      : SliverFillRemaining(
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                Icon(Icons.event_busy),
-                                Text("選択した条件の適時開示は0件です"),
-                              ],
-                            ),
-                          ),
-                        )
-                  : SliverToBoxAdapter(
-                      child: LinearProgressIndicator(),
-                    );
-            },
-          ),
-        ],
-      ),
+                  )
+            : SliverToBoxAdapter(
+                child: LinearProgressIndicator(),
+              );
+      },
+    );
+  }
+
+  StreamBuilder<List<DocumentSnapshot>> edinetList(AppBloc bloc) {
+    return StreamBuilder<List<DocumentSnapshot>>(
+      stream: bloc.edinet$,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return SliverFillRemaining(
+            child: Container(
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.event_busy),
+                  Text(snapshot.error.toString()),
+                ],
+              ),
+            ),
+          );
+        }
+        return (snapshot.hasData && snapshot.data != null)
+            ? snapshot.data.length > 0
+                ? SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                        (context, idx) => ListTile(
+                            title: Text(snapshot.data[idx]['docDescription'])),
+                        childCount: snapshot.data.length),
+                  )
+                : SliverFillRemaining(
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.event_busy),
+                          Text("選択した条件の適時開示は0件です"),
+                        ],
+                      ),
+                    ),
+                  )
+            : SliverToBoxAdapter(
+                child: LinearProgressIndicator(),
+              );
+      },
     );
   }
 

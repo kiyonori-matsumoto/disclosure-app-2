@@ -12,15 +12,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
 
 final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新株", "自己株式", "日々の開示事項"];
 
+final dateFormatter = DateFormat("yyyy-MM-dd");
+
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
+  final _edinet$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
   final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
@@ -65,6 +69,8 @@ class AppBloc extends Bloc {
 
   ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
       _disclosure$.stream;
+  ValueObservable<List<DocumentSnapshot>> get edinet$ => _edinet$.stream;
+
   Sink<DateTime> get date => _dateController.sink;
   ValueObservable<DateTime> get date$ => _dateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
@@ -213,6 +219,8 @@ class AppBloc extends Bloc {
         .where((u) => u != null)
         .pipe(_userController);
 
+    _createEdinetStream();
+
     _createSettingStream();
 
     _createCompanyListStreams();
@@ -220,6 +228,23 @@ class AppBloc extends Bloc {
     _createNotificationStreams();
 
     _createSavedDisclosureStreams();
+  }
+
+  void _createEdinetStream() {
+    _userController.share().switchMap((_) => _dateController).switchMap((date) {
+      final start = dateFormatter.format(date);
+      final end = dateFormatter.format(date.add(Duration(days: 1)));
+      return Observable(Firestore.instance
+          .collection('edinets')
+          .where('seq', isGreaterThanOrEqualTo: start)
+          .where('seq', isLessThan: end)
+          .orderBy('seq', descending: true)
+          .snapshots());
+    }).map((doc) {
+      print("***edinets***");
+      print(doc.documents);
+      return doc.documents;
+    }).pipe(this._edinet$);
   }
 
   void _createSettingStream() {
@@ -362,9 +387,9 @@ class AppBloc extends Bloc {
           if (res.body != '') {
             final data = json.decode(res.body);
             final List<String> topics = (data['topics'] as Map<String, dynamic>)
-                    .keys
-                    .map((key) => _toCode(key))
-                    .toList() ??
+                    ?.keys
+                    ?.map((key) => _toCode(key))
+                    ?.toList() ??
                 [];
             notifications = topics.toSet();
             print('notifications = $notifications');
@@ -414,6 +439,7 @@ class AppBloc extends Bloc {
   void dispose() {
     _dateController.close();
     _disclosure$.close();
+    _edinet$.close();
     _userController.close();
     _filterChangeController.close();
     _addCustomFilterController.close();
