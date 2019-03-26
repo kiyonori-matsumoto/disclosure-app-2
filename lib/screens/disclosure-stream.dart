@@ -1,16 +1,29 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
+import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
+import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import '../widgets/drawer.dart';
+import 'package:http/http.dart';
+
+final smallGrey = TextStyle(
+  color: Colors.grey,
+  fontSize: 10,
+);
 
 class DisclosureStreamScreen extends StatefulWidget {
   @override
@@ -59,38 +72,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     banner?.dispose();
     banner = null;
   }
-
-  // Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-  //   return ListView.builder(
-  //     itemBuilder: (context, index) =>
-  //         new DisclosureListItem(item: snapshot[index]),
-  //     itemCount: snapshot.length,
-  //   );
-  // }
-
-  // Widget _buildBody(BuildContext context) {
-  //   final bloc = BlocProvider.of<AppBloc>(context);
-
-  //   return StreamBuilder<List<DocumentSnapshot>>(
-  //     stream: bloc.disclosure$,
-  //     builder: (context, snapshot) {
-  //       if (!snapshot.hasData || snapshot.data == null)
-  //         return LinearProgressIndicator();
-  //       else if (snapshot.data.length == 0) {
-  //         return Center(
-  //           child: Column(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: <Widget>[
-  //               Icon(Icons.event_busy),
-  //               Text("選択した条件の適時開示は0件です"),
-  //             ],
-  //           ),
-  //         );
-  //       }
-  //       return _buildList(context, snapshot.data);
-  //     },
-  //   );
-  // }
 
   Widget _dialog(BuildContext context, AppBloc bloc) =>
       StreamBuilder<List<Filter>>(
@@ -149,63 +130,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     });
   }
 
-  // AppBar buildAppBar(DateFormat formatter, AsyncSnapshot<DateTime> snapshot,
-  //     Future<dynamic> changeDate(), AppBloc bloc) {
-  //   return AppBar(
-  //     // Here we take the value from the MyHomePage object that was created by
-  //     // the App.build method, and use it to set our appbar title.
-  //     title: GestureDetector(
-  //       child: Text("${formatter.format(snapshot.data)}"),
-  //       onTap: changeDate,
-  //     ),
-  //     actions: <Widget>[
-  //       IconButton(
-  //         icon: Stack(
-  //           alignment: Alignment.center,
-  //           children: <Widget>[
-  //             Icon(Icons.calendar_today),
-  //             Text(
-  //               snapshot.data.day.toString(),
-  //               style: TextStyle(
-  //                   color: Colors.orange, fontWeight: FontWeight.w500),
-  //             ),
-  //           ],
-  //         ),
-  //         onPressed: changeDate,
-  //       ),
-  //       StreamBuilder(
-  //         builder: (context, snapshot) => IconButton(
-  //               icon: Stack(
-  //                 children: [
-  //                   Icon(Icons.filter_list),
-  //                   snapshot.data != null && snapshot.data > 0
-  //                       ? Container(
-  //                           decoration: ShapeDecoration(
-  //                               color: Colors.red, shape: CircleBorder()),
-  //                           child: Text(
-  //                             snapshot.data.toString(),
-  //                             style: TextStyle(fontSize: 10.0),
-  //                           ),
-  //                           padding: EdgeInsets.all(4.0),
-  //                         )
-  //                       : null,
-  //                 ].where((w) => w != null).toList(),
-  //                 alignment: Alignment.bottomRight,
-  //               ),
-  //               onPressed: () async {
-  //                 final result = await showDialog(
-  //                   context: context,
-  //                   builder: (context) => _dialog(context, bloc),
-  //                 );
-  //                 print(result);
-  //               },
-  //             ),
-  //         stream: bloc.filterCount$,
-  //       ),
-  //     ],
-  //   );
-  // }
-
   buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
@@ -245,18 +169,19 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                   );
                 }),
               ),
-              SafeArea(
-                top: false,
-                bottom: false,
-                child: Builder(builder: (context) {
-                  return CustomScrollView(
-                    slivers: <Widget>[
-                      filterToolbar(bloc, formatter),
-                      edinetList(bloc),
-                    ],
-                  );
-                }),
-              ),
+              EdinetStreamingWidget(),
+              // SafeArea(
+              //   top: false,
+              //   bottom: false,
+              //   child: Builder(builder: (context) {
+              //     return CustomScrollView(
+              //       slivers: <Widget>[
+              //         filterToolbar(bloc, formatter),
+              //         edinetList(bloc),
+              //       ],
+              //     );
+              //   }),
+              // ),
             ],
           ),
         ),
@@ -267,7 +192,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   SliverPersistentHeader filterToolbar(AppBloc bloc, DateFormat formatter) {
     return SliverPersistentHeader(
       pinned: true,
-      delegate: _SliverAppBarDelegate(
+      delegate: SliverAppBarDelegate(
         child: ListView(
           padding: EdgeInsets.all(8.0),
           scrollDirection: Axis.horizontal,
@@ -371,51 +296,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     );
   }
 
-  StreamBuilder<List<DocumentSnapshot>> edinetList(AppBloc bloc) {
-    return StreamBuilder<List<DocumentSnapshot>>(
-      stream: bloc.edinet$,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return SliverFillRemaining(
-            child: Container(
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(Icons.event_busy),
-                  Text(snapshot.error.toString()),
-                ],
-              ),
-            ),
-          );
-        }
-        return (snapshot.hasData && snapshot.data != null)
-            ? snapshot.data.length > 0
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                        (context, idx) => ListTile(
-                            title: Text(snapshot.data[idx]['docDescription'])),
-                        childCount: snapshot.data.length),
-                  )
-                : SliverFillRemaining(
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.event_busy),
-                          Text("選択した条件の適時開示は0件です"),
-                        ],
-                      ),
-                    ),
-                  )
-            : SliverToBoxAdapter(
-                child: LinearProgressIndicator(),
-              );
-      },
-    );
-  }
-
   changeDate(AppBloc bloc, {DateTime initial}) async {
     final _date = await showDatePicker(
       context: context,
@@ -425,38 +305,5 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     );
     if (_date == null) return;
     bloc.date.add(_date);
-  }
-}
-
-class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate({
-    @required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return SizedBox.expand(
-      child: Card(child: child, color: Theme.of(context).secondaryHeaderColor
-
-          // decoration: BoxDecoration(
-          //     border:
-          //         Border(bottom: BorderSide(color: Colors.black, width: 1.0))),
-          // color: Theme.of(context).backgroundColor,
-          ),
-    );
-  }
-
-  @override
-  double get maxExtent => 60;
-
-  @override
-  double get minExtent => 60;
-
-  @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return child != oldDelegate.child;
   }
 }

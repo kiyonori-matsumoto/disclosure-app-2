@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class Company {
   String name;
   String code;
+  String edinetCode;
   Key key;
 
-  Company(this.code, {String name = ''}) {
+  Company(this.code, {String name = '', String edinetCode = ''}) {
     this.name = name.trim();
     this.key = Key(this.code);
+    this.edinetCode = edinetCode;
   }
 
   bool match(String text) {

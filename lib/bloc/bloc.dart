@@ -6,6 +6,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
+import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,8 +24,9 @@ final dateFormatter = DateFormat("yyyy-MM-dd");
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
+  final _edinetDateController =
+      BehaviorSubject<DateTime>(seedValue: DateTime.now());
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
-  final _edinet$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
   final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
@@ -69,10 +71,12 @@ class AppBloc extends Bloc {
 
   ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
       _disclosure$.stream;
-  ValueObservable<List<DocumentSnapshot>> get edinet$ => _edinet$.stream;
 
   Sink<DateTime> get date => _dateController.sink;
   ValueObservable<DateTime> get date$ => _dateController.stream;
+  ValueObservable<List<Company>> get company$ => _companies$.stream;
+  Sink<DateTime> get edinetDate => _edinetDateController.sink;
+  ValueObservable<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
   ValueObservable<FirebaseUser> get user$ => _userController.stream;
   ValueObservable<List<Filter>> get filter$ => _filter$.stream;
@@ -219,8 +223,6 @@ class AppBloc extends Bloc {
         .where((u) => u != null)
         .pipe(_userController);
 
-    _createEdinetStream();
-
     _createSettingStream();
 
     _createCompanyListStreams();
@@ -228,23 +230,6 @@ class AppBloc extends Bloc {
     _createNotificationStreams();
 
     _createSavedDisclosureStreams();
-  }
-
-  void _createEdinetStream() {
-    _userController.share().switchMap((_) => _dateController).switchMap((date) {
-      final start = dateFormatter.format(date);
-      final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return Observable(Firestore.instance
-          .collection('edinets')
-          .where('seq', isGreaterThanOrEqualTo: start)
-          .where('seq', isLessThan: end)
-          .orderBy('seq', descending: true)
-          .snapshots());
-    }).map((doc) {
-      print("***edinets***");
-      print(doc.documents);
-      return doc.documents;
-    }).pipe(this._edinet$);
   }
 
   void _createSettingStream() {
@@ -349,8 +334,8 @@ class AppBloc extends Bloc {
     Observable.fromFuture(
             _userController.first.then((user) => _handleOpenFile()))
         .map((data) => data
-            .map((d) =>
-                Company((d['code'] as String).substring(0, 4), name: d['name']))
+            .map((d) => Company((d['code'] as String).substring(0, 4),
+                name: d['name'], edinetCode: d['edinetCode']))
             .toList())
         .pipe(_companies$);
 
@@ -439,7 +424,6 @@ class AppBloc extends Bloc {
   void dispose() {
     _dateController.close();
     _disclosure$.close();
-    _edinet$.close();
     _userController.close();
     _filterChangeController.close();
     _addCustomFilterController.close();
@@ -464,6 +448,7 @@ class AppBloc extends Bloc {
     _savedDisclosure$.close();
     _saveDisclosureController.close();
     _showOnlyFavorites$.close();
+    _edinetDateController.close();
   }
 
   String _toCode(String topic) {
