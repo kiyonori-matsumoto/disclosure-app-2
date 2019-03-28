@@ -60,6 +60,7 @@ class AppBloc extends Bloc {
   // companyList
   final _filtetrdCompanies$ = BehaviorSubject<List<Company>>();
   final _companies$ = BehaviorSubject<List<Company>>();
+  final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
   final _codeStrController = BehaviorSubject<String>(seedValue: '');
   final _storage = FirebaseStorage.instance;
 
@@ -75,6 +76,8 @@ class AppBloc extends Bloc {
   Sink<DateTime> get date => _dateController.sink;
   ValueObservable<DateTime> get date$ => _dateController.stream;
   ValueObservable<List<Company>> get company$ => _companies$.stream;
+  ValueObservable<Map<String, Company>> get companyMap$ =>
+      _companiesMap$.stream;
   Sink<DateTime> get edinetDate => _edinetDateController.sink;
   ValueObservable<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
@@ -348,6 +351,10 @@ class AppBloc extends Bloc {
         return data.where((d) => d.match(lowerStr)).toList();
       },
     ).pipe(_filtetrdCompanies$);
+
+    _companies$.share().map((companies) {
+      return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode, c)));
+    }).pipe(_companiesMap$);
   }
 
   void _createNotificationStreams() {
@@ -439,6 +446,7 @@ class AppBloc extends Bloc {
     _favoritWithName$.close();
     _filtetrdCompanies$.close();
     _companies$.close();
+    _companiesMap$.close();
     _codeStrController.close();
     _notifications$.close();
     _addNotificationController.close();

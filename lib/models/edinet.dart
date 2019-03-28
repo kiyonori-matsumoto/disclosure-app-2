@@ -7,6 +7,7 @@ class Edinet {
   String docTypeCode;
   String edinetCode;
   String filerName;
+  Company filer;
   String formCode;
   String issuerEdinetCode;
   Company issuer;
@@ -35,18 +36,11 @@ class Edinet {
     time = (item['time'] - 9 * 60 * 60) * 1000;
   }
 
-  void fillCompanyName(List<Company> companies) {
-    this.issuer = companies.firstWhere(
-        (c) => c.edinetCode == this.issuerEdinetCode,
-        orElse: () => Company(null));
-
-    this.subject = companies.firstWhere(
-        (c) => c.edinetCode == this.subjectEdinetCode,
-        orElse: () => Company(null));
-
-    this.subsidiary = companies.firstWhere(
-        (c) => c.edinetCode == this.subsidiaryEdinetCode,
-        orElse: () => Company(null));
+  void fillCompanyName(Map<String, Company> companies) {
+    this.filer = companies[this.edinetCode] ?? Company(null);
+    this.issuer = companies[this.issuerEdinetCode] ?? Company(null);
+    this.subject = companies[this.subjectEdinetCode] ?? Company(null);
+    this.subsidiary = companies[this.subsidiaryEdinetCode] ?? Company(null);
   }
 
   String get relatedCompaniesName {
@@ -55,10 +49,17 @@ class Edinet {
         .join(',');
   }
 
+  List<Company> get companies {
+    return [filer, issuer, subject, subsidiary]
+        .where((c) => c?.code != null)
+        .toList();
+  }
+
   static List<String> docTypes() {
     return [
       '大量保有報告書',
       '四半期報告書',
+      '訂正四半期報告書',
       '公開買付届出書',
       '有価証券通知書',
       '変更通知書(有価証券通知書)',
@@ -75,7 +76,6 @@ class Edinet {
       '訂正有価証券報告書',
       '確認書',
       '訂正確認書',
-      '訂正四半期報告書',
       '半期報告書',
       '訂正半期報告書',
       '臨時報告書',

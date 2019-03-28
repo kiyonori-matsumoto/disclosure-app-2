@@ -136,7 +136,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
         title: Text('適時開示一覧'),
         pinned: false,
         floating: true,
-        snap: true,
+        snap: false,
         bottom: TabBar(
           tabs: <Widget>[
             Tab(
@@ -170,18 +170,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 }),
               ),
               EdinetStreamingWidget(),
-              // SafeArea(
-              //   top: false,
-              //   bottom: false,
-              //   child: Builder(builder: (context) {
-              //     return CustomScrollView(
-              //       slivers: <Widget>[
-              //         filterToolbar(bloc, formatter),
-              //         edinetList(bloc),
-              //       ],
-              //     );
-              //   }),
-              // ),
             ],
           ),
         ),

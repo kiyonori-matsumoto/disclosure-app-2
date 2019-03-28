@@ -38,9 +38,10 @@ class EdinetBloc extends Bloc {
       return doc?.documents;
     });
 
-    Observable.combineLatest3<List<DocumentSnapshot>, List<Company>, String,
-            List<Edinet>>(_edinets, bloc.company$, _filter$,
-        (edinets, companies, filter) {
+    final _mappedEdinets = Observable.combineLatest2<
+        List<DocumentSnapshot>,
+        Map<String, Company>,
+        Iterable<Edinet>>(_edinets, bloc.companyMap$, (edinets, companies) {
       if (edinets == null) {
         return null;
       }
@@ -48,7 +49,15 @@ class EdinetBloc extends Bloc {
         final edinet = Edinet.fromDocumentSnapshot(snapshot);
         edinet.fillCompanyName(companies);
         return edinet;
-      }).where((edinet) {
+      });
+    });
+
+    Observable.combineLatest2<Iterable<Edinet>, String, List<Edinet>>(
+        _mappedEdinets, _filter$, (edinets, filter) {
+      if (edinets == null) {
+        return null;
+      }
+      return edinets.where((edinet) {
         if (filter == null || filter == '') {
           return true;
         }
