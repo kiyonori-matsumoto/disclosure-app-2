@@ -4,8 +4,16 @@ import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 
 MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
-  keywords: <String>['disclosure', 'tdnet'],
-  contentUrl: 'https://flutter.io',
+  keywords: <String>[
+    'disclosure',
+    'tdnet',
+    '株',
+    '適時開示',
+    'edinet',
+    '株式',
+    '投資',
+    '投機'
+  ],
   childDirected: false,
   testDevices: <String>[
     'BBAD97782D98B8B76526B5A34CDE98A7'

@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -8,17 +6,13 @@ import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
-import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 import '../widgets/drawer.dart';
-import 'package:http/http.dart';
 
 final smallGrey = TextStyle(
   color: Colors.grey,
@@ -37,6 +31,14 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   DateTime date = DateTime.now();
   BannerAd banner;
   MyRouteObserver routeObserver = MyRouteObserver();
+  String displayTarget;
+
+  AppBloc bloc;
+
+  DisclosureStreamScreenState() {
+    displayTarget = "tdnet";
+  }
+
   bool searching = false;
 
   @override
@@ -48,6 +50,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   @override
   initState() {
     super.initState();
+    this.bloc = BlocProvider.of<AppBloc>(context);
     if (banner == null) {
       banner = showBanner("ca-app-pub-5131663294295156/8292017322");
     }
@@ -100,7 +103,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   Widget build(BuildContext context) {
     return runZoned(() {
       final bloc = BlocProvider.of<AppBloc>(context);
-      final formatter = DateFormat.yMd('ja');
 
       final mediaQuery = MediaQuery.of(context);
       return StreamBuilder<DateTime>(
@@ -109,8 +111,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             if (snapshot.data == null) return Container();
 
             return Scaffold(
-              // appBar: buildAppBar(formatter, snapshot, changeDate, bloc),
-              // body: _buildBody(context),
               body: buildSliverBody(context, bloc: bloc),
               drawer: AppDrawer(),
               persistentFooterButtons: <Widget>[
@@ -133,50 +133,139 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
-        title: Text('適時開示一覧'),
-        pinned: false,
-        floating: true,
-        snap: false,
-        bottom: TabBar(
-          tabs: <Widget>[
-            Tab(
-              text: "TDNET",
+      title: Theme(
+        data: Theme.of(context).copyWith(brightness: Brightness.dark),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton(
+            hint: Text(
+              displayTarget.toUpperCase(),
+              style: Theme.of(context).primaryTextTheme.title,
             ),
-            Tab(text: "EDINET")
-          ],
-        ));
+            items: [
+              DropdownMenuItem(
+                  value: "tdnet",
+                  child: Text(
+                    'TDNET',
+                  )),
+              DropdownMenuItem(
+                  value: "edinet",
+                  child: Text(
+                    'EDINET',
+                  )),
+            ],
+            onChanged: (v) {
+              setState(() {
+                displayTarget = v;
+              });
+            },
+          ),
+        ),
+      ),
+      pinned: false,
+      floating: true,
+      snap: true,
+    );
 
     return SafeArea(
-      child: DefaultTabController(
-        length: 2,
-        child: NestedScrollView(
-          headerSliverBuilder: (context, inner) {
-            return [
-              appbar,
-            ];
-          },
-          body: TabBarView(
-            children: [
-              SafeArea(
-                top: false,
-                bottom: false,
-                child: Builder(builder: (context) {
-                  return CustomScrollView(
-                    slivers: <Widget>[
-                      filterToolbar(bloc, formatter),
-                      tdnetList(bloc),
-                    ],
-                  );
-                }),
-              ),
-              EdinetStreamingWidget(),
-            ],
-          ),
+      child: CustomScrollView(
+        slivers: this.displayTarget == "tdnet"
+            ? <Widget>[
+                appbar,
+                filterToolbar(bloc, formatter),
+                tdnetList(bloc),
+              ]
+            : [
+                appbar,
+                edinetFilterToolbar(bloc),
+                EdinetStreamingWidget(),
+              ],
+      ),
+    );
+  }
+
+  SliverPersistentHeader edinetFilterToolbar(AppBloc bloc) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: SliverAppBarDelegate(
+        child: ListView(
+          padding: EdgeInsets.all(8.0),
+          scrollDirection: Axis.horizontal,
+          children: <Widget>[
+            StreamBuilder<DateTime>(
+              stream: bloc.edinetDate$,
+              builder: (context, snapshot) => Container(
+                    padding: EdgeInsets.all(4.0),
+                    child: ActionChip(
+                      avatar: Icon(Icons.calendar_today),
+                      label: Text(snapshot.hasData
+                          ? formatter.format(snapshot.data)
+                          : ''),
+                      onPressed: () async {
+                        final _date = await showDatePicker(
+                          context: context,
+                          initialDate: snapshot.data,
+                          firstDate: DateTime(2019, 3, 1),
+                          lastDate: DateTime.now(),
+                        );
+                        if (_date != null) {
+                          bloc.edinetDate.add(_date);
+                        }
+                      },
+                    ),
+                  ),
+            ),
+            StreamBuilder<String>(
+              stream: bloc.edinetFilter$,
+              builder: (context, snapshot) {
+                final text = snapshot.data ?? '';
+                return Container(
+                  padding: EdgeInsets.all(4.0),
+                  child: ChoiceChip(
+                    label: Text(text == '' ? 'なし' : text),
+                    avatar: Icon(Icons.filter_list),
+                    onSelected: (v) async {
+                      final result = await showDialog<String>(
+                        context: context,
+                        builder: (context) => _edinetFilterDialog(context),
+                      );
+                      bloc.edintFilterController.add(result);
+                    },
+                    selected: text != '',
+                  ),
+                );
+              },
+            ),
+            ShowFavoritOnlyTooltipWidget(
+              stream: bloc.edinetShowOnlyFavorite$,
+              onSelected: (val) => bloc.edinetSetShowOnlyFavorite.add(val),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _edinetFilterDialog(BuildContext context) => StreamBuilder<String>(
+        builder: (context, snapshot) => SimpleDialog(
+              title: Text('filter'),
+              children: Edinet.docTypes()
+                  .map(
+                    (type) => Container(
+                          child: CheckboxListTile(
+                            title: Text(type),
+                            value: type == snapshot.data,
+                            onChanged: (value) {
+                              Navigator.of(context).pop(value ? type : null);
+                            },
+                          ),
+                          padding: EdgeInsets.only(left: 16.0),
+                        ),
+                  )
+                  .toList(),
+              contentPadding: EdgeInsets.zero,
+            ),
+        stream: bloc.edinetFilter$,
+      );
   SliverPersistentHeader filterToolbar(AppBloc bloc, DateFormat formatter) {
     return SliverPersistentHeader(
       pinned: true,
@@ -221,17 +310,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 );
               },
             ),
-            StreamBuilder<bool>(
+            ShowFavoritOnlyTooltipWidget(
               stream: bloc.showOnlyFavorites$,
-              builder: (context, snapshot) => Container(
-                    padding: EdgeInsets.all(4.0),
-                    child: ChoiceChip(
-                      avatar: Icon(Icons.favorite),
-                      label: Text('お気に入りのみ表示する'),
-                      selected: snapshot.hasData && snapshot.data,
-                      onSelected: (val) => bloc.setShowOnlyFavorites.add(val),
-                    ),
-                  ),
+              onSelected: (val) => bloc.setShowOnlyFavorites.add(val),
             ),
           ],
         ),
@@ -293,5 +374,32 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     );
     if (_date == null) return;
     bloc.date.add(_date);
+  }
+}
+
+class ShowFavoritOnlyTooltipWidget extends StatelessWidget {
+  const ShowFavoritOnlyTooltipWidget({
+    this.onSelected,
+    this.stream,
+    Key key,
+  }) : super(key: key);
+
+  final void Function(bool) onSelected;
+  final Stream<bool> stream;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<bool>(
+      stream: stream,
+      builder: (context, snapshot) => Container(
+            padding: EdgeInsets.all(4.0),
+            child: ChoiceChip(
+              avatar: Icon(Icons.favorite),
+              label: Text('お気に入りのみ表示する'),
+              selected: snapshot.hasData && snapshot.data,
+              onSelected: onSelected,
+            ),
+          ),
+    );
   }
 }

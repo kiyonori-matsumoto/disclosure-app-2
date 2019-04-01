@@ -30,7 +30,7 @@ class Disclosure {
     title = item['title'];
     document = item['document'];
     exchanges = item['exchanges'];
-    time = ((v) => v is String ? int.parse(v) : v)(item['time']);
+    time = ((dynamic v) => v is String ? int.parse(v) : v)(item['time']);
     viewCount = item['view_count'];
     tags = (item['tags'] ?? {}).keys.toList().cast<String>();
     isSelected = false;
@@ -47,7 +47,7 @@ class Disclosure {
       'document': document,
       'exchanges': exchanges,
       'time': time,
-      'tags': tags.fold({}, (obj, tag) {
+      'tags': tags.fold<Map<String, dynamic>>({}, (obj, tag) {
         obj[tag] = true;
         return obj;
       }),

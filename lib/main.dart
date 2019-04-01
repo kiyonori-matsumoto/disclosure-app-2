@@ -26,7 +26,7 @@ void main() async {
     runApp(AppProvider(
       child: AppRootWidget(),
     ));
-  }, onError: (error, stackTrace) async {
+  }, onError: (dynamic error, dynamic stackTrace) async {
     print("runZoned onerror handler");
     if (isInDebugMode) {
       print(error);

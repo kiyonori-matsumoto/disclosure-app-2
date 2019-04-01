@@ -6,8 +6,6 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
-import 'package:disclosure_app_fl/models/edinet.dart';
-import 'package:disclosure_app_fl/models/favorite.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -28,6 +26,7 @@ class AppBloc extends Bloc {
       BehaviorSubject<DateTime>(seedValue: DateTime.now());
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
+  final _edinetFilter$ = BehaviorSubject<String>(seedValue: '');
   final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
@@ -38,6 +37,8 @@ class AppBloc extends Bloc {
       StreamController();
   final StreamController<Filter> _removeCustomFilterController =
       StreamController();
+  final _edinetShowOnlyFavoriteController =
+      BehaviorSubject<bool>(seedValue: false);
 
   final StreamController<String> _filterChangeController = StreamController();
 
@@ -52,7 +53,7 @@ class AppBloc extends Bloc {
 
   // favorites
   final BehaviorSubject<List<String>> _favorit$ = BehaviorSubject();
-  final BehaviorSubject<List<Favorite>> _favoritWithName$ = BehaviorSubject();
+  final BehaviorSubject<List<Company>> _favoritWithName$ = BehaviorSubject();
   final StreamController<String> _addFavoriteController = StreamController();
   final StreamController<String> _removeFavoriteController = StreamController();
   final StreamController<String> _switchFavoriteController = StreamController();
@@ -83,6 +84,8 @@ class AppBloc extends Bloc {
   Sink<String> get addFilter => _filterChangeController.sink;
   ValueObservable<FirebaseUser> get user$ => _userController.stream;
   ValueObservable<List<Filter>> get filter$ => _filter$.stream;
+  ValueObservable<String> get edinetFilter$ => _edinetFilter$.stream;
+  Sink<String> get edintFilterController => _edinetFilter$.sink;
   Observable<int> get filterCount$ =>
       _filter$.map((f) => f.where((_f) => _f.isSelected).length);
   ValueObservable<List<Filter>> get customFilters$ => _customFilter$.stream;
@@ -91,6 +94,11 @@ class AppBloc extends Bloc {
 
   Sink<bool> get setShowOnlyFavorites => _showOnlyFavorites$.sink;
   ValueObservable<bool> get showOnlyFavorites$ => _showOnlyFavorites$.stream;
+
+  ValueObservable<bool> get edinetShowOnlyFavorite$ =>
+      _edinetShowOnlyFavoriteController.stream;
+  Sink<bool> get edinetSetShowOnlyFavorite =>
+      _edinetShowOnlyFavoriteController.sink;
 
   ValueObservable<Map<String, dynamic>> get settings$ => _setting$.stream;
   Observable<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
@@ -101,7 +109,7 @@ class AppBloc extends Bloc {
   Sink<String> get removeFavorite => _removeFavoriteController.sink;
   Sink<String> get switchFavorite => _switchFavoriteController.sink;
   ValueObservable<List<String>> get favorites$ => _favorit$.stream;
-  ValueObservable<List<Favorite>> get favoritesWithName$ =>
+  ValueObservable<List<Company>> get favoritesWithName$ =>
       _favoritWithName$.stream;
 
   ValueObservable<List<Company>> get filteredCompany$ =>
@@ -298,16 +306,13 @@ class AppBloc extends Bloc {
       favorites.addAll(data);
     });
 
-    Observable.combineLatest2<List<String>, List<Company>, List<Favorite>>(
+    Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
       _favorit$,
       _companies$.stream,
       (_favs, _conps) {
         return _favs.map((_fav) {
-          final _name = _conps
-              .firstWhere((_conp) => _conp.code == _fav,
-                  orElse: () => Company(_fav, name: '???'))
-              .name;
-          return Favorite(_name, _fav);
+          return _conps.firstWhere((_conp) => _conp.code == _fav,
+              orElse: () => Company(_fav, name: '???'));
         }).toList();
       },
     ).pipe(_favoritWithName$);
@@ -436,6 +441,7 @@ class AppBloc extends Bloc {
     _addCustomFilterController.close();
     _removeCustomFilterController.close();
     _filter$.close();
+    _edinetFilter$.close();
     _addFavoriteController.close();
     _removeFavoriteController.close();
     _switchFavoriteController.close();
@@ -456,6 +462,7 @@ class AppBloc extends Bloc {
     _savedDisclosure$.close();
     _saveDisclosureController.close();
     _showOnlyFavorites$.close();
+    _edinetShowOnlyFavoriteController.close();
     _edinetDateController.close();
   }
 

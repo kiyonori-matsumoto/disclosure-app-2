@@ -1,6 +1,6 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/bloc/disclosure_bloc.dart';
+import 'package:disclosure_app_fl/bloc/edinet_bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/utils/downloadEdinet.dart';
@@ -26,24 +26,26 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
 
   @override
   void initState() {
+    super.initState();
     this.bloc = BlocProvider.of<AppBloc>(context);
     this.edinetBloc = EdinetBloc(bloc);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      bottom: false,
-      child: Builder(builder: (context) {
-        return CustomScrollView(
-          slivers: <Widget>[
-            filterToolbar(bloc),
-            edinetList(bloc),
-          ],
-        );
-      }),
-    );
+    // return SafeArea(
+    //   top: false,
+    //   bottom: false,
+    //   child: Builder(builder: (context) {
+    // return CustomScrollView(
+    //   slivers: <Widget>[
+    //     filterToolbar(bloc),
+    //     edinetList(bloc),
+    //   ],
+    // );
+    //   }),
+    // );
+    return edinetList(bloc);
   }
 
   SliverPersistentHeader filterToolbar(AppBloc bloc) {
@@ -76,7 +78,7 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
                   ),
             ),
             StreamBuilder<String>(
-              stream: edinetBloc.filter$,
+              stream: bloc.edinetFilter$,
               builder: (context, snapshot) {
                 final text = snapshot.data ?? '';
                 return Container(
@@ -89,7 +91,7 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
                         context: context,
                         builder: (context) => _dialog(context),
                       );
-                      edinetBloc.filterController.add(result);
+                      bloc.edintFilterController.add(result);
                     },
                     selected: text != '',
                   ),
@@ -121,7 +123,7 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
                   .toList(),
               contentPadding: EdgeInsets.zero,
             ),
-        stream: edinetBloc.filter$,
+        stream: bloc.edinetFilter$,
       );
 
   StreamBuilder<List<Edinet>> edinetList(AppBloc bloc) {
@@ -147,36 +149,41 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate((context, idx) {
                       final edinet = snapshot.data[idx];
-                      return Stack(
-                          alignment: Alignment.topRight,
-                          children: <Widget>[
-                            ListTile(
-                              contentPadding:
-                                  EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-                              title: Text(edinet.docDescription),
-                              subtitle: Text(edinet.relatedCompaniesName),
-                              onTap: () => downloadAndOpenEdinet(edinet.docId),
-                              // onLongPress:
-                              //     _onLongPress(context, edinet.companies),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment: MainAxisAlignment.end,
+                      return Builder(
+                        builder: (context) => Stack(
+                                alignment: Alignment.topRight,
                                 children: <Widget>[
-                                  Text(
-                                    edinet.docType + " | ",
-                                    style: smallGrey,
+                                  ListTile(
+                                    contentPadding: EdgeInsets.fromLTRB(
+                                        16.0, 8.0, 16.0, 0.0),
+                                    title: Text(edinet.docDescription),
+                                    subtitle: Text(edinet.relatedCompaniesName),
+                                    onTap: () =>
+                                        downloadAndOpenEdinet(edinet.docId),
+                                    // onLongPress:
+                                    //     _onLongPress(context, edinet.companies),
                                   ),
-                                  Text(
-                                    toTime(edinet.time),
-                                    style: smallGrey,
+                                  Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: <Widget>[
+                                        Text(
+                                          edinet.docType + " | ",
+                                          style: smallGrey,
+                                        ),
+                                        Text(
+                                          toTime(edinet.time),
+                                          style: smallGrey,
+                                        )
+                                      ],
+                                    ),
                                   )
-                                ],
-                              ),
-                            )
-                          ]);
+                                ]),
+                      );
                     }, childCount: snapshot.data.length),
                   )
                 : SliverFillRemaining(
@@ -199,6 +206,8 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
   }
 
   _onLongPress(BuildContext context, List<Company> companies) => () async {
+        if (companies.length == 0) return;
+
         RenderBox renderBox = context.findRenderObject();
         final point = renderBox.localToGlobal(Offset.zero);
         final size = MediaQuery.of(context).size;
@@ -209,14 +218,14 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
           items: companies
               .map((company) => PopupMenuItem(
                     child: ListTile(
-                      title: Text('${company.name}のEDINET情報'),
+                      title: Text('${company.name}'),
                     ),
                     value: company,
                   ))
               .toList(),
         );
         if (choice != null) {
-          return Navigator.pushNamed(context, '/company-disclosures',
+          Navigator.pushNamed(context, '/company-disclosures',
               arguments: choice);
         }
       };

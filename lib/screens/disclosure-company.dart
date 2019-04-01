@@ -3,8 +3,6 @@ import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/company_disclosure_bloc.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/models/favorite.dart';
-import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -134,7 +132,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
       appBar: AppBar(
         title: Text("${this.company.name} (${this.code})"),
         actions: <Widget>[
-          StreamBuilder<List<Favorite>>(
+          StreamBuilder<List<Company>>(
             stream: appBloc.favoritesWithName$,
             builder: (context, snapshot) {
               final isFavorite = snapshot.hasData &&

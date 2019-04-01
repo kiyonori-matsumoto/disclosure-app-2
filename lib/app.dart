@@ -63,8 +63,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     final bloc = BlocProvider.of<AppBloc>(context);
 
-    bloc.notifications$.listen((data) {}, onError: (error) {
-      showDialog(
+    bloc.notifications$.listen((data) {}, onError: (dynamic error) {
+      showDialog<dynamic>(
         context: navigatorKey.currentState.overlay.context,
         builder: (context) => AlertDialog(
               title: Text("エラー！"),
@@ -77,13 +77,13 @@ class AppRootWidgetState extends State<AppRootWidget> {
     // _auth.signInAnonymously().then(print);
   }
 
-  Future<void> _handleNotification(message) async {
+  Future<void> _handleNotification(Map<String, dynamic> message) async {
     print("###notification handler ###");
     print(message);
     print(navigatorKey.currentContext);
-    final code = message['code'] ?? '';
+    final String code = message['code'] ?? '';
     final company = Company(code, name: message['name'] ?? '');
-    await Future.delayed(Duration(milliseconds: 1000));
+    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
     // navigatorKey.currentState.pop();
     return navigatorKey.currentState.push(
       MaterialPageRoute(
@@ -91,20 +91,19 @@ class AppRootWidgetState extends State<AppRootWidget> {
     );
   }
 
-  Future<void> _handleNotificationMsg(message) async {
+  Future<void> _handleNotificationMsg(Map<String, dynamic> message) async {
     print("###notificationMsg handler ###");
     print(message);
-    final data = message ?? {};
-    final code = data['code'] ?? '';
-    final company = Company(code, name: data['name'] ?? '');
+    // final data = message ?? {};
+    // final String code = data['code'] ?? '';
+    // final company = Company(code, name: data['name'] ?? '');
 
-    final res = await showDialog(
+    await showDialog<dynamic>(
       context: navigatorKey.currentState.overlay.context,
       builder: (context) => AlertDialog(
           title: Text(message['notification']['title']),
           content: Text(message['notification']['body'])),
     );
-    print(res);
   }
 
   double getSmartBannerHeight(MediaQueryData mediaQuery) {
@@ -156,7 +155,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
       onGenerateRoute: (route) {
         print("onGenerateRoute $route");
         if (route.name.startsWith('/company-disclosures')) {
-          return MaterialPageRoute(
+          return MaterialPageRoute<dynamic>(
             builder: (context) =>
                 DisclosureCompanyScreen(company: route.arguments),
           );

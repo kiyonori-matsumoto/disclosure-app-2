@@ -1,10 +1,7 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/models/favorite.dart';
-import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
-import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:flutter/material.dart';
 
 class FavoriteScreen extends StatefulWidget {
@@ -23,13 +20,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   _buildBody(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
-    return StreamBuilder<List<Favorite>>(
+    return StreamBuilder<List<Company>>(
       stream: bloc.favoritesWithName$,
       builder: (context, snapshot) => _builder(context, snapshot, bloc),
     );
   }
 
-  Widget _builder(BuildContext context, AsyncSnapshot<List<Favorite>> snapshot,
+  Widget _builder(BuildContext context, AsyncSnapshot<List<Company>> snapshot,
       AppBloc bloc) {
     return (!snapshot.hasData || snapshot.data == null)
         ? LinearProgressIndicator()

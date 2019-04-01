@@ -16,6 +16,9 @@ class Company {
     return this.name.toLowerCase().contains(text) || this.code.startsWith(text);
   }
 
+  bool operator ==(o) => o is Company && code == o.code;
+  int get hashCode => int.parse(this.code);
+
   @override
   String toString() {
     return '${code.length > 4 ? code.substring(0, 4) : code} $name';
