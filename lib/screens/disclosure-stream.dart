@@ -228,7 +228,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                         context: context,
                         builder: (context) => _edinetFilterDialog(context),
                       );
-                      bloc.edintFilterController.add(result);
+                      if (result != null) {
+                        bloc.edintFilterController.add(result);
+                      }
                     },
                     selected: text != '',
                   ),
@@ -255,7 +257,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                             title: Text(type),
                             value: type == snapshot.data,
                             onChanged: (value) {
-                              Navigator.of(context).pop(value ? type : null);
+                              Navigator.of(context).pop(value ? type : '');
                             },
                           ),
                           padding: EdgeInsets.only(left: 16.0),
