@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/bloc/bloc_util.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:intl/intl.dart';
@@ -20,19 +21,20 @@ class EdinetBloc extends Bloc {
   // ValueObservable<String> get filter$ => _filter$;
   // Sink<String> get filterController => _filter$.sink;
 
-  EdinetBloc(AppBloc bloc) {
+  Observable<List<Edinet>> edinetStream(AppBloc bloc) {
     final _edinets =
         bloc.user$.switchMap((_) => bloc.edinetDate$).switchMap((date) {
       print("***date*** $date");
       final start = dateFormatter.format(date);
       final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return Observable(Firestore.instance
-              .collection(path)
-              .where('seq', isGreaterThanOrEqualTo: start)
-              .where('seq', isLessThan: end)
-              .orderBy('seq', descending: true)
-              .snapshots())
-          .startWith(null);
+      return Observable(
+        Firestore.instance
+            .collection(path)
+            .where('seq', isGreaterThanOrEqualTo: start)
+            .where('seq', isLessThan: end)
+            .orderBy('seq', descending: true)
+            .snapshots(),
+      ).startWith(null);
     }).map((doc) {
       return doc?.documents;
     });
@@ -61,7 +63,7 @@ class EdinetBloc extends Bloc {
       return _favorites;
     });
 
-    Observable.combineLatest3<Iterable<Edinet>, String, List<Company>,
+    return Observable.combineLatest3<Iterable<Edinet>, String, List<Company>,
             List<Edinet>>(_mappedEdinets, bloc.edinetFilter$, _favorite$,
         (edinets, filter, favorites) {
       if (edinets == null) {
@@ -79,7 +81,11 @@ class EdinetBloc extends Bloc {
         return Set.of(favorites).intersection(Set.of(edinet.companies)).length >
             0;
       }).toList();
-    }).pipe(_edinet$);
+    });
+  }
+
+  EdinetBloc(AppBloc bloc) {
+    connect(DeferStream(() => edinetStream(bloc), reusable: true), _edinet$);
   }
 
   @override

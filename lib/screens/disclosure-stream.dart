@@ -344,8 +344,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             ? snapshot.data.length > 0
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate(
-                        (context, idx) =>
-                            DisclosureListItem(item: snapshot.data[idx]),
+                        (context, idx) => DisclosureListItem(
+                            key: Key(snapshot.data[idx].documentID),
+                            item: snapshot.data[idx]),
                         childCount: snapshot.data.length),
                   )
                 : SliverFillRemaining(

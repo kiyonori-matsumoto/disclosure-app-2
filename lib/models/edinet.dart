@@ -19,6 +19,7 @@ class Edinet {
   String subsidiaryEdinetCode;
   Company subsidiary;
   int time;
+  int lastEvaluate;
 
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
     final item = snapshot.data;
@@ -34,6 +35,7 @@ class Edinet {
     subjectEdinetCode = item['subjectEdinetCode'];
     subsidiaryEdinetCode = item['subsidiaryEdinetCode'];
     time = (item['time'] - 9 * 60 * 60) * 1000;
+    lastEvaluate = item['time'];
   }
 
   void fillCompanyName(Map<String, Company> companies) {

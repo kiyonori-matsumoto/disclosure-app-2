@@ -38,7 +38,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   AppRootWidgetState() {
     print('configure');
     _message.configure(
-      onMessage: _handleNotification, //TODO:
+      onMessage: _handleNotificationMsg, //TODO:
       onLaunch: _handleNotification,
       onResume: _handleNotification,
     );
@@ -81,14 +81,12 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print("###notification handler ###");
     print(message);
     print(navigatorKey.currentContext);
-    final String code = message['code'] ?? '';
-    final company = Company(code, name: message['name'] ?? '');
+    final data = message['data'];
+    final String code = data['code'] ?? '';
+    final company = Company(code, name: data['name'] ?? '');
     await Future<dynamic>.delayed(Duration(milliseconds: 1000));
-    // navigatorKey.currentState.pop();
-    return navigatorKey.currentState.push(
-      MaterialPageRoute(
-          builder: (context) => DisclosureCompanyScreen(company: company)),
-    );
+    return navigatorKey.currentState
+        .pushNamed('/company-disclosures', arguments: company);
   }
 
   Future<void> _handleNotificationMsg(Map<String, dynamic> message) async {
