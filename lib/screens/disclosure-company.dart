@@ -26,6 +26,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   String code;
   CompanyDisclosureBloc bloc;
   BannerAd banner;
+  int tabLength;
 
   @override
   initState() {
@@ -39,6 +40,9 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     );
     if (company.edinetCode != '') {
       this.bloc.edinetInit.add(company.edinetCode);
+      tabLength = 2;
+    } else {
+      tabLength = 1;
     }
   }
 
@@ -138,7 +142,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     final mediaQuery = MediaQuery.of(context);
 
     return DefaultTabController(
-      length: 2,
+      length: this.tabLength,
       child: Scaffold(
         appBar: AppBar(
           title: Text("${this.company.name} (${this.code})"),
@@ -195,10 +199,11 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
             ].where((e) => e != null).toList(),
           ),
         ),
-        body: TabBarView(children: <Widget>[
+        body: TabBarView(
+            children: <Widget>[
           _buildBody(context),
-          _buildEdinetList(context),
-        ]),
+          this.tabLength == 2 ? _buildEdinetList(context) : null,
+        ].where((e) => e != null).toList()),
         persistentFooterButtons: <Widget>[
           SizedBox(
             height: getSmartBannerHeight(mediaQuery) - 16.0,
