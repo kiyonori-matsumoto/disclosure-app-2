@@ -1,6 +1,6 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/bloc/company_disclosure_bloc.dart';
+import 'package:disclosure_app_fl/bloc/company_disclosure_bloc2.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -24,25 +24,28 @@ class DisclosureCompanyScreen extends StatefulWidget {
 class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   final Company company;
   String code;
-  CompanyDisclosureBloc bloc;
   BannerAd banner;
   int tabLength;
+  CompanyDisclosureBloc2 bloc2;
 
   @override
   initState() {
     super.initState();
     banner = showBanner("ca-app-pub-5131663294295156/4027309882");
     final appBloc = BlocProvider.of<AppBloc>(context);
-    this.bloc = CompanyDisclosureBloc(
-      this.code,
-      companies: appBloc.companyMap$,
-      user$: appBloc.user$,
-    );
     if (company.edinetCode != '') {
-      this.bloc.edinetInit.add(company.edinetCode);
       tabLength = 2;
     } else {
       tabLength = 1;
+    }
+    this.bloc2 = CompanyDisclosureBloc2(
+      this.company,
+      companies: appBloc.companyMap$,
+      user$: appBloc.user$,
+    );
+    this.bloc2.disclosure.reload.add(null);
+    if (company.edinetCode != '') {
+      this.bloc2.edinet.reload.add(null);
     }
   }
 
@@ -52,84 +55,83 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return RefreshIndicator(
-      child: Scrollbar(
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (scrollInfo) {
-            if (scrollInfo.metrics.pixels ==
-                scrollInfo.metrics.maxScrollExtent) {
-              this.bloc.loadNext.add(code);
-            }
-          },
-          child: CustomScrollView(slivers: <Widget>[
-            StreamBuilder<CompanySettlement>(
-                stream: bloc.companySettlement$,
-                builder: (context, snapshot) {
-                  return SliverList(
-                    delegate: SliverChildListDelegate(
-                      (!snapshot.hasData ||
-                              snapshot.data == null ||
-                              snapshot.data.schedule == null ||
-                              snapshot.data.schedule
-                                  .add(Duration(days: 1))
-                                  .isBefore(DateTime.now()))
-                          ? []
-                          : [
-                              Card(
-                                child: Column(
-                                  children: <Widget>[
-                                    ListTile(
-                                      leading: Icon(
-                                        Icons.announcement,
-                                        color:
-                                            Theme.of(context).backgroundColor,
-                                      ),
-                                      title: Text(snapshot.data.toMessage()),
-                                    )
-                                  ],
-                                ),
-                                shape: RoundedRectangleBorder(),
-                              )
-                            ],
-                    ),
-                  );
-                }),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => index == snapshot.length
-                    ? StreamBuilder(
-                        stream: bloc.isLoading$,
-                        builder: (context, snapshot) => snapshot.data
-                            ? Container(
-                                alignment: Alignment.center,
-                                child: CircularProgressIndicator(),
-                              )
-                            : SizedBox(),
-                        initialData: false,
-                      )
-                    : new DisclosureListItem(
-                        item: snapshot[index],
-                        showDate: true,
-                        key: Key(snapshot[index]['document']),
-                      ),
-                childCount: snapshot.length + 1,
-              ),
-            ),
-          ]),
+      child: CustomScrollView(slivers: <Widget>[
+        StreamBuilder<CompanySettlement>(
+            stream: bloc2.companySettlement$,
+            builder: (context, snapshot) {
+              return SliverList(
+                delegate: SliverChildListDelegate(
+                  (!snapshot.hasData ||
+                          snapshot.data == null ||
+                          snapshot.data.schedule == null ||
+                          snapshot.data.schedule
+                              .add(Duration(days: 1))
+                              .isBefore(DateTime.now()))
+                      ? []
+                      : [
+                          Card(
+                            child: Column(
+                              children: <Widget>[
+                                ListTile(
+                                  leading: Icon(
+                                    Icons.announcement,
+                                    color: Theme.of(context).backgroundColor,
+                                  ),
+                                  title: Text(snapshot.data.toMessage()),
+                                )
+                              ],
+                            ),
+                            shape: RoundedRectangleBorder(),
+                          )
+                        ],
+                ),
+              );
+            }),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => DisclosureListItem(
+                  item: snapshot[index],
+                  showDate: true,
+                  key: Key(snapshot[index]['document']),
+                ),
+            childCount: snapshot.length,
+          ),
         ),
-      ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: RaisedButton(
+              child: StreamBuilder<bool>(
+                  stream: bloc2.disclosure.isLoading$,
+                  builder: (context, snapshot) {
+                    return snapshot.data == false
+                        ? Text('更に読み込む')
+                        : CircularProgressIndicator();
+                  }),
+              onPressed: () {
+                this.bloc2.disclosure?.loadNext?.add(snapshot.last);
+              },
+            ),
+          ),
+        )
+      ]),
       onRefresh: () {
-        bloc.reload.add(this.company.code);
-        return bloc.isLoading$.where((e) => e).first;
+        bloc2.disclosure?.reload?.add(this.company.code);
+        return bloc2.disclosure?.isLoading$?.where((e) => e)?.first;
       },
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<List<DocumentSnapshot>>(
-      stream: bloc.disclosures$,
+      stream: bloc2.disclosure.data$,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data == null) {
-          return LinearProgressIndicator();
+          return Column(
+            children: <Widget>[
+              LinearProgressIndicator(),
+            ],
+          );
         }
         return _buildList(context, snapshot.data);
       },
@@ -215,45 +217,62 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
 
   Widget _buildEdinetList(BuildContext context) {
     return StreamBuilder<List<Edinet>>(
-        stream: bloc.edinet$,
+        stream: bloc2.edinet.data$,
         builder: (context, snapshot) {
           return RefreshIndicator(
-            child: Scrollbar(
-              child: Builder(builder: (context) {
-                if (!snapshot.hasData || snapshot.data == null) {
-                  return LinearProgressIndicator();
-                }
-                if (snapshot.data.length == 0) {
-                  return Container(
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.event_busy),
-                        Text("選択した条件の適時開示は0件です"),
-                      ],
-                    ),
-                  );
-                }
-                return NotificationListener<ScrollNotification>(
-                    child: ListView.builder(
-                      itemBuilder: (context, idx) => EdinetListItem(
-                            edinet: snapshot.data[idx],
-                            showDate: true,
+            child: Builder(builder: (context) {
+              if (!snapshot.hasData || snapshot.data == null) {
+                return Column(
+                  children: <Widget>[
+                    LinearProgressIndicator(),
+                  ],
+                );
+              }
+              if (snapshot.data.length == 0) {
+                return Container(
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.event_busy),
+                      Text("選択した条件の適時開示は0件です"),
+                    ],
+                  ),
+                );
+              }
+              return ListView.builder(
+                itemBuilder: (context, idx) {
+                  return idx == snapshot.data.length
+                      ? Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: RaisedButton(
+                            child: StreamBuilder<bool>(
+                                stream: bloc2.edinet.isLoading$,
+                                builder: (context, snapshot) {
+                                  return snapshot.data == false
+                                      ? Text('更に読み込む')
+                                      : CircularProgressIndicator();
+                                }),
+                            onPressed: () {
+                              this
+                                  .bloc2
+                                  .edinet
+                                  ?.loadNext
+                                  ?.add(snapshot.data.last);
+                            },
                           ),
-                      itemCount: snapshot.data.length,
-                    ),
-                    onNotification: (scrollInfo) {
-                      print("onNotification");
-                      if (snapshot.connectionState == ConnectionState.active) {
-                        bloc.edinetLoadNext.add(snapshot.data.last);
-                      }
-                    });
-              }),
-            ),
+                        )
+                      : EdinetListItem(
+                          edinet: snapshot.data[idx],
+                          showDate: true,
+                        );
+                },
+                itemCount: snapshot.data.length + 1,
+              );
+            }),
             onRefresh: () {
-              bloc.edinetInit.add(this.company.edinetCode);
-              return bloc.edinet$.first;
+              bloc2.edinet.reload.add(null);
+              return bloc2.edinet.data$.first;
             },
           );
         });
@@ -262,6 +281,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   @override
   void dispose() {
     banner?.dispose();
+    bloc2?.dispose();
     super.dispose();
   }
 }

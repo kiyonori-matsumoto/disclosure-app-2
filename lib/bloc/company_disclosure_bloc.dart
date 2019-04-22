@@ -12,7 +12,7 @@ import 'package:rxdart/rxdart.dart';
 class CompanyDisclosureBloc extends Bloc {
   final path = 'disclosures';
   final StreamController<String> _reloadController = StreamController();
-  final StreamController<Edinet> _loadNextController = StreamController();
+  final StreamController<String> _loadNextController = StreamController();
   final BehaviorSubject<List<DocumentSnapshot>> _disclosures$ =
       BehaviorSubject();
   final BehaviorSubject<bool> _isLoadingController =
