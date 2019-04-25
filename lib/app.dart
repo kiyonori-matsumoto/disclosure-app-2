@@ -73,8 +73,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
       );
       print("notification onerror $error");
     });
-    // initializeDateFormatting('ja_JP');
-    // _auth.signInAnonymously().then(print);
   }
 
   Future<void> _handleNotification(Map<String, dynamic> message) async {
@@ -128,42 +126,48 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Widget build(BuildContext context) {
     FirebaseAnalytics analytics = FirebaseAnalytics();
     final routeObserver = MyRouteObserver();
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: '適時開示(TDNet) Notifier',
-      locale: Locale('ja', 'JP'),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      supportedLocales: [
-        Locale('ja', ''),
-      ],
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        // brightness: Brightness.dark,
-      ),
-      routes: {
-        '/': (context) => DisclosureStreamScreen(),
-        '/companies': (context) => SearchCompanyScreen(),
-        '/favorites': (context) => FavoriteScreen(),
-        '/settings': (context) => SettingScreen(),
-        '/savedDisclosures': (context) => SavedDisclosuresScreen(),
-      },
-      onGenerateRoute: (route) {
-        print("onGenerateRoute $route");
-        if (route.name.startsWith('/company-disclosures')) {
-          return MaterialPageRoute<dynamic>(
-            builder: (context) =>
-                DisclosureCompanyScreen(company: route.arguments),
+    final bloc = BlocProvider.of<AppBloc>(context);
+
+    return StreamBuilder<Brightness>(
+        stream: bloc.darkMode$,
+        builder: (context, snapshot) {
+          return MaterialApp(
+            navigatorKey: navigatorKey,
+            title: '適時開示(TDNet) Notifier',
+            locale: Locale('ja', 'JP'),
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: [
+              Locale('ja', ''),
+            ],
+            theme: ThemeData(
+              primarySwatch: Colors.deepPurple,
+              brightness: snapshot.data,
+            ),
+            routes: {
+              '/': (context) => DisclosureStreamScreen(),
+              '/companies': (context) => SearchCompanyScreen(),
+              '/favorites': (context) => FavoriteScreen(),
+              '/settings': (context) => SettingScreen(),
+              '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+            },
+            onGenerateRoute: (route) {
+              print("onGenerateRoute $route");
+              if (route.name.startsWith('/company-disclosures')) {
+                return MaterialPageRoute<dynamic>(
+                  builder: (context) =>
+                      DisclosureCompanyScreen(company: route.arguments),
+                );
+              }
+            },
+            navigatorObservers: [
+              FirebaseAnalyticsObserver(analytics: analytics),
+              routeObserver
+            ],
           );
-        }
-      },
-      navigatorObservers: [
-        FirebaseAnalyticsObserver(analytics: analytics),
-        routeObserver
-      ],
-    );
+        });
   }
 
   @override

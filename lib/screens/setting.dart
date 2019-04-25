@@ -17,6 +17,11 @@ class _SettingScreenState extends State<SettingScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('設定')),
@@ -55,6 +60,17 @@ class _SettingScreenState extends State<SettingScreen> {
             );
           },
         ),
+        StreamBuilder<Brightness>(
+            stream: bloc.darkMode$,
+            builder: (context, snapshot) {
+              return CheckboxListTile(
+                value: snapshot.data == Brightness.dark,
+                title: Text('ダークモード'),
+                onChanged: (v) {
+                  bloc.setModeBrightness.add(!v);
+                },
+              );
+            }),
         ListTile(
           title: Text('カスタムタグ設定'),
           leading: Icon(Icons.local_offer),
@@ -168,7 +184,7 @@ class ListHeader extends StatelessWidget {
       child: Text(
         this.title,
         style: TextStyle(
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).textTheme.caption.color,
         ),
       ),
     );

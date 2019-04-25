@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
@@ -14,6 +15,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新株", "自己株式", "日々の開示事項"];
 
@@ -30,6 +32,8 @@ class AppBloc extends Bloc {
   final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
   final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
+  final _darkMode$ = BehaviorSubject<Brightness>(seedValue: Brightness.light);
+  final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
 
@@ -124,6 +128,9 @@ class AppBloc extends Bloc {
   ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
       _savedDisclosure$.stream;
   Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
+
+  ValueObservable<Brightness> get darkMode$ => _darkMode$.stream;
+  Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
@@ -241,6 +248,20 @@ class AppBloc extends Bloc {
     _createNotificationStreams();
 
     _createSavedDisclosureStreams();
+
+    final br = Observable(_setModeBrightness.stream).doOnData((mode) =>
+        SharedPreferences.getInstance()
+            .then((pref) => pref.setBool('setDarkMode', mode)));
+
+    Observable.concat(<Stream<bool>>[
+      Observable.fromFuture(SharedPreferences.getInstance().then((pref) =>
+          pref.containsKey('setDarkMode')
+              ? pref.getBool('setDarkMode')
+              : true)),
+      br
+    ])
+        .map((m) => m == true ? Brightness.light : Brightness.dark)
+        .pipe(_darkMode$);
   }
 
   void _createSettingStream() {
@@ -464,6 +485,8 @@ class AppBloc extends Bloc {
     _showOnlyFavorites$.close();
     _edinetShowOnlyFavoriteController.close();
     _edinetDateController.close();
+    _darkMode$.close();
+    _setModeBrightness.close();
   }
 
   String _toCode(String topic) {

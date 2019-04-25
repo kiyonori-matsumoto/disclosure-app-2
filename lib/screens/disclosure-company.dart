@@ -247,12 +247,13 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                           padding: const EdgeInsets.all(8.0),
                           child: RaisedButton(
                             child: StreamBuilder<bool>(
-                                stream: bloc2.edinet.isLoading$,
-                                builder: (context, snapshot) {
-                                  return snapshot.data == false
-                                      ? Text('更に読み込む')
-                                      : CircularProgressIndicator();
-                                }),
+                              stream: bloc2.edinet.isLoading$,
+                              builder: (context, snapshot) {
+                                return snapshot.data == false
+                                    ? Text('更に読み込む')
+                                    : CircularProgressIndicator();
+                              },
+                            ),
                             onPressed: () {
                               this
                                   .bloc2
