@@ -343,28 +343,37 @@ class AppBloc extends Bloc {
     Future<List<dynamic>> _handleOpenFile() async {
       final _appDir = await getApplicationDocumentsDirectory();
       final companyJsonFile = File(_appDir.path + "/companies.json");
-      if (companyJsonFile.existsSync() &&
-          companyJsonFile
-              .lastModifiedSync()
-              .isAfter(DateTime.now().subtract(Duration(days: 7)))) {
-        // file exists and latest, so not download this file
-        print('use current file');
-        return companyJsonFile.readAsString().then((str) => jsonDecode(str));
-      } else {
-        print('download file from storage');
-        final ref = _storage.ref().child('companies.json');
-        final task = ref.writeToFile(companyJsonFile);
-        return task.future
-            .then((snapshot) => companyJsonFile.readAsString())
-            .then((str) => jsonDecode(str));
+      try {
+        if (companyJsonFile.existsSync() &&
+            companyJsonFile
+                .lastModifiedSync()
+                .isAfter(DateTime.now().subtract(Duration(days: 7)))) {
+          // file exists and latest, so not download this file
+          print('use current file');
+          return companyJsonFile.readAsString().then((str) => jsonDecode(str));
+        } else {
+          print('download file from storage');
+          final ref = _storage.ref().child('companies.json');
+          final task = ref.writeToFile(companyJsonFile);
+          return task.future
+              .then((snapshot) => companyJsonFile.readAsString())
+              .then((str) => jsonDecode(str));
+        }
+      } catch (e) {
+        // エラー発生時はファイルを削除する
+        companyJsonFile.deleteSync();
       }
     }
 
     Observable.fromFuture(
             _userController.first.then((user) => _handleOpenFile()))
         .map((data) => data
-            .map((d) => Company((d['code'] as String).substring(0, 4),
-                name: d['name'], edinetCode: d['edinetCode']))
+            .map((d) => Company(
+                  (d['code'] as String).substring(0, 4),
+                  name: d['name'],
+                  edinetCode: d['edinetCode'],
+                  nameKana: d['nameKana'],
+                ))
             .toList())
         .pipe(_companies$);
 
@@ -374,7 +383,7 @@ class AppBloc extends Bloc {
       (data, str) {
         if (str.length < 2) return [];
         final lowerStr = str.toLowerCase();
-        return data.where((d) => d.match(lowerStr)).toList();
+        return data.where((d) => d.match(lowerStr)).take(100).toList();
       },
     ).pipe(_filtetrdCompanies$);
 
