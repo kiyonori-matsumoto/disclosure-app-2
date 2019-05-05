@@ -135,7 +135,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
         builder: (context, snapshot) {
           return MaterialApp(
             navigatorKey: navigatorKey,
-            title: '適時開示(TDNet) Notifier',
+            title: '適時開示(TDNet/Edinet) Notifier',
             locale: Locale('ja', 'JP'),
             localizationsDelegates: [
               GlobalMaterialLocalizations.delegate,

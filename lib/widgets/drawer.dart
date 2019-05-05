@@ -2,6 +2,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info/package_info.dart';
 
 class AppDrawer extends StatelessWidget {
   Widget _avator(String url) {
@@ -54,10 +55,14 @@ class AppDrawer extends StatelessWidget {
             title: Text('設定'),
             onTap: () => Navigator.of(context).popAndPushNamed('/settings'),
           ),
-          AboutListTile(
-            applicationLegalese: '(c) 2019 Matsukiyo Lab.',
-            child: Text('このアプリについて'),
-            icon: Icon(Icons.info),
+          FutureBuilder<PackageInfo>(
+            builder: (context, snapshot) => AboutListTile(
+                  applicationLegalese: '(c) 2019 Matsukiyo Lab.',
+                  applicationVersion: snapshot.data.version,
+                  child: Text('このアプリについて'),
+                  icon: Icon(Icons.info),
+                ),
+            future: PackageInfo.fromPlatform(),
           )
         ],
       ),
