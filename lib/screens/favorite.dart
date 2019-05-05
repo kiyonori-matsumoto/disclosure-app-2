@@ -48,7 +48,17 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             ),
                             key: fav.key,
                             onDismissed: (direction) {
+                              final revert = () {
+                                bloc.addFavorite.add(fav.code);
+                              };
                               bloc.removeFavorite.add(fav.code);
+                              Scaffold.of(context).showSnackBar(SnackBar(
+                                content: Text("削除しました"),
+                                action: SnackBarAction(
+                                  label: "取り消す",
+                                  onPressed: revert,
+                                ),
+                              ));
                             },
                           );
                         }).toList())

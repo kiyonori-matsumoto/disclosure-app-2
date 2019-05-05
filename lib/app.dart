@@ -73,6 +73,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
       );
       print("notification onerror $error");
     });
+
+    _message.subscribeToTopic('/topics/edinet');
   }
 
   Future<void> _handleNotification(Map<String, dynamic> message) async {

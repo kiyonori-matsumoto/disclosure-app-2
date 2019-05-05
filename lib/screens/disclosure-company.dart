@@ -23,7 +23,6 @@ class DisclosureCompanyScreen extends StatefulWidget {
 
 class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   final Company company;
-  String code;
   BannerAd banner;
   int tabLength;
   CompanyDisclosureBloc2 bloc2;
@@ -49,9 +48,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     }
   }
 
-  _DisclosureCompanyScreenState({this.company}) {
-    this.code = this.company.code;
-  }
+  _DisclosureCompanyScreenState({this.company}) {}
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return RefreshIndicator(
@@ -147,18 +144,18 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
       length: this.tabLength,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("${this.company.name} (${this.code})"),
+          title: Text("${this.company.name} (${this.company.code})"),
           actions: <Widget>[
             StreamBuilder<List<Company>>(
               stream: appBloc.favoritesWithName$,
               builder: (context, snapshot) {
                 final isFavorite = snapshot.hasData &&
-                    snapshot.data.any((fav) => fav.code == this.code);
+                    snapshot.data.any((fav) => fav.code == this.company.code);
                 return IconButton(
                   icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                   tooltip: 'お気に入り',
                   onPressed: () {
-                    appBloc.switchFavorite.add(this.code);
+                    appBloc.switchFavorite.add(this.company.code);
                     Scaffold.of(context).showSnackBar(SnackBar(
                       content:
                           Text(isFavorite ? 'お気に入りを解除しました' : 'お気に入りに追加しました'),
@@ -171,14 +168,14 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
               stream: appBloc.notifications$,
               builder: (context, snapshot) {
                 final hasNotification = snapshot.hasData &&
-                    snapshot.data.any((comp) => comp.code == this.code);
+                    snapshot.data.any((comp) => comp.code == this.company.code);
                 return IconButton(
                   icon: Icon(hasNotification
                       ? Icons.notifications
                       : Icons.notifications_off),
                   tooltip: '通知',
                   onPressed: () {
-                    appBloc.switchNotification.add(this.code);
+                    appBloc.switchNotification.add(this.company.code);
                     Scaffold.of(context).showSnackBar(SnackBar(
                       content:
                           Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),

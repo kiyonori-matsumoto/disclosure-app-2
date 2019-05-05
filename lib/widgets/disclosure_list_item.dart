@@ -3,6 +3,7 @@ import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
+import 'package:disclosure_app_fl/widgets/content-view-count.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -42,19 +43,6 @@ class DisclosureListItemState extends State<DisclosureListItem> {
     );
   }
 
-  Widget viewCountWidget(int viewCount) {
-    if (viewCount == null || viewCount == 0) return null;
-    return Row(
-      children: <Widget>[
-        Icon(Icons.cloud_download, size: 10, color: Colors.grey),
-        Text(
-          "${viewCount.toString()} | ",
-          style: smallGrey,
-        )
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
@@ -77,7 +65,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
                           style: smallGrey,
                         )
                       : null,
-                  viewCountWidget(disclosure.viewCount),
+                  new ContentViewCount(viewCount: disclosure.viewCount),
                   Text(
                     toTime(disclosure.time, showDate: widget.showDate),
                     style: smallGrey,

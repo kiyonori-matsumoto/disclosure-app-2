@@ -5,6 +5,7 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/utils/downloadEdinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
+import 'package:disclosure_app_fl/widgets/content-view-count.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
@@ -125,11 +126,14 @@ class EdinetListItem extends StatelessWidget {
                   edinet.docType + " | ",
                   style: smallGrey,
                 ),
+                new ContentViewCount(
+                  viewCount: edinet.view_count,
+                ),
                 Text(
                   this.showDate ? toDate(edinet.time) : toTime(edinet.time),
                   style: smallGrey,
                 )
-              ],
+              ].where((e) => e != null).toList(),
             ),
           )
         ]);
