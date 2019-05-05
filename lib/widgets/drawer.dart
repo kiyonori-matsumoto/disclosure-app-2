@@ -58,7 +58,7 @@ class AppDrawer extends StatelessWidget {
           FutureBuilder<PackageInfo>(
             builder: (context, snapshot) => AboutListTile(
                   applicationLegalese: '(c) 2019 Matsukiyo Lab.',
-                  applicationVersion: snapshot.data.version,
+                  applicationVersion: snapshot?.data?.version ?? '',
                   child: Text('このアプリについて'),
                   icon: Icon(Icons.info),
                 ),
