@@ -415,6 +415,7 @@ class AppBloc extends Bloc {
             final data = json.decode(res.body);
             final List<String> topics = (data['topics'] as Map<String, dynamic>)
                     ?.keys
+                    ?.where((key) => key.startsWith('code_'))
                     ?.map((key) => _toCode(key))
                     ?.toList() ??
                 [];

@@ -7,7 +7,7 @@ description: A new Flutter project.
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.0.19+37
+version: 1.0.20+38
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
@@ -52,6 +52,8 @@ flutter_icons:
   android: "ic_launcher"
   ios: false
   image_path: icons/icon.png
+  adaptive_icon_background: icons/icon_bg.png
+  adaptive_icon_foreground: icons/icon_fg.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec

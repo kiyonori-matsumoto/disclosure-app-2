@@ -101,7 +101,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               position:
                   RelativeRect.fromLTRB(size.width, point.dy, 0.0, point.dy),
               items: [
-                PopupMenuItem(
+                const PopupMenuItem(
                   child: ListTile(
                     leading: Icon(
                       Icons.save,
