@@ -230,7 +230,8 @@ class AppBloc extends Bloc {
               !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
           .where((doc) =>
               isNotFilterSelected ||
-              selectedFilterStr.any((str) => doc.data['tags'][str] == true))
+              selectedFilterStr
+                  .any((str) => (doc.data['tags'] ?? {})[str] == true))
           .where((doc) => _favorites.length == 0
               ? true
               : _favorites.contains(doc.data['code']))
