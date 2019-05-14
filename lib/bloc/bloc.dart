@@ -231,7 +231,7 @@ class AppBloc extends Bloc {
           .where((doc) =>
               isNotFilterSelected ||
               selectedFilterStr
-                  .any((str) => (doc.data['tags'] ?? {})[str] == true))
+                  .any((str) => (doc.data['tags'] ?? {})[str] != null))
           .where((doc) => _favorites.length == 0
               ? true
               : _favorites.contains(doc.data['code']))
