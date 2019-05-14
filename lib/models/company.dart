@@ -11,7 +11,7 @@ class Company {
       {String name = '', String edinetCode = '', this.nameKana = ''}) {
     this.name = name.trim();
     this.key = Key(this.code);
-    this.edinetCode = edinetCode;
+    this.edinetCode = edinetCode ?? '';
   }
 
   bool match(String text) {

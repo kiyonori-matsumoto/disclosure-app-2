@@ -341,33 +341,38 @@ class AppBloc extends Bloc {
   }
 
   void _createCompanyListStreams() {
-    Future<List<dynamic>> _handleOpenFile() async {
+    Stream<List<dynamic>> _handleOpenFile() async* {
       final _appDir = await getApplicationDocumentsDirectory();
       final companyJsonFile = File(_appDir.path + "/companies.json");
+      final exists = companyJsonFile.existsSync();
       try {
-        if (companyJsonFile.existsSync() &&
+        if (exists) {
+          print('send current file');
+          yield await companyJsonFile
+              .readAsString()
+              .then((str) => jsonDecode(str));
+        }
+        if (!(exists &&
             companyJsonFile
                 .lastModifiedSync()
-                .isAfter(DateTime.now().subtract(Duration(days: 7)))) {
-          // file exists and latest, so not download this file
-          print('use current file');
-          return companyJsonFile.readAsString().then((str) => jsonDecode(str));
-        } else {
+                .isAfter(DateTime.now().subtract(Duration(seconds: 1))))) {
           print('download file from storage');
+
           final ref = _storage.ref().child('companies.json');
           final task = ref.writeToFile(companyJsonFile);
-          return task.future
+          yield await task.future
               .then((snapshot) => companyJsonFile.readAsString())
               .then((str) => jsonDecode(str));
         }
       } catch (e) {
         // エラー発生時はファイルを削除する
         companyJsonFile.deleteSync();
+        throw (e);
       }
     }
 
-    Observable.fromFuture(
-            _userController.first.then((user) => _handleOpenFile()))
+    _userController
+        .switchMap((user) => _handleOpenFile())
         .map((data) => data
             .map((d) => Company(
                   (d['code'] as String).substring(0, 4),

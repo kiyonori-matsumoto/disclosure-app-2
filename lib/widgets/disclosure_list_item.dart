@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/content-view-count.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:disclosure_app_fl/utils/get_company.dart';
 
 import 'package:disclosure_app_fl/utils/downloadDisclosure.dart';
 import '../utils/time.dart';
@@ -127,8 +128,8 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ));
             }
             if (choice == 1) {
-              final company =
-                  Company(disclosure.code, name: disclosure.company);
+              final company = await getCompany(bloc,
+                  code: disclosure.code, name: disclosure.company);
               return Navigator.pushNamed(context, '/company-disclosures',
                   arguments: company);
             }

@@ -8,6 +8,7 @@ import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
+import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -34,6 +35,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final _message = FirebaseMessaging();
   final _admob = FirebaseAdMob.instance
       .initialize(appId: 'ca-app-pub-5131663294295156~3067610804');
+  AppBloc bloc;
 
   AppRootWidgetState() {
     print('configure');
@@ -61,7 +63,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
       }
     }).then(print);
 
-    final bloc = BlocProvider.of<AppBloc>(context);
+    bloc = BlocProvider.of<AppBloc>(context);
 
     bloc.notifications$.listen((data) {}, onError: (dynamic error) {
       showDialog<dynamic>(
@@ -74,7 +76,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
       print("notification onerror $error");
     });
 
-    _message.subscribeToTopic('/topics/edinet');
+    _message.subscribeToTopic('edinet_notification');
+    _message.unsubscribeFromTopic('edinet');
   }
 
   Future<void> _handleNotification(Map<String, dynamic> message) async {
@@ -83,7 +86,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print(navigatorKey.currentContext);
     final data = message['data'];
     final String code = data['code'] ?? '';
-    final company = Company(code, name: data['name'] ?? '');
+    final company =
+        await getCompany(bloc, code: code, name: data['name'] ?? '');
     await Future<dynamic>.delayed(Duration(milliseconds: 1000));
     return navigatorKey.currentState
         .pushNamed('/company-disclosures', arguments: company);
