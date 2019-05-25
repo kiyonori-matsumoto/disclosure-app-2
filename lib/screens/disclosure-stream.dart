@@ -164,6 +164,14 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       pinned: false,
       floating: true,
       snap: true,
+      // actions: <Widget>[
+      //   IconButton(
+      //     icon: Icon(Icons.new_releases),
+      //     onPressed: () {
+      //       Navigator.of(context).pushNamed('/whatsnew');
+      //     },
+      //   )
+      // ],
     );
 
     return SafeArea(
@@ -278,7 +286,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           children: <Widget>[
             StreamBuilder<DateTime>(
               stream: bloc.date$,
-              builder: (context, snapshot) => Container(
+              builder: (context, snapshot) => Padding(
                     padding: EdgeInsets.all(4.0),
                     child: ActionChip(
                       avatar: Icon(Icons.calendar_today),
@@ -295,7 +303,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
               stream: bloc.filterCount$,
               builder: (context, snapshot) {
                 final text = snapshot.data?.toString() ?? '0';
-                return Container(
+                return Padding(
                   padding: EdgeInsets.all(4.0),
                   child: ChoiceChip(
                     label: Text(text),
@@ -311,6 +319,22 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                   ),
                 );
               },
+            ),
+            Padding(
+              padding: EdgeInsets.all(4.0),
+              child: StreamBuilder<String>(
+                stream: bloc.setDisclosureOrder$,
+                builder: (context, snapshot) {
+                  return ActionChip(
+                    label: Text(snapshot?.data ?? ''),
+                    avatar: Icon(Icons.sort),
+                    onPressed: () {
+                      final next = {'閲覧回数': '最新', '最新': '閲覧回数'};
+                      bloc.setDisclosureOrder.add(next[snapshot?.data ?? '']);
+                    },
+                  );
+                },
+              ),
             ),
             ShowFavoritOnlyTooltipWidget(
               stream: bloc.showOnlyFavorites$,

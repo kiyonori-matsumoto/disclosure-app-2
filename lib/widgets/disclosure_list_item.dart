@@ -60,18 +60,17 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ),
               Row(
                 children: <Widget>[
-                  disclosure.tags.length > 0
-                      ? Text(
-                          "${(disclosure.tags ?? []).join(', ')} | ",
-                          style: smallGrey,
-                        )
-                      : null,
+                  if (disclosure.tags.length > 0)
+                    Text(
+                      "${(disclosure.tags ?? []).join(', ')} | ",
+                      style: smallGrey,
+                    ),
                   new ContentViewCount(viewCount: disclosure.viewCount),
                   Text(
                     toTime(disclosure.time, showDate: widget.showDate),
                     style: smallGrey,
                   ),
-                ].where((e) => e != null).toList(),
+                ],
               ),
             ],
           ),

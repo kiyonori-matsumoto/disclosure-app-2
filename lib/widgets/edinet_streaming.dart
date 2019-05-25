@@ -133,7 +133,7 @@ class EdinetListItem extends StatelessWidget {
                   this.showDate ? toDate(edinet.time) : toTime(edinet.time),
                   style: smallGrey,
                 )
-              ].where((e) => e != null).toList(),
+              ],
             ),
           )
         ]);

@@ -21,6 +21,12 @@ final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新�
 
 final dateFormatter = DateFormat("yyyy-MM-dd");
 
+final Map<String, Comparator<DocumentSnapshot>> comparators = {
+  "最新": null,
+  "閲覧回数": (a, b) =>
+      (b.data['view_count'] ?? 0).compareTo(a.data['view_count'] ?? 0),
+};
+
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
@@ -36,6 +42,7 @@ class AppBloc extends Bloc {
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
+  final _setDisclosureOrder$ = BehaviorSubject<String>(seedValue: "最新");
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
@@ -132,6 +139,10 @@ class AppBloc extends Bloc {
   ValueObservable<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
+  ValueObservable<String> get setDisclosureOrder$ =>
+      _setDisclosureOrder$.stream;
+  Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
+
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
     return prev;
@@ -212,10 +223,13 @@ class AppBloc extends Bloc {
       return Observable.just(<String>[]);
     });
 
-    Observable.combineLatest4<List<Filter>, QuerySnapshot, bool, List<String>,
-            List<DocumentSnapshot>>(
-        this._filter$, store$, _hideDailyDisclosure$, showingFavorite,
-        (_filters, d, _hideDaily, _favorites) {
+    Observable.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
+            String, List<DocumentSnapshot>>(
+        this._filter$,
+        store$,
+        _hideDailyDisclosure$,
+        showingFavorite,
+        _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
       print("combinelatest3 $_filters , $d , $_hideDaily");
       if (d == null) return null;
       final isNotFilterSelected =
@@ -225,7 +239,7 @@ class AppBloc extends Bloc {
           .where((filter) => filter.isSelected)
           .map((filter) => filter.title);
 
-      return d.documents
+      final docs = d.documents
           .where((doc) =>
               !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
           .where((doc) =>
@@ -236,6 +250,13 @@ class AppBloc extends Bloc {
               ? true
               : _favorites.contains(doc.data['code']))
           .toList();
+      if (order != null) {
+        final comp = comparators[order];
+        if (comp != null) {
+          docs.sort(comp);
+        }
+      }
+      return docs;
     }).pipe(_disclosure$);
 
     FirebaseAuth.instance.onAuthStateChanged
@@ -287,19 +308,23 @@ class AppBloc extends Bloc {
 
     _addFavoriteController.stream.listen((code) {
       favorites.add(code);
+      _addNotificationController.add(code);
       _publishFavorites(favorites.toList());
     });
 
     _removeFavoriteController.stream.listen((code) {
       favorites.remove(code);
+      _removeNotificationController.add(code);
       _publishFavorites(favorites.toList());
     });
 
     _switchFavoriteController.stream.listen((code) {
       if (favorites.contains(code)) {
+        _removeNotificationController.add(code);
         favorites.remove(code);
       } else {
         favorites.add(code);
+        _addNotificationController.add(code);
       }
       _publishFavorites(favorites.toList());
     });
@@ -503,6 +528,7 @@ class AppBloc extends Bloc {
     _edinetDateController.close();
     _darkMode$.close();
     _setModeBrightness.close();
+    _setDisclosureOrder$.close();
   }
 
   String _toCode(String topic) {

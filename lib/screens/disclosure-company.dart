@@ -164,39 +164,36 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                 );
               },
             ),
-            StreamBuilder<List<Company>>(
-              stream: appBloc.notifications$,
-              builder: (context, snapshot) {
-                final hasNotification = snapshot.hasData &&
-                    snapshot.data.any((comp) => comp.code == this.company.code);
-                return IconButton(
-                  icon: Icon(hasNotification
-                      ? Icons.notifications
-                      : Icons.notifications_off),
-                  tooltip: '通知',
-                  onPressed: () {
-                    appBloc.switchNotification.add(this.company.code);
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                      content:
-                          Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),
-                    ));
-                  },
-                );
-              },
-            )
+            // StreamBuilder<List<Company>>(
+            //   stream: appBloc.notifications$,
+            //   builder: (context, snapshot) {
+            //     final hasNotification = snapshot.hasData &&
+            //         snapshot.data.any((comp) => comp.code == this.company.code);
+            //     return IconButton(
+            //       icon: Icon(hasNotification
+            //           ? Icons.notifications
+            //           : Icons.notifications_off),
+            //       tooltip: '通知',
+            //       onPressed: () {
+            //         appBloc.switchNotification.add(this.company.code);
+            //         Scaffold.of(context).showSnackBar(SnackBar(
+            //           content:
+            //               Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),
+            //         ));
+            //       },
+            //     );
+            //   },
+            // )
           ],
-          bottom: TabBar(
-            tabs: <Widget>[
+          bottom: TabBar(tabs: <Widget>[
+            Tab(
+              text: 'TDNET',
+            ),
+            if (this.company.edinetCode != '')
               Tab(
-                text: 'TDNET',
+                text: 'EDINET',
               ),
-              this.company.edinetCode == ''
-                  ? null
-                  : Tab(
-                      text: 'EDINET',
-                    ),
-            ].where((e) => e != null).toList(),
-          ),
+          ]),
         ),
         body: TabBarView(
             children: <Widget>[
