@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
+import 'package:disclosure_app_fl/screens/whatsnew.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -158,6 +158,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
               '/favorites': (context) => FavoriteScreen(),
               '/settings': (context) => SettingScreen(),
               '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+              '/whatsnew': (context) => WhatsNewScreen(),
             },
             onGenerateRoute: (route) {
               print("onGenerateRoute $route");

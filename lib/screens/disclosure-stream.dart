@@ -164,14 +164,14 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       pinned: false,
       floating: true,
       snap: true,
-      // actions: <Widget>[
-      //   IconButton(
-      //     icon: Icon(Icons.new_releases),
-      //     onPressed: () {
-      //       Navigator.of(context).pushNamed('/whatsnew');
-      //     },
-      //   )
-      // ],
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.new_releases),
+          onPressed: () {
+            Navigator.of(context).pushNamed('/whatsnew');
+          },
+        )
+      ],
     );
 
     return SafeArea(
