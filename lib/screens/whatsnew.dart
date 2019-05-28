@@ -6,14 +6,14 @@ class WhatsNewScreen extends StatefulWidget {
   _WhatsNewScreenState createState() => _WhatsNewScreenState();
 }
 
-class _WhatsNewScreenState extends State<WhatsNewScreen> with SingleTickerProviderStateMixin {
-
+class _WhatsNewScreenState extends State<WhatsNewScreen>
+    with SingleTickerProviderStateMixin {
   TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    this._tabController = TabController(length: 2, vsync: this)
+    this._tabController = TabController(length: 2, vsync: this);
   }
 
   @override
@@ -22,6 +22,7 @@ class _WhatsNewScreenState extends State<WhatsNewScreen> with SingleTickerProvid
     return Scaffold(
       body: Container(
         child: TabBarView(
+          controller: this._tabController,
           children: <Widget>[
             Container(color: Colors.green),
             Container(color: Colors.red),

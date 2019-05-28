@@ -170,23 +170,26 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           onPressed: () {
             Navigator.of(context).pushNamed('/whatsnew');
           },
+          tooltip: "新機能",
         )
       ],
     );
 
     return SafeArea(
-      child: CustomScrollView(
-        slivers: this.displayTarget == "tdnet"
-            ? <Widget>[
-                appbar,
-                filterToolbar(bloc, formatter),
-                tdnetList(bloc),
-              ]
-            : [
-                appbar,
-                edinetFilterToolbar(bloc),
-                EdinetStreamingWidget(),
-              ],
+      child: Scrollbar(
+        child: CustomScrollView(
+          slivers: this.displayTarget == "tdnet"
+              ? <Widget>[
+                  appbar,
+                  filterToolbar(bloc, formatter),
+                  tdnetList(bloc),
+                ]
+              : [
+                  appbar,
+                  edinetFilterToolbar(bloc),
+                  EdinetStreamingWidget(),
+                ],
+        ),
       ),
     );
   }
