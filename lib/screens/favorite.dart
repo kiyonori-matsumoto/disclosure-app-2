@@ -38,6 +38,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       ? ListView(
                           children: snapshot.data.map((fav) {
                           return Dismissible(
+                            background: Container(
+                              color: Colors.red,
+                            ),
                             child: new FadedListTile(
                               fav: fav,
                               key: fav.key,

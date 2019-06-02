@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
+import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -168,7 +169,8 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
         IconButton(
           icon: Icon(Icons.new_releases),
           onPressed: () {
-            Navigator.of(context).pushNamed('/whatsnew');
+            // Navigator.of(context).pushNamed('/whatsnew');
+            launchURL("https://disclosure-app.firebaseapp.com/whatsnew/1.1/");
           },
           tooltip: "新機能",
         )

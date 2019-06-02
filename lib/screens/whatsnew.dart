@@ -24,7 +24,9 @@ class _WhatsNewScreenState extends State<WhatsNewScreen>
         child: TabBarView(
           controller: this._tabController,
           children: <Widget>[
-            Container(color: Colors.green),
+            AboutDialog(
+              children: <Widget>[Text("test")],
+            ),
             Container(color: Colors.red),
           ],
         ),

@@ -2,7 +2,6 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
-import 'package:disclosure_app_fl/widgets/drawer.dart';
 import 'package:flutter/material.dart';
 
 class NotificationSettingScreen extends StatefulWidget {
@@ -17,7 +16,7 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("通知設定")),
+      appBar: AppBar(title: Text("証券コードで通知")),
       body: _buildBody(context),
     );
   }

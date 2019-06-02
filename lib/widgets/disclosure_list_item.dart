@@ -35,15 +35,6 @@ class DisclosureListItem extends StatefulWidget {
 class DisclosureListItemState extends State<DisclosureListItem> {
   bool isDownloading = false;
 
-  Future<void> show(BuildContext context) {
-    return showMenu(
-      context: context,
-      items: [
-        PopupMenuItem(child: Text('保存')),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
