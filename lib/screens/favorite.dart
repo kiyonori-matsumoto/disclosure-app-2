@@ -38,13 +38,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                       ? ListView(
                           children: snapshot.data.map((fav) {
                           return Dismissible(
-                            child: ListTile(
-                              title: Text(fav.toString()),
-                              onTap: () {
-                                return Navigator.pushNamed(
-                                    context, '/company-disclosures',
-                                    arguments: fav);
-                              },
+                            background: Container(
+                              color: Colors.red,
+                            ),
+                            child: new FadedListTile(
+                              fav: fav,
+                              key: fav.key,
                             ),
                             key: fav.key,
                             onDismissed: (direction) {
@@ -82,5 +81,45 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   void _handleSubmit(AppBloc bloc, String code) {
     bloc.addFavorite.add(code);
+  }
+}
+
+class FadedListTile extends StatefulWidget {
+  final Company fav;
+  const FadedListTile({
+    @required this.fav,
+    Key key,
+  }) : super(key: key);
+
+  @override
+  _FadedListTileState createState() => _FadedListTileState();
+}
+
+class _FadedListTileState extends State<FadedListTile> {
+  double opacity = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 100)).then((_) {
+      this.setState(() {
+        opacity = 1.0;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: opacity,
+      child: ListTile(
+        title: Text(widget.fav.toString()),
+        onTap: () {
+          return Navigator.pushNamed(context, '/company-disclosures',
+              arguments: widget.fav);
+        },
+      ),
+      duration: const Duration(milliseconds: 500),
+    );
   }
 }

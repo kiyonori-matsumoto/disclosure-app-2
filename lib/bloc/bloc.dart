@@ -21,6 +21,12 @@ final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新�
 
 final dateFormatter = DateFormat("yyyy-MM-dd");
 
+final Map<String, Comparator<DocumentSnapshot>> comparators = {
+  "最新": null,
+  "閲覧回数": (a, b) =>
+      (b.data['view_count'] ?? 0).compareTo(a.data['view_count'] ?? 0),
+};
+
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
@@ -36,6 +42,7 @@ class AppBloc extends Bloc {
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
+  final _setDisclosureOrder$ = BehaviorSubject<String>(seedValue: "最新");
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
@@ -67,13 +74,16 @@ class AppBloc extends Bloc {
   final _companies$ = BehaviorSubject<List<Company>>();
   final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
   final _codeStrController = BehaviorSubject<String>(seedValue: '');
-  final _storage = FirebaseStorage.instance;
+  final _storage = FirebaseStorage(storageBucket: 'gs://disclosure-app-2');
 
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
+  final _tagsNotifications$ = BehaviorSubject<List<String>>();
   final _addNotificationController = StreamController<String>();
   final _removeNotificationController = StreamController<String>();
   final _switchNotificationController = StreamController<String>();
+  final _addTagsNotificationController = StreamController<String>();
+  final _removeTagsNotificationController = StreamController<String>();
 
   ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
       _disclosure$.stream;
@@ -121,9 +131,14 @@ class AppBloc extends Bloc {
   Sink<String> get changeFilter => _codeStrController.sink;
 
   ValueObservable<List<Company>> get notifications$ => _notifications$.stream;
+  ValueObservable<List<String>> get tagsNotifications$ =>
+      _tagsNotifications$.stream;
   Sink<String> get addNotification => _addNotificationController.sink;
   Sink<String> get removeNotification => _removeNotificationController.sink;
   Sink<String> get switchNotification => _switchNotificationController.sink;
+  Sink<String> get addTagsNotification => _addTagsNotificationController.sink;
+  Sink<String> get removeTagsNotification =>
+      _removeTagsNotificationController.sink;
 
   ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
       _savedDisclosure$.stream;
@@ -131,6 +146,10 @@ class AppBloc extends Bloc {
 
   ValueObservable<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
+
+  ValueObservable<String> get setDisclosureOrder$ =>
+      _setDisclosureOrder$.stream;
+  Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
@@ -212,10 +231,13 @@ class AppBloc extends Bloc {
       return Observable.just(<String>[]);
     });
 
-    Observable.combineLatest4<List<Filter>, QuerySnapshot, bool, List<String>,
-            List<DocumentSnapshot>>(
-        this._filter$, store$, _hideDailyDisclosure$, showingFavorite,
-        (_filters, d, _hideDaily, _favorites) {
+    Observable.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
+            String, List<DocumentSnapshot>>(
+        this._filter$,
+        store$,
+        _hideDailyDisclosure$,
+        showingFavorite,
+        _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
       print("combinelatest3 $_filters , $d , $_hideDaily");
       if (d == null) return null;
       final isNotFilterSelected =
@@ -225,7 +247,7 @@ class AppBloc extends Bloc {
           .where((filter) => filter.isSelected)
           .map((filter) => filter.title);
 
-      return d.documents
+      final docs = d.documents
           .where((doc) =>
               !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
           .where((doc) =>
@@ -236,6 +258,13 @@ class AppBloc extends Bloc {
               ? true
               : _favorites.contains(doc.data['code']))
           .toList();
+      if (order != null) {
+        final comp = comparators[order];
+        if (comp != null) {
+          docs.sort(comp);
+        }
+      }
+      return docs;
     }).pipe(_disclosure$);
 
     FirebaseAuth.instance.onAuthStateChanged
@@ -287,19 +316,23 @@ class AppBloc extends Bloc {
 
     _addFavoriteController.stream.listen((code) {
       favorites.add(code);
+      _addNotificationController.add(code);
       _publishFavorites(favorites.toList());
     });
 
     _removeFavoriteController.stream.listen((code) {
       favorites.remove(code);
+      _removeNotificationController.add(code);
       _publishFavorites(favorites.toList());
     });
 
     _switchFavoriteController.stream.listen((code) {
       if (favorites.contains(code)) {
         favorites.remove(code);
+        _removeNotificationController.add(code);
       } else {
         favorites.add(code);
+        _addNotificationController.add(code);
       }
       _publishFavorites(favorites.toList());
     });
@@ -419,12 +452,8 @@ class AppBloc extends Bloc {
         .then((res) {
           if (res.body != '') {
             final data = json.decode(res.body);
-            final List<String> topics = (data['topics'] as Map<String, dynamic>)
-                    ?.keys
-                    ?.where((key) => key.startsWith('code_'))
-                    ?.map((key) => _toCode(key))
-                    ?.toList() ??
-                [];
+            final List<String> topics =
+                (data['topics'] as Map<String, dynamic>)?.keys?.toList() ?? [];
             notifications = topics.toSet();
             print('notifications = $notifications');
             return topics;
@@ -435,33 +464,61 @@ class AppBloc extends Bloc {
         .then((topics) => _notificationString$.add(topics))
         .catchError(_notificationString$.addError);
 
+    _notificationString$.map((notifications) {
+      return notifications
+          .where((key) => key.startsWith(('tags_')))
+          .map((key) => _toTag(key))
+          .toList();
+    }).pipe(_tagsNotifications$);
+
     Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
       _notificationString$,
       _companies$.stream,
       (_topics, _comps) {
-        return _topics.map((_topic) {
+        return _topics
+            .where((key) => key.startsWith('code_'))
+            .map((key) => _toCode(key))
+            .map((_topic) {
           return _comps.firstWhere((_conp) => _conp.code == _topic,
               orElse: () => Company(_topic, name: '???'));
         }).toList();
       },
     ).pipe(_notifications$);
 
-    this._addNotificationController.stream.listen((code) {
+    this._addNotificationController.stream.listen((_code) {
+      final code = _toTopic(_code);
       print('add notification $code');
-      messaging.subscribeToTopic(_toTopic(code));
+      messaging.subscribeToTopic(code);
       notifications.add(code);
       _notificationString$.add(notifications.toList());
     });
 
-    this._removeNotificationController.stream.listen((code) {
+    this._removeNotificationController.stream.listen((_code) {
+      final code = _toTopic(_code);
       print('remove notification $code');
-      messaging.unsubscribeFromTopic(_toTopic(code));
+      messaging.unsubscribeFromTopic(code);
       notifications.remove(code);
       _notificationString$.add(notifications.toList());
     });
 
+    this._addTagsNotificationController.stream.listen((_tag) {
+      final topic = _fromTag(_tag);
+      print('add notification $topic');
+      messaging.subscribeToTopic(topic);
+      notifications.add(topic);
+      _notificationString$.add(notifications.toList());
+    });
+
+    this._removeTagsNotificationController.stream.listen((_code) {
+      final topic = _fromTag(_code);
+      print('remove notification $topic');
+      messaging.unsubscribeFromTopic(topic);
+      notifications.remove(topic);
+      _notificationString$.add(notifications.toList());
+    });
+
     this._switchNotificationController.stream.listen((code) {
-      if (notifications.contains(code)) {
+      if (notifications.contains(_toCode(code))) {
         this._removeNotificationController.add(code);
       } else {
         this._addNotificationController.add(code);
@@ -492,9 +549,12 @@ class AppBloc extends Bloc {
     _companiesMap$.close();
     _codeStrController.close();
     _notifications$.close();
+    _tagsNotifications$.close();
     _addNotificationController.close();
     _removeNotificationController.close();
     _switchNotificationController.close();
+    _addTagsNotificationController.close();
+    _removeTagsNotificationController.close();
     _customFilter$.close();
     _savedDisclosure$.close();
     _saveDisclosureController.close();
@@ -503,10 +563,20 @@ class AppBloc extends Bloc {
     _edinetDateController.close();
     _darkMode$.close();
     _setModeBrightness.close();
+    _setDisclosureOrder$.close();
   }
 
   String _toCode(String topic) {
     return topic.replaceAll(RegExp(r'^code_'), '');
+  }
+
+  Codec<String, String> stringToBase64Url = utf8.fuse(base64Url);
+  String _toTag(String key) {
+    return stringToBase64Url.decode(key.replaceAll(RegExp(r'^tags_'), ''));
+  }
+
+  String _fromTag(String key) {
+    return "tags_${stringToBase64Url.encode(key)}";
   }
 
   void _createSavedDisclosureStreams() {

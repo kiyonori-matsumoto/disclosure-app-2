@@ -1,11 +1,15 @@
 import 'package:bloc_provider/bloc_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/notification-setting.dart';
+import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import 'notification-tag-setting.dart';
 
 class SettingScreen extends StatefulWidget {
   @override
@@ -16,9 +20,12 @@ class _SettingScreenState extends State<SettingScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  AppBloc bloc;
+
   @override
   void initState() {
     super.initState();
+    this.bloc = BlocProvider.of<AppBloc>(context);
   }
 
   @override
@@ -39,10 +46,18 @@ class _SettingScreenState extends State<SettingScreen> {
         ListHeader(title: '通知設定'),
         ListTile(
           leading: Icon(Icons.notifications),
-          title: Text('通知設定'),
+          title: Text('証券コードで通知'),
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => NotificationSettingScreen()));
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.local_offer),
+          title: Text('タグで通知(β)'),
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => NotificationTagSettingScreen()));
           },
         ),
         Divider(),
@@ -107,20 +122,12 @@ class _SettingScreenState extends State<SettingScreen> {
             children: <Widget>[Text('プライバシーポリシー'), Icon(Icons.open_in_browser)],
           ),
           onTap: () {
-            _launchURL();
+            const url = 'https://disclosure-app.firebaseapp.com/privacy/';
+            launchURL(url);
           },
         )
       ],
     );
-  }
-
-  _launchURL() async {
-    const url = 'https://disclosure-app.firebaseapp.com/privacy/';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
   }
 
   Future<FirebaseUser> _handleSignIn(BuildContext context) async {
@@ -144,10 +151,41 @@ class _SettingScreenState extends State<SettingScreen> {
         ));
       }
       print(user.providerId);
-      Scaffold.of(context).showSnackBar(SnackBar(
-        content: Text('Googleアカウントと連携しました'),
-        duration: Duration(seconds: 5),
-      ));
+      // Scaffold.of(context).showSnackBar(SnackBar(
+      //   content: Text('Googleアカウントと連携しました'),
+      //   duration: Duration(seconds: 5),
+      // ));
+      user.reload();
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              content: const Text('お気に入りから通知を復元しますか？'),
+              actions: <Widget>[
+                RaisedButton(
+                    child: const Text('復元する'),
+                    textColor: Theme.of(context).primaryTextTheme.button.color,
+                    onPressed: () async {
+                      final id = user.uid;
+                      final settings = await Firestore.instance
+                          .collection('users')
+                          .document(id)
+                          .get();
+                      final List<String> favs =
+                          settings.data['favorites'].cast<String>();
+                      favs.forEach((fav) {
+                        this.bloc.addNotification.add(fav);
+                      });
+                      Navigator.pop(context);
+                    }),
+                FlatButton(
+                  child: const Text('キャンセル'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+      );
       return user;
     } catch (e) {
       print('exception');
@@ -165,6 +203,7 @@ class _SettingScreenState extends State<SettingScreen> {
       content: Text('連携を解除しました'),
       duration: Duration(seconds: 10),
     );
+    user.reload();
     Scaffold.of(context).showSnackBar(snackBar);
   }
 }

@@ -35,15 +35,6 @@ class DisclosureListItem extends StatefulWidget {
 class DisclosureListItemState extends State<DisclosureListItem> {
   bool isDownloading = false;
 
-  Future<void> show(BuildContext context) {
-    return showMenu(
-      context: context,
-      items: [
-        PopupMenuItem(child: Text('保存')),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
@@ -60,18 +51,17 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ),
               Row(
                 children: <Widget>[
-                  disclosure.tags.length > 0
-                      ? Text(
-                          "${(disclosure.tags ?? []).join(', ')} | ",
-                          style: smallGrey,
-                        )
-                      : null,
+                  if (disclosure.tags.length > 0)
+                    Text(
+                      "${(disclosure.tags ?? []).join(', ')} | ",
+                      style: smallGrey,
+                    ),
                   new ContentViewCount(viewCount: disclosure.viewCount),
                   Text(
                     toTime(disclosure.time, showDate: widget.showDate),
                     style: smallGrey,
                   ),
-                ].where((e) => e != null).toList(),
+                ],
               ),
             ],
           ),
