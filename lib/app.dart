@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
+import 'package:disclosure_app_fl/screens/disclosure-tags.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
@@ -164,6 +165,12 @@ class AppRootWidgetState extends State<AppRootWidget> {
                 return MaterialPageRoute<dynamic>(
                   builder: (context) =>
                       DisclosureCompanyScreen(company: route.arguments),
+                );
+              }
+              if (route.name.startsWith('/tag-disclosures')) {
+                return MaterialPageRoute<dynamic>(
+                  builder: (context) =>
+                      DisclosureTagsScreen(tag: route.arguments),
                 );
               }
             },
