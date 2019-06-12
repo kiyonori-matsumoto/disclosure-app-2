@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:admob_flutter/admob_flutter.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -52,30 +53,30 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   initState() {
     super.initState();
     this.bloc = BlocProvider.of<AppBloc>(context);
-    if (banner == null) {
-      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    }
+    // if (banner == null) {
+    //   banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    // }
   }
 
-  @override
-  dispose() {
-    print('dispose disclosure-stream');
-    routeObserver.unsubscribe(this);
-    banner?.dispose();
-    banner = null;
-    super.dispose();
-  }
+  // @override
+  // dispose() {
+  //   print('dispose disclosure-stream');
+  //   routeObserver.unsubscribe(this);
+  //   banner?.dispose();
+  //   banner = null;
+  //   super.dispose();
+  // }
 
-  void didPopNext() {
-    if (banner == null) {
-      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    }
-  }
+  // void didPopNext() {
+  //   if (banner == null) {
+  //     banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+  //   }
+  // }
 
-  void didPushNext() {
-    banner?.dispose();
-    banner = null;
-  }
+  // void didPushNext() {
+  //   banner?.dispose();
+  //   banner = null;
+  // }
 
   Widget _dialog(BuildContext context, AppBloc bloc) =>
       StreamBuilder<List<Filter>>(
@@ -114,9 +115,13 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             return Scaffold(
               body: buildSliverBody(context, bloc: bloc),
               drawer: AppDrawer(),
-              persistentFooterButtons: <Widget>[
-                SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
-              ],
+              // persistentFooterButtons: <Widget>[
+              //   // SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
+              //   AdmobBanner(
+              //     adUnitId: "ca-app-pub-5131663294295156/8292017322",
+              //     adSize: AdmobBannerSize.BANNER,
+              //   )
+              // ],
             );
           });
     }, onError: (error, stacktrace) {
@@ -373,9 +378,23 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             ? snapshot.data.length > 0
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate(
-                        (context, idx) => DisclosureListItem(
-                            key: Key(snapshot.data[idx].documentID),
-                            item: snapshot.data[idx]),
+                        (context, idx) => (idx % 10 == 5)
+                            ? Column(
+                                children: <Widget>[
+                                  AdmobBanner(
+                                    adUnitId:
+                                        "ca-app-pub-5131663294295156/8292017322",
+                                    adSize: AdmobBannerSize.BANNER,
+                                  ),
+                                  DisclosureListItem(
+                                    key: Key(snapshot.data[idx].documentID),
+                                    item: snapshot.data[idx],
+                                  )
+                                ],
+                              )
+                            : DisclosureListItem(
+                                key: Key(snapshot.data[idx].documentID),
+                                item: snapshot.data[idx]),
                         childCount: snapshot.data.length),
                   )
                 : SliverFillRemaining(

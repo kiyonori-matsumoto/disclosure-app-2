@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:admob_flutter/admob_flutter.dart';
 import 'package:disclosure_app_fl/provider.dart';
 import 'package:flutter/material.dart';
 import 'app.dart';
@@ -22,6 +23,7 @@ void main() async {
   };
 
   await FlutterCrashlytics().initialize();
+  Admob.initialize('ca-app-pub-5131663294295156~3067610804');
   runZoned<Future<Null>>(() async {
     runApp(AppProvider(
       child: AppRootWidget(),
