@@ -173,7 +173,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             launchURL("https://disclosure-app.firebaseapp.com/whatsnew/1.1/");
           },
           tooltip: "新機能",
-        )
+        ),
       ],
     );
 

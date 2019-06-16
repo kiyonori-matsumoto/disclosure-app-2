@@ -96,7 +96,7 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("${this.tag})"),
+        title: Text("${this.tag}の通知履歴"),
       ),
       body: _buildBody(context),
       persistentFooterButtons: <Widget>[

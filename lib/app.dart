@@ -86,9 +86,16 @@ class AppRootWidgetState extends State<AppRootWidget> {
     print(navigatorKey.currentContext);
     final data = message['data'];
     final String code = data['code'] ?? '';
+    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
+
+    if (data['type'] == 'tag') {
+      final tag = data['tag'];
+      return navigatorKey.currentState
+          .pushNamed('/tag-disclosures', arguments: tag);
+    }
+
     final company =
         await getCompany(bloc, code: code, name: data['name'] ?? '');
-    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
     return navigatorKey.currentState
         .pushNamed('/company-disclosures', arguments: company);
   }
