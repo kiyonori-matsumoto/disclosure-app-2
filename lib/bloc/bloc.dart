@@ -76,6 +76,9 @@ class AppBloc extends Bloc {
   final _codeStrController = BehaviorSubject<String>(seedValue: '');
   final _storage = FirebaseStorage(storageBucket: 'gs://disclosure-app-2');
 
+  final _companiesHistory$ = BehaviorSubject<List<Company>>();
+  final _addHistory = StreamController<Company>();
+
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
   final _tagsNotifications$ = BehaviorSubject<List<String>>();
@@ -143,6 +146,10 @@ class AppBloc extends Bloc {
   ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
       _savedDisclosure$.stream;
   Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
+
+  ValueObservable<List<Company>> get companyHistory$ =>
+      _companiesHistory$.stream;
+  Sink<Company> get addHistory => _addHistory.sink;
 
   ValueObservable<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
@@ -371,6 +378,43 @@ class AppBloc extends Bloc {
         }).toList();
       },
     ).pipe(_favoritWithName$);
+
+    final history = _setting$.map<List<String>>(
+        (data) => data != null ? data['cp_hist']?.cast<String>() ?? [] : []);
+
+    Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
+      history,
+      _companies$.stream,
+      (_hist, _comps) {
+        // print("hist=$_hist, comps=$_comps");
+        return _hist
+            .map((_h) => _comps.firstWhere((_c) => _c.code == _h,
+                orElse: () => Company(_h, name: '???')))
+            .toList();
+      },
+    ).pipe(_companiesHistory$);
+
+    Observable.concat(<Stream<List<Company>>>[
+      _companiesHistory$.take(1),
+      Observable(_addHistory.stream).map((e) => [e].toList())
+    ])
+        .scan<List<Company>>(
+          (a, e, i) => (e + a.where((_a) => !e.contains(_a)).toList())
+              .getRange(0, 20)
+              .toList(),
+          [],
+        )
+        .doOnData((data) => print("******$data*******"))
+        .skip(1)
+        .map((e) => e.map((_e) => _e.code).toList())
+        .forEach((comps) async {
+          final user = await _userController.first;
+          if (user == null) return;
+          await Firestore.instance
+              .collection('users')
+              .document(user.uid)
+              .setData({"cp_hist": comps}, merge: true);
+        });
   }
 
   void _createCompanyListStreams() {
@@ -564,6 +608,8 @@ class AppBloc extends Bloc {
     _darkMode$.close();
     _setModeBrightness.close();
     _setDisclosureOrder$.close();
+    _companiesHistory$.close();
+    _addHistory.close();
   }
 
   String _toCode(String topic) {
