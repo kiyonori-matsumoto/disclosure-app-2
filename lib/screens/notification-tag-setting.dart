@@ -1,7 +1,5 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
 import 'package:flutter/material.dart';
 
 class NotificationTagSettingScreen extends StatefulWidget {
