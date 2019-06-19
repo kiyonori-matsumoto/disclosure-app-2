@@ -8,6 +8,7 @@ import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
+import 'package:disclosure_app_fl/screens/settlements-list.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -165,6 +166,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
               '/favorites': (context) => FavoriteScreen(),
               '/settings': (context) => SettingScreen(),
               '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+              '/settlements': (context) => SettlementsList(),
             },
             onGenerateRoute: (route) {
               print("onGenerateRoute $route");

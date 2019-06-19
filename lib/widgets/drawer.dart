@@ -45,6 +45,11 @@ class AppDrawer extends StatelessWidget {
             onTap: () => Navigator.of(context).popAndPushNamed('/favorites'),
           ),
           ListTile(
+            title: Text('決算予定'),
+            leading: Icon(Icons.monetization_on),
+            onTap: () => Navigator.of(context).popAndPushNamed('/settlements'),
+          ),
+          ListTile(
             title: Text('保存した開示情報'),
             leading: Icon(Icons.bookmark),
             onTap: () =>
