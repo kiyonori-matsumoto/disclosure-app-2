@@ -97,17 +97,40 @@ class CompanyListView extends StatelessWidget {
     final AppBloc bloc = BlocProvider.of<AppBloc>(context);
 
     return ListView.builder(
-      itemBuilder: (context, index) => ListTile(
-          title: Text(companies[index].name),
+      itemBuilder: (context, index) {
+        final company = companies[index];
+        return ListTile(
+          title: Text(company.name),
           leading: history ? Icon(Icons.history) : null,
           onTap: () {
-            bloc.addHistory.add(companies[index]);
+            bloc.addHistory.add(company);
             return Navigator.pushNamed(
               context,
               '/company-disclosures',
-              arguments: companies[index],
+              arguments: company,
             );
-          }),
+          },
+          trailing: PopupMenuButton(
+            itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: Text('お気に入りに追加'),
+                    value: 'add_favorite',
+                  )
+                ],
+            onSelected: (value) {
+              switch (value) {
+                case "add_favorite":
+                  bloc.addFavorite.add(company.code);
+                  Scaffold.of(context).showSnackBar((SnackBar(
+                    content: Text('${company.name}をお気に入りに追加しました'),
+                  )));
+                  break;
+                default:
+              }
+            },
+          ),
+        );
+      },
       itemCount: companies.length,
     );
   }

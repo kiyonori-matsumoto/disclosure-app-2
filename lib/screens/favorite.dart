@@ -66,14 +66,22 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                           child: Text('お気に入りはありません'),
                         ),
                 ),
-                Divider(),
-                BottomTextFieldWithIcon(
-                  onSubmit: (code) {
-                    this._handleSubmit(bloc, code);
+                Divider(
+                  height: 8.0,
+                ),
+                RaisedButton(
+                  child: Text('検索して追加'),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/companies');
                   },
-                  hintText: '証券コード',
-                  keyboardType: TextInputType.number,
                 )
+                // BottomTextFieldWithIcon(
+                //   onSubmit: (code) {
+                //     this._handleSubmit(bloc, code);
+                //   },
+                //   hintText: '証券コード',
+                //   keyboardType: TextInputType.number,
+                // )
               ],
             ),
           );

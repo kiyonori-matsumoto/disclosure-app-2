@@ -399,9 +399,8 @@ class AppBloc extends Bloc {
       Observable(_addHistory.stream).map((e) => [e].toList())
     ])
         .scan<List<Company>>(
-          (a, e, i) => (e + a.where((_a) => !e.contains(_a)).toList())
-              .getRange(0, 20)
-              .toList(),
+          (a, e, i) =>
+              (e + a.where((_a) => !e.contains(_a)).toList()).take(20).toList(),
           [],
         )
         .doOnData((data) => print("******$data*******"))
