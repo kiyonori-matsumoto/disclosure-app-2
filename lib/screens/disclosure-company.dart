@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
+import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -52,66 +53,70 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return RefreshIndicator(
-      child: CustomScrollView(slivers: <Widget>[
-        StreamBuilder<CompanySettlement>(
-            stream: bloc2.companySettlement$,
-            builder: (context, snapshot) {
-              return SliverList(
-                delegate: SliverChildListDelegate(
-                  (!snapshot.hasData ||
-                          snapshot.data == null ||
-                          snapshot.data.schedule == null ||
-                          snapshot.data.schedule
-                              .add(Duration(days: 1))
-                              .isBefore(DateTime.now()))
-                      ? []
-                      : [
-                          Card(
-                            child: Column(
-                              children: <Widget>[
-                                ListTile(
-                                  leading: Icon(
-                                    Icons.announcement,
-                                    color: Theme.of(context).backgroundColor,
-                                  ),
-                                  title: Text(snapshot.data.toMessage()),
-                                )
-                              ],
-                            ),
-                            shape: RoundedRectangleBorder(),
-                          )
-                        ],
+      child: (snapshot.length == 0
+          ? const NoDisclosures()
+          : CustomScrollView(slivers: <Widget>[
+              StreamBuilder<CompanySettlement>(
+                stream: bloc2.companySettlement$,
+                builder: (context, snapshot) {
+                  return SliverList(
+                    delegate: SliverChildListDelegate(
+                      (!snapshot.hasData ||
+                              snapshot.data == null ||
+                              snapshot.data.schedule == null ||
+                              snapshot.data.schedule
+                                  .add(Duration(days: 1))
+                                  .isBefore(DateTime.now()))
+                          ? []
+                          : [
+                              Card(
+                                child: Column(
+                                  children: <Widget>[
+                                    ListTile(
+                                      leading: Icon(
+                                        Icons.announcement,
+                                        color:
+                                            Theme.of(context).backgroundColor,
+                                      ),
+                                      title: Text(snapshot.data.toMessage()),
+                                    )
+                                  ],
+                                ),
+                                shape: RoundedRectangleBorder(),
+                              )
+                            ],
+                    ),
+                  );
+                },
+              ),
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => DisclosureListItem(
+                        item: snapshot[index],
+                        showDate: true,
+                        key: Key(snapshot[index]['document']),
+                      ),
+                  childCount: snapshot.length,
                 ),
-              );
-            }),
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => DisclosureListItem(
-                  item: snapshot[index],
-                  showDate: true,
-                  key: Key(snapshot[index]['document']),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                    child: StreamBuilder<bool>(
+                        stream: bloc2.disclosure.isLoading$,
+                        builder: (context, snapshot) {
+                          return snapshot.data == false
+                              ? Text('更に読み込む')
+                              : CircularProgressIndicator();
+                        }),
+                    onPressed: () {
+                      this.bloc2.disclosure?.loadNext?.add(snapshot.last);
+                    },
+                  ),
                 ),
-            childCount: snapshot.length,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: RaisedButton(
-              child: StreamBuilder<bool>(
-                  stream: bloc2.disclosure.isLoading$,
-                  builder: (context, snapshot) {
-                    return snapshot.data == false
-                        ? Text('更に読み込む')
-                        : CircularProgressIndicator();
-                  }),
-              onPressed: () {
-                this.bloc2.disclosure?.loadNext?.add(snapshot.last);
-              },
-            ),
-          ),
-        )
-      ]),
+              )
+            ])),
       onRefresh: () {
         bloc2.disclosure?.reload?.add(this.company.code);
         return bloc2.disclosure?.isLoading$?.where((e) => e)?.first;

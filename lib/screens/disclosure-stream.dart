@@ -9,6 +9,7 @@ import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
+import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -379,16 +380,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                         childCount: snapshot.data.length),
                   )
                 : SliverFillRemaining(
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.event_busy),
-                          Text("選択した条件の適時開示は0件です"),
-                        ],
-                      ),
-                    ),
+                    child: NoDisclosures(),
                   )
             : SliverToBoxAdapter(
                 child: LinearProgressIndicator(),

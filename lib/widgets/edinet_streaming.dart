@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
 
+import 'no_disclosures.dart';
+
 final smallGrey = TextStyle(
   color: Colors.grey,
   fontSize: 10,
@@ -74,16 +76,7 @@ class EdinetSliverList extends StatelessWidget {
                     }, childCount: snapshot.data.length),
                   )
                 : SliverFillRemaining(
-                    child: Container(
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Icon(Icons.event_busy),
-                          Text("選択した条件の適時開示は0件です"),
-                        ],
-                      ),
-                    ),
+                    child: new NoDisclosures(),
                   )
             : SliverToBoxAdapter(
                 child: LinearProgressIndicator(),
