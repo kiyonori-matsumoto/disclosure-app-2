@@ -6,7 +6,6 @@ import 'package:disclosure_app_fl/screens/notification-setting.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'notification-tag-setting.dart';
@@ -125,7 +124,7 @@ class _SettingScreenState extends State<SettingScreen> {
             const url = 'https://disclosure-app.firebaseapp.com/privacy/';
             launchURL(url);
           },
-        )
+        ),
       ],
     );
   }
@@ -145,7 +144,8 @@ class _SettingScreenState extends State<SettingScreen> {
           idToken: googleAuth.idToken,
         ));
       } else {
-        user = await _auth.linkWithCredential(GoogleAuthProvider.getCredential(
+        user = await FirebaseAuth.instance.currentUser();
+        user = await user.linkWithCredential(GoogleAuthProvider.getCredential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         ));
