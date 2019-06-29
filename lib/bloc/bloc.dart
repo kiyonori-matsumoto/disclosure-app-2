@@ -215,21 +215,23 @@ class AppBloc extends Bloc {
     //     .map((filters) => filters.where((f) => f.isCustom).toList())
     //     .pipe(_customFilter$);
 
-    final store$ = _userController
-        .share()
-        .switchMap((_) => _dateController)
-        .flatMap((date) {
-      final _date = DateTime(date.year, date.month, date.day);
-      final start = _date.millisecondsSinceEpoch;
-      final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
-      return Observable(store
-              .collection(this.path)
-              .where('time', isGreaterThanOrEqualTo: start)
-              .where('time', isLessThan: end)
-              .orderBy('time', descending: true)
-              .snapshots())
-          .startWith(null);
-    });
+    final store$ =
+        Observable.combineLatest2<String, DateTime, Stream<QuerySnapshot>>(
+      _userController.map((u) => u.uid).distinct(),
+      _dateController,
+      (user, date) {
+        final _date = DateTime(date.year, date.month, date.day);
+        final start = _date.millisecondsSinceEpoch;
+        final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
+        return Observable(store
+                .collection(this.path)
+                .where('time', isGreaterThanOrEqualTo: start)
+                .where('time', isLessThan: end)
+                .orderBy('time', descending: true)
+                .snapshots())
+            .startWith(null);
+      },
+    ).flatMap((e) => e);
 
     final showingFavorite = _showOnlyFavorites$.switchMap((val) {
       if (val) {
