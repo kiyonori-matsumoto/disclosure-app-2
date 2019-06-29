@@ -26,7 +26,7 @@ dependencies:
   firebase_auth: ^0.8.1
   firebase_messaging: ^4.0.0
   firebase_storage: ^2.1.0
-  flutter_crashlytics: ^0.3.0
+  flutter_crashlytics: ^1.0.0
   flutter_localizations:
     sdk: flutter
   flutter_sticky_header: ^0.3.4

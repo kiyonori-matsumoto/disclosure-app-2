@@ -17,6 +17,7 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_crashlytics/flutter_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'screens/disclosure-stream.dart';
@@ -78,7 +79,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
     });
 
     _message.subscribeToTopic('edinet_notification');
-    _message.unsubscribeFromTopic('edinet');
+    // _message.unsubscribeFromTopic('edinet');
+
+    bloc.user$.listen((user) {
+      FlutterCrashlytics().setUserInfo(user.uid, user.email, user.displayName);
+    });
   }
 
   Future<void> _handleNotification(Map<String, dynamic> message) async {
