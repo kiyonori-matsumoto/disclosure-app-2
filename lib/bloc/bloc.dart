@@ -511,7 +511,15 @@ class AppBloc extends Bloc {
           }
         })
         .then((topics) => _notificationString$.add(topics))
-        .catchError(_notificationString$.addError);
+        .catchError((err) {
+          print(err);
+          if (err is SocketException) {
+            _notificationString$
+                .addError(new SocketException("サーバーとの通信に失敗しました"));
+          } else {
+            _notificationString$.addError(err);
+          }
+        });
 
     _notificationString$.map((notifications) {
       return notifications
