@@ -19,7 +19,7 @@ class FirestoreGetCount<T> extends Bloc {
   final StreamController<void> _reloadController = StreamController();
   final StreamController<T> _loadNextController = StreamController();
   final BehaviorSubject<List<T>> _data$ = BehaviorSubject();
-  final BehaviorSubject<bool> _isLoading$ = BehaviorSubject(seedValue: true);
+  final BehaviorSubject<bool> _isLoading$ = BehaviorSubject.seeded(true);
 
   Sink<void> get reload => _reloadController.sink;
   Sink<T> get loadNext => _loadNextController.sink;

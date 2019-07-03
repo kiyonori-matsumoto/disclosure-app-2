@@ -29,27 +29,26 @@ final Map<String, Comparator<DocumentSnapshot>> comparators = {
 
 class AppBloc extends Bloc {
   final path = 'disclosures';
-  final _dateController = BehaviorSubject<DateTime>(seedValue: DateTime.now());
+  final _dateController = BehaviorSubject<DateTime>.seeded(DateTime.now());
   final _edinetDateController =
-      BehaviorSubject<DateTime>(seedValue: DateTime.now());
+      BehaviorSubject<DateTime>.seeded(DateTime.now());
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
-  final _edinetFilter$ = BehaviorSubject<String>(seedValue: '');
-  final _showOnlyFavorites$ = BehaviorSubject<bool>(seedValue: false);
-  final _customFilter$ = BehaviorSubject<List<Filter>>(seedValue: []);
+  final _edinetFilter$ = BehaviorSubject<String>.seeded('');
+  final _showOnlyFavorites$ = BehaviorSubject<bool>.seeded(false);
+  final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
-  final _darkMode$ = BehaviorSubject<Brightness>(seedValue: Brightness.light);
+  final _darkMode$ = BehaviorSubject<Brightness>.seeded(Brightness.light);
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
-  final _setDisclosureOrder$ = BehaviorSubject<String>(seedValue: "最新");
+  final _setDisclosureOrder$ = BehaviorSubject<String>.seeded("最新");
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
   final StreamController<Filter> _removeCustomFilterController =
       StreamController();
-  final _edinetShowOnlyFavoriteController =
-      BehaviorSubject<bool>(seedValue: false);
+  final _edinetShowOnlyFavoriteController = BehaviorSubject<bool>.seeded(false);
 
   final StreamController<String> _filterChangeController = StreamController();
 
@@ -73,7 +72,7 @@ class AppBloc extends Bloc {
   final _filtetrdCompanies$ = BehaviorSubject<List<Company>>();
   final _companies$ = BehaviorSubject<List<Company>>();
   final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
-  final _codeStrController = BehaviorSubject<String>(seedValue: '');
+  final _codeStrController = BehaviorSubject<String>.seeded('');
   final _storage = FirebaseStorage(storageBucket: 'gs://disclosure-app-2');
 
   final _companiesHistory$ = BehaviorSubject<List<Company>>();
