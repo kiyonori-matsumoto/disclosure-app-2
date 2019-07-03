@@ -21,10 +21,15 @@ final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新�
 
 final dateFormatter = DateFormat("yyyy-MM-dd");
 
+T getOr<T>(T a, T b) {
+  return a == 0 ? b : a;
+}
+
 final Map<String, Comparator<DocumentSnapshot>> comparators = {
   "最新": null,
-  "閲覧回数": (a, b) =>
+  "閲覧回数": (a, b) => getOr(
       (b.data['view_count'] ?? 0).compareTo(a.data['view_count'] ?? 0),
+      (b.data['time'] ?? 0).compareTo(a.data['time'] ?? 0)),
 };
 
 class AppBloc extends Bloc {
