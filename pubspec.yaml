@@ -7,7 +7,7 @@ description: A new Flutter project.
 # Both the version and the builder number may be overridden in flutter
 # build by specifying --build-name and --build-number, respectively.
 # Read more about versioning at semver.org.
-version: 1.1.1
+version: 1.1.2
 
 environment:
   sdk: ">=2.3.0-dev.0.0 <3.0.0"
@@ -29,7 +29,7 @@ dependencies:
   flutter_crashlytics: ^1.0.0
   flutter_localizations:
     sdk: flutter
-  flutter_sticky_header: ^0.3.4
+  flutter_sticky_header: ^0.4.0
   http:
   google_sign_in: ^4.0.1
   intl: ^0.15.7
