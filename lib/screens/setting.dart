@@ -100,21 +100,21 @@ class _SettingScreenState extends State<SettingScreen> {
         StreamBuilder<FirebaseUser>(
           stream: bloc.user$,
           builder: (context, snapshot) => RaisedButton(
-                color: Color(0xff4285f4),
-                textColor: Colors.white,
-                onPressed: () {
-                  snapshot.hasData &&
-                          snapshot.data.providerData
-                              .any((p) => p.providerId == "google.com")
-                      ? this._handleSignOut(context)
-                      : this._handleSignIn(context);
-                },
-                child: snapshot.hasData &&
-                        snapshot.data.providerData
-                            .any((p) => p.providerId == "google.com")
-                    ? Text('GOOGLE連携を解除')
-                    : Text('GOOGLE連携'),
-              ),
+            color: Color(0xff4285f4),
+            textColor: Colors.white,
+            onPressed: () {
+              snapshot.hasData &&
+                      snapshot.data.providerData
+                          .any((p) => p.providerId == "google.com")
+                  ? this._handleSignOut(context)
+                  : this._handleSignIn(context);
+            },
+            child: snapshot.hasData &&
+                    snapshot.data.providerData
+                        .any((p) => p.providerId == "google.com")
+                ? Text('GOOGLE連携を解除')
+                : Text('GOOGLE連携'),
+          ),
         ),
         ListTile(
           title: Row(
@@ -139,16 +139,18 @@ class _SettingScreenState extends State<SettingScreen> {
       FirebaseUser user;
       if (providers.contains('google.com')) {
         user =
-            await _auth.signInWithCredential(GoogleAuthProvider.getCredential(
+            (await _auth.signInWithCredential(GoogleAuthProvider.getCredential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
-        ));
+        )))
+                .user;
       } else {
         user = await FirebaseAuth.instance.currentUser();
-        user = await user.linkWithCredential(GoogleAuthProvider.getCredential(
+        user = (await user.linkWithCredential(GoogleAuthProvider.getCredential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
-        ));
+        )))
+            .user;
       }
       print(user.providerId);
       // Scaffold.of(context).showSnackBar(SnackBar(
@@ -159,32 +161,32 @@ class _SettingScreenState extends State<SettingScreen> {
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              content: const Text('お気に入りから通知を復元しますか？'),
-              actions: <Widget>[
-                RaisedButton(
-                    child: const Text('復元する'),
-                    textColor: Theme.of(context).primaryTextTheme.button.color,
-                    onPressed: () async {
-                      final id = user.uid;
-                      final settings = await Firestore.instance
-                          .collection('users')
-                          .document(id)
-                          .get();
-                      final List<String> favs =
-                          settings.data['favorites'].cast<String>();
-                      favs.forEach((fav) {
-                        this.bloc.addNotification.add(fav);
-                      });
-                      Navigator.pop(context);
-                    }),
-                FlatButton(
-                  child: const Text('キャンセル'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
+          content: const Text('お気に入りから通知を復元しますか？'),
+          actions: <Widget>[
+            RaisedButton(
+                child: const Text('復元する'),
+                textColor: Theme.of(context).primaryTextTheme.button.color,
+                onPressed: () async {
+                  final id = user.uid;
+                  final settings = await Firestore.instance
+                      .collection('users')
+                      .document(id)
+                      .get();
+                  final List<String> favs =
+                      settings.data['favorites'].cast<String>();
+                  favs.forEach((fav) {
+                    this.bloc.addNotification.add(fav);
+                  });
+                  Navigator.pop(context);
+                }),
+            FlatButton(
+              child: const Text('キャンセル'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
             ),
+          ],
+        ),
       );
       return user;
     } catch (e) {
