@@ -14,7 +14,7 @@ class FirestoreGetCount<T> extends Bloc {
   final Query query;
   final Function(T) getFn;
   final T Function(DocumentSnapshot) mapper;
-  final ValueObservable<FirebaseUser> user$;
+  final ValueStream<FirebaseUser> user$;
 
   final StreamController<void> _reloadController = StreamController();
   final StreamController<T> _loadNextController = StreamController();
@@ -23,8 +23,8 @@ class FirestoreGetCount<T> extends Bloc {
 
   Sink<void> get reload => _reloadController.sink;
   Sink<T> get loadNext => _loadNextController.sink;
-  ValueObservable<List<T>> get data$ => _data$.stream;
-  ValueObservable<bool> get isLoading$ => _isLoading$.stream;
+  ValueStream<List<T>> get data$ => _data$.stream;
+  ValueStream<bool> get isLoading$ => _isLoading$.stream;
 
   FirestoreGetCount({
     @required this.query,
@@ -32,8 +32,8 @@ class FirestoreGetCount<T> extends Bloc {
     @required this.mapper,
     @required this.user$,
   }) {
-    Observable(_reloadController.stream).switchMap((_) {
-      return Observable(_loadNextController.stream)
+    _reloadController.stream.switchMap((_) {
+      return _loadNextController.stream
           .startWith(null)
           .doOnData((_) => this._isLoading$.add(true))
           .flatMap((last) {
@@ -44,7 +44,7 @@ class FirestoreGetCount<T> extends Bloc {
               print("start after = $lastData");
               q = q.startAfter([lastData]);
             }
-            return Observable.fromFuture(
+            return Stream.fromFuture(
                 user$.first.then((user) => q.limit(20).getDocuments()));
           })
           .doOnData((_) => this._isLoading$.add(false))
@@ -72,13 +72,13 @@ class CompanyDisclosureBloc2 extends Bloc {
   final FirestoreGetCount<Edinet> edinet;
   final FirestoreGetCount<DocumentSnapshot> disclosure;
 
-  final ValueObservable<Map<String, Company>> companies;
-  final ValueObservable<FirebaseUser> user$;
+  final ValueStream<Map<String, Company>> companies;
+  final ValueStream<FirebaseUser> user$;
 
   final BehaviorSubject<CompanySettlement> _companySettlement$ =
       BehaviorSubject();
 
-  ValueObservable<CompanySettlement> get companySettlement$ =>
+  ValueStream<CompanySettlement> get companySettlement$ =>
       _companySettlement$.stream;
 
   CompanyDisclosureBloc2._(
@@ -92,8 +92,8 @@ class CompanyDisclosureBloc2 extends Bloc {
   }
 
   factory CompanyDisclosureBloc2(Company company,
-      {@required ValueObservable<Map<String, Company>> companies,
-      @required ValueObservable<FirebaseUser> user$}) {
+      {@required ValueStream<Map<String, Company>> companies,
+      @required ValueStream<FirebaseUser> user$}) {
     final edinet = company.edinetCode != null
         ? FirestoreGetCount<Edinet>(
             user$: user$,

@@ -7,6 +7,9 @@ import 'package:flutter_crashlytics/flutter_crashlytics.dart';
 import 'package:flutter/rendering.dart';
 
 void main() async {
+  // add this, and it should be the first line in main method
+  WidgetsFlutterBinding.ensureInitialized();
+
   // debugPaintSizeEnabled = true;
   FlutterError.onError = (FlutterErrorDetails details) {
     print("FlutterError onerror handler");

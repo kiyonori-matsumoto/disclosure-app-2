@@ -92,53 +92,53 @@ class AppBloc extends Bloc {
   final _addTagsNotificationController = StreamController<String>();
   final _removeTagsNotificationController = StreamController<String>();
 
-  ValueObservable<List<DocumentSnapshot>> get disclosure$ =>
+  ValueStream<List<DocumentSnapshot>> get disclosure$ =>
       _disclosure$.stream;
 
   Sink<DateTime> get date => _dateController.sink;
-  ValueObservable<DateTime> get date$ => _dateController.stream;
-  ValueObservable<List<Company>> get company$ => _companies$.stream;
-  ValueObservable<Map<String, Company>> get companyMap$ =>
+  ValueStream<DateTime> get date$ => _dateController.stream;
+  ValueStream<List<Company>> get company$ => _companies$.stream;
+  ValueStream<Map<String, Company>> get companyMap$ =>
       _companiesMap$.stream;
   Sink<DateTime> get edinetDate => _edinetDateController.sink;
-  ValueObservable<DateTime> get edinetDate$ => _edinetDateController.stream;
+  ValueStream<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
-  ValueObservable<FirebaseUser> get user$ => _userController.stream;
-  ValueObservable<List<Filter>> get filter$ => _filter$.stream;
-  ValueObservable<String> get edinetFilter$ => _edinetFilter$.stream;
+  ValueStream<FirebaseUser> get user$ => _userController.stream;
+  ValueStream<List<Filter>> get filter$ => _filter$.stream;
+  ValueStream<String> get edinetFilter$ => _edinetFilter$.stream;
   Sink<String> get edintFilterController => _edinetFilter$.sink;
-  Observable<int> get filterCount$ =>
+  Stream<int> get filterCount$ =>
       _filter$.map((f) => f.where((_f) => _f.isSelected).length);
-  ValueObservable<List<Filter>> get customFilters$ => _customFilter$.stream;
+  ValueStream<List<Filter>> get customFilters$ => _customFilter$.stream;
   Sink<String> get addCustomFilter => _addCustomFilterController.sink;
   Sink<Filter> get removeCustomFilter => _removeCustomFilterController.sink;
 
   Sink<bool> get setShowOnlyFavorites => _showOnlyFavorites$.sink;
-  ValueObservable<bool> get showOnlyFavorites$ => _showOnlyFavorites$.stream;
+  ValueStream<bool> get showOnlyFavorites$ => _showOnlyFavorites$.stream;
 
-  ValueObservable<bool> get edinetShowOnlyFavorite$ =>
+  ValueStream<bool> get edinetShowOnlyFavorite$ =>
       _edinetShowOnlyFavoriteController.stream;
   Sink<bool> get edinetSetShowOnlyFavorite =>
       _edinetShowOnlyFavoriteController.sink;
 
-  ValueObservable<Map<String, dynamic>> get settings$ => _setting$.stream;
-  Observable<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
+  ValueStream<Map<String, dynamic>> get settings$ => _setting$.stream;
+  Stream<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
   Sink<bool> get setVisibleDailyDisclosure =>
       _setVisibleDailyDisclosureController.sink;
 
   Sink<String> get addFavorite => _addFavoriteController.sink;
   Sink<String> get removeFavorite => _removeFavoriteController.sink;
   Sink<String> get switchFavorite => _switchFavoriteController.sink;
-  ValueObservable<List<String>> get favorites$ => _favorit$.stream;
-  ValueObservable<List<Company>> get favoritesWithName$ =>
+  ValueStream<List<String>> get favorites$ => _favorit$.stream;
+  ValueStream<List<Company>> get favoritesWithName$ =>
       _favoritWithName$.stream;
 
-  ValueObservable<List<Company>> get filteredCompany$ =>
+  ValueStream<List<Company>> get filteredCompany$ =>
       _filtetrdCompanies$.stream;
   Sink<String> get changeFilter => _codeStrController.sink;
 
-  ValueObservable<List<Company>> get notifications$ => _notifications$.stream;
-  ValueObservable<List<String>> get tagsNotifications$ =>
+  ValueStream<List<Company>> get notifications$ => _notifications$.stream;
+  ValueStream<List<String>> get tagsNotifications$ =>
       _tagsNotifications$.stream;
   Sink<String> get addNotification => _addNotificationController.sink;
   Sink<String> get removeNotification => _removeNotificationController.sink;
@@ -147,18 +147,18 @@ class AppBloc extends Bloc {
   Sink<String> get removeTagsNotification =>
       _removeTagsNotificationController.sink;
 
-  ValueObservable<List<DocumentSnapshot>> get savedDisclosure$ =>
+  ValueStream<List<DocumentSnapshot>> get savedDisclosure$ =>
       _savedDisclosure$.stream;
   Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
 
-  ValueObservable<List<Company>> get companyHistory$ =>
+  ValueStream<List<Company>> get companyHistory$ =>
       _companiesHistory$.stream;
   Sink<Company> get addHistory => _addHistory.sink;
 
-  ValueObservable<Brightness> get darkMode$ => _darkMode$.stream;
+  ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
-  ValueObservable<String> get setDisclosureOrder$ =>
+  ValueStream<String> get setDisclosureOrder$ =>
       _setDisclosureOrder$.stream;
   Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
 
@@ -220,19 +220,14 @@ class AppBloc extends Bloc {
     //     .pipe(_customFilter$);
 
     final store$ =
-        Observable.combineLatest2<String, DateTime, Stream<QuerySnapshot>>(
+        Rx.combineLatest2<String, DateTime, Stream<QuerySnapshot>>(
       _userController.map((u) => u.uid).distinct(),
       _dateController,
       (user, date) {
         final _date = DateTime(date.year, date.month, date.day);
         final start = _date.millisecondsSinceEpoch;
         final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
-        return Observable(store
-                .collection(this.path)
-                .where('time', isGreaterThanOrEqualTo: start)
-                .where('time', isLessThan: end)
-                .orderBy('time', descending: true)
-                .snapshots())
+        return store.collection(this.path).where('time', isGreaterThanOrEqualTo: start).where('time', isLessThan: end).orderBy('time', descending: true).snapshots()
             .startWith(null);
       },
     ).flatMap((e) => e);
@@ -241,10 +236,10 @@ class AppBloc extends Bloc {
       if (val) {
         return _favorit$;
       }
-      return Observable.just(<String>[]);
+      return Stream.value(<String>[]);
     });
 
-    Observable.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
+    Rx.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
             String, List<DocumentSnapshot>>(
         this._filter$,
         store$,
@@ -292,12 +287,12 @@ class AppBloc extends Bloc {
 
     _createSavedDisclosureStreams();
 
-    final br = Observable(_setModeBrightness.stream).doOnData((mode) =>
+    final br = _setModeBrightness.stream.doOnData((mode) =>
         SharedPreferences.getInstance()
             .then((pref) => pref.setBool('setDarkMode', mode)));
 
-    Observable.concat(<Stream<bool>>[
-      Observable.fromFuture(SharedPreferences.getInstance().then((pref) =>
+    Rx.concat(<Stream<bool>>[
+      Stream.fromFuture(SharedPreferences.getInstance().then((pref) =>
           pref.containsKey('setDarkMode')
               ? pref.getBool('setDarkMode')
               : true)),
@@ -374,7 +369,7 @@ class AppBloc extends Bloc {
       favorites.addAll(data);
     });
 
-    Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
       _favorit$,
       _companies$.stream,
       (_favs, _conps) {
@@ -388,7 +383,7 @@ class AppBloc extends Bloc {
     final history = _setting$.map<List<String>>(
         (data) => data != null ? data['cp_hist']?.cast<String>() ?? [] : []);
 
-    Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
       history,
       _companies$.stream,
       (_hist, _comps) {
@@ -400,9 +395,9 @@ class AppBloc extends Bloc {
       },
     ).pipe(_companiesHistory$);
 
-    Observable.concat(<Stream<List<Company>>>[
+    Rx.concat(<Stream<List<Company>>>[
       _companiesHistory$.take(1),
-      Observable(_addHistory.stream).map((e) => [e].toList())
+      _addHistory.stream.map((e) => [e].toList())
     ])
         .scan<List<Company>>(
           (a, e, i) =>
@@ -465,7 +460,7 @@ class AppBloc extends Bloc {
             .toList())
         .pipe(_companies$);
 
-    Observable.combineLatest2<List<Company>, String, List<Company>>(
+    Rx.combineLatest2<List<Company>, String, List<Company>>(
       _companies$.stream,
       _codeStrController.stream,
       (data, str) {
@@ -528,7 +523,7 @@ class AppBloc extends Bloc {
           .toList();
     }).pipe(_tagsNotifications$);
 
-    Observable.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
       _notificationString$,
       _companies$.stream,
       (_topics, _comps) {

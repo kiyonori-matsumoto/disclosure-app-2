@@ -17,29 +17,22 @@ class EdinetBloc extends Bloc {
   final _edinet$ = BehaviorSubject<List<Edinet>>();
   // final _filter$ = BehaviorSubject<String>(seedValue: '');
 
-  ValueObservable<List<Edinet>> get edinet$ => _edinet$.stream;
+  ValueStream<List<Edinet>> get edinet$ => _edinet$.stream;
   // ValueObservable<String> get filter$ => _filter$;
   // Sink<String> get filterController => _filter$.sink;
 
-  Observable<List<Edinet>> edinetStream(AppBloc bloc) {
+  Stream<List<Edinet>> edinetStream(AppBloc bloc) {
     final _edinets =
         bloc.user$.switchMap((_) => bloc.edinetDate$).switchMap((date) {
       print("***date*** $date");
       final start = dateFormatter.format(date);
       final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return Observable(
-        Firestore.instance
-            .collection(path)
-            .where('seq', isGreaterThanOrEqualTo: start)
-            .where('seq', isLessThan: end)
-            .orderBy('seq', descending: true)
-            .snapshots(),
-      ).startWith(null);
+      return Firestore.instance.collection(path).where('seq', isGreaterThanOrEqualTo: start).where('seq', isLessThan: end).orderBy('seq', descending: true).snapshots().startWith(null);
     }).map((doc) {
       return doc?.documents;
     });
 
-    final _mappedEdinets = Observable.combineLatest2<
+    final _mappedEdinets = Rx.combineLatest2<
         List<DocumentSnapshot>,
         Map<String, Company>,
         Iterable<Edinet>>(_edinets, bloc.companyMap$, (edinets, companies) {
@@ -54,7 +47,7 @@ class EdinetBloc extends Bloc {
     });
 
     final _favorite$ =
-        Observable.combineLatest2<List<Company>, bool, List<Company>>(
+        Rx.combineLatest2<List<Company>, bool, List<Company>>(
             bloc.favoritesWithName$, bloc.edinetShowOnlyFavorite$,
             (_favorites, _favoriteOnly) {
       if (_favoriteOnly == false) {
@@ -63,7 +56,7 @@ class EdinetBloc extends Bloc {
       return _favorites;
     });
 
-    return Observable.combineLatest3<Iterable<Edinet>, String, List<Company>,
+    return Rx.combineLatest3<Iterable<Edinet>, String, List<Company>,
             List<Edinet>>(_mappedEdinets, bloc.edinetFilter$, _favorite$,
         (edinets, filter, favorites) {
       if (edinets == null) {

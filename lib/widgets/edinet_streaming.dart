@@ -41,7 +41,7 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
 }
 
 class EdinetSliverList extends StatelessWidget {
-  final ValueObservable<List<Edinet>> stream;
+  final ValueStream<List<Edinet>> stream;
 
   EdinetSliverList({@required this.stream});
 

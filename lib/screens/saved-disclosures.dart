@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
+import 'package:rxdart/rxdart.dart';
 
 class SavedDisclosuresScreen extends StatefulWidget {
   @override
@@ -57,30 +58,30 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, i) => Dismissible(
-                                  key: Key(entry.value[i].data['document']),
-                                  child: DisclosureListItem(
-                                    item: entry.value[i],
-                                    showDate: true,
+                              key: Key(entry.value[i].data['document']),
+                              child: DisclosureListItem(
+                                item: entry.value[i],
+                                showDate: true,
+                              ),
+                              onDismissed: ((direction) {
+                                final entryBack = entry.value[i].data;
+                                final entryRef = entry.value[i].reference;
+                                entry.value[i].reference.delete();
+                                final revert = () {
+                                  entryRef.setData(entryBack);
+                                };
+                                Scaffold.of(context).showSnackBar(SnackBar(
+                                  content: Text('削除しました'),
+                                  action: SnackBarAction(
+                                    onPressed: revert,
+                                    label: "取り消す",
                                   ),
-                                  onDismissed: ((direction) {
-                                    final entryBack = entry.value[i].data;
-                                    final entryRef = entry.value[i].reference;
-                                    entry.value[i].reference.delete();
-                                    final revert = () {
-                                      entryRef.setData(entryBack);
-                                    };
-                                    Scaffold.of(context).showSnackBar(SnackBar(
-                                      content: Text('削除しました'),
-                                      action: SnackBarAction(
-                                        onPressed: revert,
-                                        label: "取り消す",
-                                      ),
-                                    ));
-                                  }),
-                                  background: Container(
-                                    color: Colors.green,
-                                  ),
-                                ),
+                                ));
+                              }),
+                              background: Container(
+                                color: Colors.green,
+                              ),
+                            ),
                             childCount: entry.value.length,
                           ),
                         ),
