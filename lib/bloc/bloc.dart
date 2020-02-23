@@ -57,6 +57,9 @@ class AppBloc extends Bloc {
 
   final StreamController<String> _filterChangeController = StreamController();
 
+  final StreamController<bool> _refreshDisclosuresController =
+      StreamController();
+
   // users
   final _userController = BehaviorSubject<FirebaseUser>();
 
@@ -93,6 +96,8 @@ class AppBloc extends Bloc {
   final _removeTagsNotificationController = StreamController<String>();
 
   ValueStream<List<DocumentSnapshot>> get disclosure$ => _disclosure$.stream;
+
+  Sink<bool> get refreshDisclosures => _refreshDisclosuresController.sink;
 
   Sink<DateTime> get date => _dateController.sink;
   ValueStream<DateTime> get date$ => _dateController.stream;
