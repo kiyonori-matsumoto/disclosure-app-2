@@ -92,14 +92,12 @@ class AppBloc extends Bloc {
   final _addTagsNotificationController = StreamController<String>();
   final _removeTagsNotificationController = StreamController<String>();
 
-  ValueStream<List<DocumentSnapshot>> get disclosure$ =>
-      _disclosure$.stream;
+  ValueStream<List<DocumentSnapshot>> get disclosure$ => _disclosure$.stream;
 
   Sink<DateTime> get date => _dateController.sink;
   ValueStream<DateTime> get date$ => _dateController.stream;
   ValueStream<List<Company>> get company$ => _companies$.stream;
-  ValueStream<Map<String, Company>> get companyMap$ =>
-      _companiesMap$.stream;
+  ValueStream<Map<String, Company>> get companyMap$ => _companiesMap$.stream;
   Sink<DateTime> get edinetDate => _edinetDateController.sink;
   ValueStream<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
@@ -130,11 +128,9 @@ class AppBloc extends Bloc {
   Sink<String> get removeFavorite => _removeFavoriteController.sink;
   Sink<String> get switchFavorite => _switchFavoriteController.sink;
   ValueStream<List<String>> get favorites$ => _favorit$.stream;
-  ValueStream<List<Company>> get favoritesWithName$ =>
-      _favoritWithName$.stream;
+  ValueStream<List<Company>> get favoritesWithName$ => _favoritWithName$.stream;
 
-  ValueStream<List<Company>> get filteredCompany$ =>
-      _filtetrdCompanies$.stream;
+  ValueStream<List<Company>> get filteredCompany$ => _filtetrdCompanies$.stream;
   Sink<String> get changeFilter => _codeStrController.sink;
 
   ValueStream<List<Company>> get notifications$ => _notifications$.stream;
@@ -151,15 +147,13 @@ class AppBloc extends Bloc {
       _savedDisclosure$.stream;
   Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
 
-  ValueStream<List<Company>> get companyHistory$ =>
-      _companiesHistory$.stream;
+  ValueStream<List<Company>> get companyHistory$ => _companiesHistory$.stream;
   Sink<Company> get addHistory => _addHistory.sink;
 
   ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
-  ValueStream<String> get setDisclosureOrder$ =>
-      _setDisclosureOrder$.stream;
+  ValueStream<String> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
   Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
@@ -215,23 +209,6 @@ class AppBloc extends Bloc {
       }, merge: true);
     });
 
-    // _filter$
-    //     .map((filters) => filters.where((f) => f.isCustom).toList())
-    //     .pipe(_customFilter$);
-
-    final store$ =
-        Rx.combineLatest2<String, DateTime, Stream<QuerySnapshot>>(
-      _userController.map((u) => u.uid).distinct(),
-      _dateController,
-      (user, date) {
-        final _date = DateTime(date.year, date.month, date.day);
-        final start = _date.millisecondsSinceEpoch;
-        final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
-        return store.collection(this.path).where('time', isGreaterThanOrEqualTo: start).where('time', isLessThan: end).orderBy('time', descending: true).snapshots()
-            .startWith(null);
-      },
-    ).flatMap((e) => e);
-
     final showingFavorite = _showOnlyFavorites$.switchMap((val) {
       if (val) {
         return _favorit$;
@@ -239,40 +216,65 @@ class AppBloc extends Bloc {
       return Stream.value(<String>[]);
     });
 
-    Rx.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
-            String, List<DocumentSnapshot>>(
-        this._filter$,
-        store$,
-        _hideDailyDisclosure$,
-        showingFavorite,
-        _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
-      print("combinelatest3 $_filters , $d , $_hideDaily");
-      if (d == null) return null;
-      final isNotFilterSelected =
-          _filters.where((filter) => filter.isSelected).length == 0;
+    final createDateStream = (int start, int end) {
+      final _disclosures = store
+          .collection(this.path)
+          .where('time', isGreaterThanOrEqualTo: start)
+          .where('time', isLessThan: end)
+          .orderBy('time', descending: true)
+          .snapshots()
+          .startWith(null);
 
-      final selectedFilterStr = _filters
-          .where((filter) => filter.isSelected)
-          .map((filter) => filter.title);
+      return Rx.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
+              String, List<DocumentSnapshot>>(
+          this._filter$,
+          _disclosures,
+          _hideDailyDisclosure$,
+          showingFavorite,
+          _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
+        print([_filters, d, _hideDaily, _favorites, order]);
+        if (d == null) return null;
+        final isNotFilterSelected =
+            _filters.where((filter) => filter.isSelected).length == 0;
 
-      final docs = d.documents
-          .where((doc) =>
-              !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
-          .where((doc) =>
-              isNotFilterSelected ||
-              selectedFilterStr
-                  .any((str) => (doc.data['tags'] ?? {})[str] != null))
-          .where((doc) => _favorites.length == 0
-              ? true
-              : _favorites.contains(doc.data['code']))
-          .toList();
-      if (order != null) {
-        final comp = comparators[order];
-        if (comp != null) {
-          docs.sort(comp);
+        final selectedFilterStr = _filters
+            .where((filter) => filter.isSelected)
+            .map((filter) => filter.title);
+
+        final docs = d.documents
+            .where((doc) =>
+                !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
+            .where((doc) =>
+                isNotFilterSelected ||
+                selectedFilterStr
+                    .any((str) => (doc.data['tags'] ?? {})[str] != null))
+            .where((doc) => _favorites.length == 0
+                ? true
+                : _favorites.contains(doc.data['code']))
+            .toList();
+        if (order != null) {
+          final comp = comparators[order];
+          if (comp != null) {
+            docs.sort(comp);
+          }
         }
-      }
-      return docs;
+        return docs;
+      });
+    };
+
+    Rx.combineLatest2<String, DateTime, List<int>>(
+      _userController.map((u) => u.uid).distinct(),
+      _dateController,
+      (user, date) {
+        final _date = DateTime(date.year, date.month, date.day);
+        final start = _date.millisecondsSinceEpoch;
+        final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
+        return [start, end];
+      },
+    ).switchMap((value) {
+      final start = value[0];
+      final end = value[1];
+      return createDateStream(start, end);
     }).pipe(_disclosure$);
 
     FirebaseAuth.instance.onAuthStateChanged
