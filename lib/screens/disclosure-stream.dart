@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+import 'package:badges/badges.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -14,6 +16,7 @@ import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:rxdart/rxdart.dart';
 import '../widgets/drawer.dart';
 
 final smallGrey = TextStyle(
@@ -81,23 +84,23 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   Widget _dialog(BuildContext context, AppBloc bloc) =>
       StreamBuilder<List<Filter>>(
         builder: (context, snapshot) => SimpleDialog(
-              title: Text('filter'),
-              children: (snapshot.data ?? [])
-                  .map(
-                    (filter) => Container(
-                          child: CheckboxListTile(
-                            title: Text(filter.title),
-                            value: filter.isSelected,
-                            onChanged: (value) {
-                              bloc.addFilter.add(filter.title);
-                            },
-                          ),
-                          padding: EdgeInsets.only(left: 16.0),
-                        ),
-                  )
-                  .toList(),
-              contentPadding: EdgeInsets.zero,
-            ),
+          title: Text('filter'),
+          children: (snapshot.data ?? [])
+              .map(
+                (filter) => Container(
+                  child: CheckboxListTile(
+                    title: Text(filter.title),
+                    value: filter.isSelected,
+                    onChanged: (value) {
+                      bloc.addFilter.add(filter.title);
+                    },
+                  ),
+                  padding: EdgeInsets.only(left: 16.0),
+                ),
+              )
+              .toList(),
+          contentPadding: EdgeInsets.zero,
+        ),
         stream: bloc.filter$,
       );
 
@@ -124,9 +127,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-              title: Text(error.toString()),
-              content: Text(stacktrace.toString()),
-            ),
+          title: Text(error.toString()),
+          content: Text(stacktrace.toString()),
+        ),
       );
       throw (error);
     });
@@ -167,6 +170,20 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       floating: true,
       snap: true,
       actions: <Widget>[
+        Badge(
+          badgeContent: StreamBuilder(
+            stream: this.bloc.newDisclosureCount,
+            builder: (context, snapshot) =>
+                snapshot.hasData ? Text(snapshot.data.toString()) : null,
+          ),
+          child: IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              bloc.refreshDisclosures.add(Random().nextInt(65535));
+            },
+            tooltip: "リフレッシュ",
+          ),
+        ),
         IconButton(
           icon: Icon(Icons.new_releases),
           onPressed: () {
@@ -208,25 +225,24 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             StreamBuilder<DateTime>(
               stream: bloc.edinetDate$,
               builder: (context, snapshot) => Container(
-                    padding: EdgeInsets.all(4.0),
-                    child: ActionChip(
-                      avatar: Icon(Icons.calendar_today),
-                      label: Text(snapshot.hasData
-                          ? formatter.format(snapshot.data)
-                          : ''),
-                      onPressed: () async {
-                        final _date = await showDatePicker(
-                          context: context,
-                          initialDate: snapshot.data,
-                          firstDate: DateTime(2019, 3, 1),
-                          lastDate: DateTime.now(),
-                        );
-                        if (_date != null) {
-                          bloc.edinetDate.add(_date);
-                        }
-                      },
-                    ),
-                  ),
+                padding: EdgeInsets.all(4.0),
+                child: ActionChip(
+                  avatar: Icon(Icons.calendar_today),
+                  label: Text(
+                      snapshot.hasData ? formatter.format(snapshot.data) : ''),
+                  onPressed: () async {
+                    final _date = await showDatePicker(
+                      context: context,
+                      initialDate: snapshot.data,
+                      firstDate: DateTime(2019, 3, 1),
+                      lastDate: DateTime.now(),
+                    );
+                    if (_date != null) {
+                      bloc.edinetDate.add(_date);
+                    }
+                  },
+                ),
+              ),
             ),
             StreamBuilder<String>(
               stream: bloc.edinetFilter$,
@@ -263,23 +279,23 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
 
   Widget _edinetFilterDialog(BuildContext context) => StreamBuilder<String>(
         builder: (context, snapshot) => SimpleDialog(
-              title: Text('filter'),
-              children: Edinet.docTypes()
-                  .map(
-                    (type) => Container(
-                          child: CheckboxListTile(
-                            title: Text(type),
-                            value: type == snapshot.data,
-                            onChanged: (value) {
-                              Navigator.of(context).pop(value ? type : '');
-                            },
-                          ),
-                          padding: EdgeInsets.only(left: 16.0),
-                        ),
-                  )
-                  .toList(),
-              contentPadding: EdgeInsets.zero,
-            ),
+          title: Text('filter'),
+          children: Edinet.docTypes()
+              .map(
+                (type) => Container(
+                  child: CheckboxListTile(
+                    title: Text(type),
+                    value: type == snapshot.data,
+                    onChanged: (value) {
+                      Navigator.of(context).pop(value ? type : '');
+                    },
+                  ),
+                  padding: EdgeInsets.only(left: 16.0),
+                ),
+              )
+              .toList(),
+          contentPadding: EdgeInsets.zero,
+        ),
         stream: bloc.edinetFilter$,
       );
   SliverPersistentHeader filterToolbar(AppBloc bloc, DateFormat formatter) {
@@ -293,17 +309,16 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             StreamBuilder<DateTime>(
               stream: bloc.date$,
               builder: (context, snapshot) => Padding(
-                    padding: EdgeInsets.all(4.0),
-                    child: ActionChip(
-                      avatar: Icon(Icons.calendar_today),
-                      label: Text(snapshot.hasData
-                          ? formatter.format(snapshot.data)
-                          : ''),
-                      onPressed: () {
-                        changeDate(bloc, initial: snapshot.data);
-                      },
-                    ),
-                  ),
+                padding: EdgeInsets.all(4.0),
+                child: ActionChip(
+                  avatar: Icon(Icons.calendar_today),
+                  label: Text(
+                      snapshot.hasData ? formatter.format(snapshot.data) : ''),
+                  onPressed: () {
+                    changeDate(bloc, initial: snapshot.data);
+                  },
+                ),
+              ),
             ),
             StreamBuilder<int>(
               stream: bloc.filterCount$,
@@ -416,14 +431,14 @@ class ShowFavoritOnlyTooltipWidget extends StatelessWidget {
     return StreamBuilder<bool>(
       stream: stream,
       builder: (context, snapshot) => Container(
-            padding: EdgeInsets.all(4.0),
-            child: ChoiceChip(
-              avatar: Icon(Icons.favorite),
-              label: Text('お気に入りのみ表示する'),
-              selected: snapshot.hasData && snapshot.data,
-              onSelected: onSelected,
-            ),
-          ),
+        padding: EdgeInsets.all(4.0),
+        child: ChoiceChip(
+          avatar: Icon(Icons.favorite),
+          label: Text('お気に入りのみ表示する'),
+          selected: snapshot.hasData && snapshot.data,
+          onSelected: onSelected,
+        ),
+      ),
     );
   }
 }

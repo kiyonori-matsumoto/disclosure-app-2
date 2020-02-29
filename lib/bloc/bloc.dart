@@ -57,8 +57,9 @@ class AppBloc extends Bloc {
 
   final StreamController<String> _filterChangeController = StreamController();
 
-  final StreamController<bool> _refreshDisclosuresController =
-      StreamController();
+  final PublishSubject<int> _refreshDisclosuresController = PublishSubject();
+  final BehaviorSubject<int> _newDisclosureCountController =
+      BehaviorSubject.seeded(0);
 
   // users
   final _userController = BehaviorSubject<FirebaseUser>();
@@ -97,7 +98,9 @@ class AppBloc extends Bloc {
 
   ValueStream<List<DocumentSnapshot>> get disclosure$ => _disclosure$.stream;
 
-  Sink<bool> get refreshDisclosures => _refreshDisclosuresController.sink;
+  Sink<int> get refreshDisclosures => _refreshDisclosuresController.sink;
+  ValueStream<int> get newDisclosureCount =>
+      _newDisclosureCountController.stream;
 
   Sink<DateTime> get date => _dateController.sink;
   ValueStream<DateTime> get date$ => _dateController.stream;
@@ -228,12 +231,38 @@ class AppBloc extends Bloc {
           .where('time', isLessThan: end)
           .orderBy('time', descending: true)
           .snapshots()
-          .startWith(null);
+          .share();
+
+      final first = _disclosures.take(1).startWith(null);
+      final cont = _disclosures
+          .skip(1)
+          .sample(_refreshDisclosuresController.stream); //.doOnData(print));
+
+      final _disclosures2 = first.mergeWith([cont]);
+
+      final disclosureCount = _disclosures.skip(1).map((data) => data
+          .documentChanges
+          .where((change) => change.type == DocumentChangeType.added)
+          .length);
+      final newDisclosureCount = Rx.merge([
+        disclosureCount,
+        _refreshDisclosuresController.stream.map((_) => null)
+      ]).scan((a, e, _) {
+        if (e == null) {
+          return 0;
+        }
+        return a + e;
+      }, 0).startWith(0);
+
+      newDisclosureCount.listen((e) {
+        print("new disclosure count is " + e);
+        _newDisclosureCountController.add(e);
+      });
 
       return Rx.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
               String, List<DocumentSnapshot>>(
           this._filter$,
-          _disclosures,
+          _disclosures2,
           _hideDailyDisclosure$,
           showingFavorite,
           _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
@@ -625,6 +654,7 @@ class AppBloc extends Bloc {
     _setDisclosureOrder$.close();
     _companiesHistory$.close();
     _addHistory.close();
+    _refreshDisclosuresController.close();
   }
 
   String _toCode(String topic) {
