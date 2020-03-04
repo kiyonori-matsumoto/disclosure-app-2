@@ -240,14 +240,17 @@ class AppBloc extends Bloc {
 
       final _disclosures2 = first.mergeWith([cont]);
 
-      final disclosureCount = _disclosures.skip(1).map((data) => data
-          .documentChanges
-          .where((change) => change.type == DocumentChangeType.added)
-          .length);
+      final disclosureCount = _disclosures
+          .skip(1)
+          .doOnData((data) => print(data.documentChanges.map((v) => v.type)))
+          .map((data) => data.documentChanges
+              .where((change) => change.type == DocumentChangeType.added)
+              .length);
       final newDisclosureCount = Rx.merge([
         disclosureCount,
         _refreshDisclosuresController.stream.map((_) => null)
       ]).scan((a, e, _) {
+        print([a, e]);
         if (e == null) {
           return 0;
         }
@@ -255,7 +258,7 @@ class AppBloc extends Bloc {
       }, 0).startWith(0);
 
       newDisclosureCount.listen((e) {
-        print("new disclosure count is " + e);
+        print("new disclosure count is " + e.toString());
         _newDisclosureCountController.add(e);
       });
 

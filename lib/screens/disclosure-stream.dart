@@ -16,7 +16,6 @@ import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:rxdart/rxdart.dart';
 import '../widgets/drawer.dart';
 
 final smallGrey = TextStyle(
@@ -46,6 +45,8 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
 
   bool searching = false;
 
+  ScrollController sliverScrollController = new ScrollController();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -67,6 +68,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     routeObserver.unsubscribe(this);
     banner?.dispose();
     banner = null;
+    this.sliverScrollController.dispose();
     super.dispose();
   }
 
@@ -121,6 +123,31 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
               persistentFooterButtons: <Widget>[
                 SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
               ],
+              floatingActionButton: StreamBuilder<int>(
+                stream: bloc.newDisclosureCount,
+                builder: (context, snapshot) => snapshot.data == 0
+                    ? const SizedBox(
+                        width: 0.0,
+                        height: 0.0,
+                      )
+                    : FloatingActionButton.extended(
+                        onPressed: () {
+                          this.sliverScrollController.animateTo(
+                                0,
+                                duration: Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                              );
+                          this
+                              .bloc
+                              .refreshDisclosures
+                              .add(Random().nextInt(65535));
+                        },
+                        label: Text('${snapshot.data} NEW MESSAGE'),
+                        icon: Icon(Icons.refresh),
+                      ),
+              ),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerFloat,
             );
           });
     }, onError: (error, stacktrace) {
@@ -170,20 +197,20 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       floating: true,
       snap: true,
       actions: <Widget>[
-        Badge(
-          badgeContent: StreamBuilder(
-            stream: this.bloc.newDisclosureCount,
-            builder: (context, snapshot) =>
-                snapshot.hasData ? Text(snapshot.data.toString()) : null,
-          ),
-          child: IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              bloc.refreshDisclosures.add(Random().nextInt(65535));
-            },
-            tooltip: "リフレッシュ",
-          ),
-        ),
+        // Badge(
+        //   badgeContent: StreamBuilder(
+        //     stream: this.bloc.newDisclosureCount,
+        //     builder: (context, snapshot) =>
+        //         snapshot.hasData ? Text(snapshot.data.toString()) : null,
+        //   ),
+        //   child: IconButton(
+        //     icon: Icon(Icons.refresh),
+        //     onPressed: () {
+        //       bloc.refreshDisclosures.add(Random().nextInt(65535));
+        //     },
+        //     tooltip: "リフレッシュ",
+        //   ),
+        // ),
         IconButton(
           icon: Icon(Icons.new_releases),
           onPressed: () {
@@ -198,6 +225,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     return SafeArea(
       child: Scrollbar(
         child: CustomScrollView(
+          controller: this.sliverScrollController,
           slivers: this.displayTarget == "tdnet"
               ? <Widget>[
                   appbar,
