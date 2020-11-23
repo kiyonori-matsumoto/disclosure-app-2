@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:flutter/material.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,9 +18,20 @@ import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final filterStrings = ["株主優待", "決算", "配当", "業績予想", "新株", "自己株式", "日々の開示事項"];
+final filterStrings = [
+  "株主優待",
+  "決算",
+  "短信",
+  "配当",
+  "業績予想",
+  "新株",
+  "自己株式",
+  "日々の開示事項"
+];
 
 final dateFormatter = DateFormat("yyyy-MM-dd");
+
+const HISTORY_MAX = 500;
 
 T getOr<T>(T a, T b) {
   return a == 0 ? b : a;
@@ -82,6 +94,12 @@ class AppBloc extends Bloc {
 
   final _companiesHistory$ = BehaviorSubject<List<Company>>();
   final _addHistory = StreamController<Company>();
+
+  final _disclosuresHistory$ = BehaviorSubject<List<String>>();
+  final _addDisclosureHistory = StreamController<Disclosure>();
+
+  final _edinetsHistory$ = BehaviorSubject<List<String>>();
+  final _addEdinetHistory = StreamController<Edinet>();
 
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
@@ -149,6 +167,13 @@ class AppBloc extends Bloc {
 
   ValueStream<List<Company>> get companyHistory$ => _companiesHistory$.stream;
   Sink<Company> get addHistory => _addHistory.sink;
+
+  ValueStream<List<String>> get disclosureHistory$ =>
+      _disclosuresHistory$.stream;
+  Sink<Disclosure> get addDisclosureHistory => _addDisclosureHistory.sink;
+
+  ValueStream<List<String>> get edinetHistory$ => _edinetsHistory$.stream;
+  Sink<Edinet> get addEdinetHistory => _addEdinetHistory.sink;
 
   ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
@@ -417,6 +442,40 @@ class AppBloc extends Bloc {
               .document(user.uid)
               .setData({"cp_hist": comps}, merge: true);
         });
+
+    final initialDisclosureHistory = Stream.fromFuture(
+        SharedPreferences.getInstance().then((pref) =>
+            pref.getStringList('disclosure_history') ?? [].cast<String>()));
+
+    final disclosureHistory = Rx.concat(<Stream<List<String>>>[
+      initialDisclosureHistory.take(1),
+      _addDisclosureHistory.stream.map((e) => [e.document].toList())
+    ]).scan<List<String>>(
+        (a, e, _) => (e + a).toSet().take(HISTORY_MAX).toList(), []).share();
+
+    disclosureHistory.pipe(_disclosuresHistory$);
+
+    disclosureHistory.skip(1).forEach((hist) async {
+      final pref = await SharedPreferences.getInstance();
+      await pref.setStringList('disclosure_history', hist);
+    });
+
+    final initialEdinetHistory = Stream.fromFuture(
+        SharedPreferences.getInstance().then((pref) =>
+            pref.getStringList('edinet_history') ?? [].cast<String>()));
+
+    final edinetHistory = Rx.concat(<Stream<List<String>>>[
+      initialEdinetHistory.take(1),
+      _addEdinetHistory.stream.map((e) => [e.docId].toList())
+    ]).scan<List<String>>(
+        (a, e, _) => (e + a).toSet().take(HISTORY_MAX).toList(), []).share();
+
+    edinetHistory.pipe(_edinetsHistory$);
+
+    edinetHistory.skip(1).forEach((hist) async {
+      final pref = await SharedPreferences.getInstance();
+      await pref.setStringList('edinet_history', hist);
+    });
   }
 
   void _createCompanyListStreams() {
@@ -620,6 +679,10 @@ class AppBloc extends Bloc {
     _setDisclosureOrder$.close();
     _companiesHistory$.close();
     _addHistory.close();
+    _disclosuresHistory$.close();
+    _addDisclosureHistory.close();
+    _edinetsHistory$.close();
+    _addEdinetHistory.close();
   }
 
   String _toCode(String topic) {

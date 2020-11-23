@@ -71,9 +71,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
       showDialog<dynamic>(
         context: navigatorKey.currentState.overlay.context,
         builder: (context) => AlertDialog(
-              title: Text("エラー！"),
-              content: Text(error.toString()),
-            ),
+          title: Text("エラー！"),
+          content: Text(error.toString()),
+        ),
       );
       print("notification onerror $error");
     });

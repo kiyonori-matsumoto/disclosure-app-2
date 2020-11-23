@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
+import 'package:disclosure_app_fl/widgets/histories_stream.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:flutter/material.dart';
@@ -89,14 +90,17 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                   );
                 },
               ),
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => DisclosureListItem(
-                        item: snapshot[index],
-                        showDate: true,
-                        key: Key(snapshot[index]['document']),
-                      ),
-                  childCount: snapshot.length,
+              DisclosureHistoriesStreamWidget(
+                builder: (histories) => SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => DisclosureListItem(
+                      item: snapshot[index],
+                      showDate: true,
+                      histories: histories,
+                      key: Key(snapshot[index]['document']),
+                    ),
+                    childCount: snapshot.length,
+                  ),
                 ),
               ),
               SliverToBoxAdapter(
@@ -169,26 +173,6 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                 );
               },
             ),
-            // StreamBuilder<List<Company>>(
-            //   stream: appBloc.notifications$,
-            //   builder: (context, snapshot) {
-            //     final hasNotification = snapshot.hasData &&
-            //         snapshot.data.any((comp) => comp.code == this.company.code);
-            //     return IconButton(
-            //       icon: Icon(hasNotification
-            //           ? Icons.notifications
-            //           : Icons.notifications_off),
-            //       tooltip: '通知',
-            //       onPressed: () {
-            //         appBloc.switchNotification.add(this.company.code);
-            //         Scaffold.of(context).showSnackBar(SnackBar(
-            //           content:
-            //               Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),
-            //         ));
-            //       },
-            //     );
-            //   },
-            // )
           ],
           bottom: TabBar(tabs: <Widget>[
             Tab(
@@ -239,35 +223,38 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                   ),
                 );
               }
-              return ListView.builder(
-                itemBuilder: (context, idx) {
-                  return idx == snapshot.data.length
-                      ? Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: RaisedButton(
-                            child: StreamBuilder<bool>(
-                              stream: bloc2.edinet.isLoading$,
-                              builder: (context, snapshot) {
-                                return snapshot.data == false
-                                    ? Text('更に読み込む')
-                                    : CircularProgressIndicator();
+              return EdinetHistoriesStreamWidget(
+                builder: (histories) => ListView.builder(
+                  itemBuilder: (context, idx) {
+                    return idx == snapshot.data.length
+                        ? Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: RaisedButton(
+                              child: StreamBuilder<bool>(
+                                stream: bloc2.edinet.isLoading$,
+                                builder: (context, snapshot) {
+                                  return snapshot.data == false
+                                      ? Text('更に読み込む')
+                                      : CircularProgressIndicator();
+                                },
+                              ),
+                              onPressed: () {
+                                this
+                                    .bloc2
+                                    .edinet
+                                    ?.loadNext
+                                    ?.add(snapshot.data.last);
                               },
                             ),
-                            onPressed: () {
-                              this
-                                  .bloc2
-                                  .edinet
-                                  ?.loadNext
-                                  ?.add(snapshot.data.last);
-                            },
-                          ),
-                        )
-                      : EdinetListItem(
-                          edinet: snapshot.data[idx],
-                          showDate: true,
-                        );
-                },
-                itemCount: snapshot.data.length + 1,
+                          )
+                        : EdinetListItem(
+                            edinet: snapshot.data[idx],
+                            histories: histories,
+                            showDate: true,
+                          );
+                  },
+                  itemCount: snapshot.data.length + 1,
+                ),
               );
             }),
             onRefresh: () {

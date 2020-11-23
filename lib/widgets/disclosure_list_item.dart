@@ -4,6 +4,7 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/content-view-count.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
@@ -20,11 +21,13 @@ class DisclosureListItem extends StatefulWidget {
   const DisclosureListItem({
     Key key,
     this.showDate = false,
+    this.histories = const [],
     @required this.item,
   }) : super(key: key);
 
   final DocumentSnapshot item;
   final bool showDate;
+  final List<String> histories;
 
   @override
   DisclosureListItemState createState() {
@@ -39,6 +42,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
     final bloc = BlocProvider.of<AppBloc>(context);
+    final opacity = widget.histories.contains(disclosure.document) ? 0.3 : 0.9;
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
@@ -47,7 +51,15 @@ class DisclosureListItemState extends State<DisclosureListItem> {
           title: Row(
             children: <Widget>[
               Expanded(
-                child: Text("${disclosure.company}(${disclosure.code})"),
+                child: Text(
+                  "${disclosure.company}(${disclosure.code})",
+                  style: TextStyle(
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyText1
+                          .color
+                          .withOpacity(opacity)),
+                ),
               ),
               Row(
                 children: <Widget>[
@@ -68,6 +80,12 @@ class DisclosureListItemState extends State<DisclosureListItem> {
           subtitle: Text(
             disclosure.title,
             overflow: TextOverflow.fade,
+            style: TextStyle(
+                color: Theme.of(context)
+                    .textTheme
+                    .bodyText1
+                    .color
+                    .withOpacity(opacity)),
           ),
           isThreeLine: true,
           onTap: () async {
@@ -75,6 +93,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               setState(() {
                 isDownloading = true;
               });
+              bloc.addDisclosureHistory.add(disclosure);
               await downloadAndOpenDisclosure(disclosure);
             } finally {
               setState(() {

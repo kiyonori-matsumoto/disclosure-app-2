@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
 
+import 'histories_stream.dart';
 import 'no_disclosures.dart';
 
 final smallGrey = TextStyle(
@@ -36,14 +37,16 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return EdinetSliverList(stream: this.edinetBloc.edinet$);
+    return EdinetSliverList(
+        stream: this.edinetBloc.edinet$, histories: this.bloc.edinetHistory$);
   }
 }
 
 class EdinetSliverList extends StatelessWidget {
   final ValueStream<List<Edinet>> stream;
+  final ValueStream<List<String>> histories;
 
-  EdinetSliverList({@required this.stream});
+  EdinetSliverList({@required this.stream, @required this.histories});
 
   @override
   Widget build(BuildContext context) {
@@ -66,15 +69,17 @@ class EdinetSliverList extends StatelessWidget {
         }
         return (snapshot.hasData && snapshot.data != null)
             ? snapshot.data.length > 0
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate((context, idx) {
-                      final edinet = snapshot.data[idx];
-                      return Builder(
-                        builder: (context) =>
-                            new EdinetListItem(edinet: edinet),
-                      );
-                    }, childCount: snapshot.data.length),
-                  )
+                ? EdinetHistoriesStreamWidget(builder: (histories) {
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate((context, idx) {
+                        final edinet = snapshot.data[idx];
+                        return Builder(
+                          builder: (context) => new EdinetListItem(
+                              edinet: edinet, histories: histories),
+                        );
+                      }, childCount: snapshot.data.length),
+                    );
+                  })
                 : SliverFillRemaining(
                     child: new NoDisclosures(),
                   )
@@ -91,22 +96,45 @@ class EdinetListItem extends StatelessWidget {
     Key key,
     @required this.edinet,
     this.showDate = false,
+    this.histories = const [],
   }) : super(key: key);
 
   final Edinet edinet;
   final bool showDate;
+  final List<String> histories;
 
   @override
   Widget build(BuildContext context) {
+    final opacity = this.histories.contains(edinet.docId) ? 0.3 : 0.9;
+    final bloc = BlocProvider.of<AppBloc>(context);
     return Stack(
         key: Key(edinet.docId),
         alignment: Alignment.topRight,
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            title: Text(edinet.docDescription),
-            subtitle: Text(edinet.relatedCompaniesName),
-            onTap: () => downloadAndOpenEdinet(edinet.docId),
+            title: Text(
+              edinet.docDescription,
+              style: TextStyle(
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .color
+                      .withOpacity(opacity)),
+            ),
+            subtitle: Text(
+              edinet.relatedCompaniesName,
+              style: TextStyle(
+                  color: Theme.of(context)
+                      .textTheme
+                      .bodyText1
+                      .color
+                      .withOpacity(opacity)),
+            ),
+            onTap: () {
+              bloc.addEdinetHistory.add(edinet);
+              downloadAndOpenEdinet(edinet.docId);
+            },
             onLongPress: _onLongPress(context, edinet.companies),
           ),
           Padding(

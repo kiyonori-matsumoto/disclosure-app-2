@@ -11,6 +11,7 @@ class Disclosure {
   List<String> tags;
   bool isSelected;
   DateTime addAt;
+  bool hasRead;
 
   Disclosure(
       {this.code,
@@ -21,7 +22,8 @@ class Disclosure {
       this.time,
       this.viewCount,
       this.tags,
-      this.isSelected = false});
+      this.isSelected = false,
+      this.hasRead = false});
 
   Disclosure.fromDocumentSnapshot(DocumentSnapshot snapshot) {
     final item = snapshot.data;
