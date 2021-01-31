@@ -147,7 +147,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
     final routeObserver = MyRouteObserver();
     final bloc = BlocProvider.of<AppBloc>(context);
 
-    return StreamBuilder<Brightness>(
+    return StreamBuilder<ThemeMode>(
         stream: bloc.darkMode$,
         builder: (context, snapshot) {
           return MaterialApp(
@@ -161,10 +161,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
             supportedLocales: [
               Locale('ja', ''),
             ],
-            theme: ThemeData(
-              primarySwatch: Colors.deepPurple,
-              brightness: snapshot.data,
-            ),
+            theme: ThemeData(primarySwatch: Colors.deepPurple),
+            darkTheme: ThemeData.dark(),
+            themeMode: snapshot.data,
             routes: {
               '/': (context) => DisclosureStreamScreen(),
               '/companies': (context) => SearchCompanyScreen(),

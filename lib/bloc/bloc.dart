@@ -55,8 +55,8 @@ class AppBloc extends Bloc {
   final _showOnlyFavorites$ = BehaviorSubject<bool>.seeded(false);
   final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
   final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
-  final _darkMode$ = BehaviorSubject<Brightness>.seeded(Brightness.light);
-  final _setModeBrightness = StreamController<bool>();
+  final _darkMode$ = BehaviorSubject<ThemeMode>.seeded(ThemeMode.system);
+  final _setModeBrightness = StreamController<String>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
   final _setDisclosureOrder$ = BehaviorSubject<String>.seeded("最新");
@@ -175,8 +175,10 @@ class AppBloc extends Bloc {
   ValueStream<List<String>> get edinetHistory$ => _edinetsHistory$.stream;
   Sink<Edinet> get addEdinetHistory => _addEdinetHistory.sink;
 
-  ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
-  Sink<bool> get setModeBrightness => _setModeBrightness.sink;
+  ValueStream<ThemeMode> get darkMode$ => _darkMode$.stream;
+
+  /// "follow", "dark", "light"
+  Sink<String> get setModeBrightness => _setModeBrightness.sink;
 
   ValueStream<String> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
   Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
@@ -316,16 +318,22 @@ class AppBloc extends Bloc {
 
     final br = _setModeBrightness.stream.doOnData((mode) =>
         SharedPreferences.getInstance()
-            .then((pref) => pref.setBool('setDarkMode', mode)));
+            .then((pref) => pref.setString('setDarkMode2', mode)));
+    // SharedPreferences.getInstance()
+    //     .then((pref) => pref.setBool('setDarkMode', mode)));
 
-    Rx.concat(<Stream<bool>>[
+    Rx.concat(<Stream<String>>[
       Stream.fromFuture(SharedPreferences.getInstance().then((pref) =>
-          pref.containsKey('setDarkMode')
-              ? pref.getBool('setDarkMode')
-              : true)),
+          pref.containsKey('setDarkMode2')
+              ? pref.getString('setDarkMode2')
+              : "follow")),
       br
     ])
-        .map((m) => m == true ? Brightness.light : Brightness.dark)
+        .map((m) => m == "follow"
+            ? ThemeMode.system
+            : m == "dark"
+                ? ThemeMode.dark
+                : ThemeMode.light)
         .pipe(_darkMode$);
   }
 

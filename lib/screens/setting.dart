@@ -74,16 +74,49 @@ class _SettingScreenState extends State<SettingScreen> {
             );
           },
         ),
-        StreamBuilder<Brightness>(
+        StreamBuilder<ThemeMode>(
             stream: bloc.darkMode$,
             builder: (context, snapshot) {
-              return CheckboxListTile(
-                value: snapshot.data == Brightness.dark,
-                title: Text('ダークモード'),
-                onChanged: (v) {
-                  bloc.setModeBrightness.add(!v);
-                },
-              );
+              return ListTile(
+                  title: const Text('ダークモード'),
+                  subtitle: snapshot.data == ThemeMode.system
+                      ? const Text('システム設定に従う')
+                      : snapshot.data == ThemeMode.dark
+                          ? const Text('ダーク')
+                          : const Text('ライト'),
+                  onTap: () async {
+                    RenderBox renderBox = context.findRenderObject();
+                    final point = renderBox.localToGlobal(Offset.zero);
+                    final size = MediaQuery.of(context).size;
+                    print(point);
+                    final choice = await showMenu(
+                      context: context,
+                      position: RelativeRect.fromLTRB(
+                          size.width, point.dy, 0.0, point.dy),
+                      items: [
+                        const PopupMenuItem(
+                          child: ListTile(
+                            title: const Text('システム設定に従う'),
+                          ),
+                          value: "follow",
+                        ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            title: const Text('ダーク'),
+                          ),
+                          value: "dark",
+                        ),
+                        PopupMenuItem(
+                          child: ListTile(
+                            title: const Text('ライト'),
+                          ),
+                          value: "light",
+                        ),
+                      ],
+                    );
+                    print(choice);
+                    bloc.setModeBrightness.add(choice);
+                  });
             }),
         ListTile(
           title: Text('カスタムタグ設定'),
