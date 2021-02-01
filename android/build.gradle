@@ -2,17 +2,13 @@ buildscript {
     repositories {
         google()
         jcenter()
-        maven {
-           url 'https://maven.fabric.io/public'
-        }
- 
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:3.3.2'
         classpath 'com.google.gms:google-services:4.2.0'
         // Add dependency
-        classpath 'io.fabric.tools:gradle:1.26.1'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.4.1'
     }
 }
 
@@ -20,9 +16,6 @@ allprojects {
     repositories {
         google()
         jcenter()
-       maven {
-           url 'https://maven.google.com/'
-       }
     }
 }
 
