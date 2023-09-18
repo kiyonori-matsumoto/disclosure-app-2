@@ -28,8 +28,8 @@ T getOr<T>(T a, T b) {
 final Map<String, Comparator<DocumentSnapshot>> comparators = {
   "最新": null,
   "閲覧回数": (a, b) => getOr(
-      (b.data['view_count'] ?? 0).compareTo(a.data['view_count'] ?? 0),
-      (b.data['time'] ?? 0).compareTo(a.data['time'] ?? 0)),
+      (b.data()['view_count'] ?? 0).compareTo(a.data()['view_count'] ?? 0),
+      (b.data()['time'] ?? 0).compareTo(a.data()['time'] ?? 0)),
 };
 
 class AppBloc extends Bloc {
@@ -42,7 +42,7 @@ class AppBloc extends Bloc {
   final _edinetFilter$ = BehaviorSubject<String>.seeded('');
   final _showOnlyFavorites$ = BehaviorSubject<bool>.seeded(false);
   final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
-  final _savedDisclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
+  final _savedDisclosure$ = BehaviorSubject<List<QueryDocumentSnapshot>>();
   final _darkMode$ = BehaviorSubject<Brightness>.seeded(Brightness.light);
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
@@ -62,7 +62,7 @@ class AppBloc extends Bloc {
       BehaviorSubject.seeded(0);
 
   // users
-  final _userController = BehaviorSubject<FirebaseUser>();
+  final _userController = BehaviorSubject<User>();
 
   // settings
   final BehaviorSubject<Map<String, dynamic>> _setting$ = BehaviorSubject();
@@ -82,7 +82,7 @@ class AppBloc extends Bloc {
   final _companies$ = BehaviorSubject<List<Company>>();
   final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
   final _codeStrController = BehaviorSubject<String>.seeded('');
-  final _storage = FirebaseStorage(storageBucket: 'gs://disclosure-app-2');
+  final _storage = FirebaseStorage.instanceFor(bucket: 'gs://disclosure-app-2');
 
   final _companiesHistory$ = BehaviorSubject<List<Company>>();
   final _addHistory = StreamController<Company>();
@@ -109,7 +109,7 @@ class AppBloc extends Bloc {
   Sink<DateTime> get edinetDate => _edinetDateController.sink;
   ValueStream<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
-  ValueStream<FirebaseUser> get user$ => _userController.stream;
+  ValueStream<User> get user$ => _userController.stream;
   ValueStream<List<Filter>> get filter$ => _filter$.stream;
   ValueStream<String> get edinetFilter$ => _edinetFilter$.stream;
   Sink<String> get edintFilterController => _edinetFilter$.sink;
@@ -170,8 +170,8 @@ class AppBloc extends Bloc {
   };
 
   AppBloc() {
-    final store = Firestore.instance;
-    store.settings(persistenceEnabled: false);
+    final store = FirebaseFirestore.instance;
+    store.settings = Settings(persistenceEnabled: false);
     final initialFilters = filterStrings.map((str) => Filter(str)).toList();
 
     _setting$
@@ -200,21 +200,21 @@ class AppBloc extends Bloc {
     _addCustomFilterController.stream.listen((name) async {
       final user = await _userController.first;
       final customTag = await this._customFilter$.first;
-      Firestore.instance.collection('users').document(user.uid).setData({
+      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         "tags": customTag.map((t) => t.title).toList() + [name]
-      }, merge: true);
+      }, SetOptions(merge: true));
     });
 
     _removeCustomFilterController.stream.listen((filter) async {
       print('removing custom filter $filter');
       final user = await _userController.first;
       final customTag = await this._customFilter$.first;
-      Firestore.instance.collection('users').document(user.uid).setData({
+      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         "tags": customTag
             .where((f) => f.title != filter.title)
             .map((t) => t.title)
             .toList()
-      }, merge: true);
+      }, SetOptions(merge: true));
     });
 
     final showingFavorite = _showOnlyFavorites$.switchMap((val) {
@@ -242,8 +242,8 @@ class AppBloc extends Bloc {
 
       final disclosureCount = _disclosures
           .skip(1)
-          .doOnData((data) => print(data.documentChanges.map((v) => v.type)))
-          .map((data) => data.documentChanges
+          .doOnData((data) => print(data.docChanges.map((v) => v.type)))
+          .map((data) => data.docChanges
               .where((change) => change.type == DocumentChangeType.added)
               .length);
       final newDisclosureCount = Rx.merge([
@@ -278,16 +278,16 @@ class AppBloc extends Bloc {
             .where((filter) => filter.isSelected)
             .map((filter) => filter.title);
 
-        final docs = d.documents
+        final docs = d.docs
             .where((doc) =>
-                !_hideDaily || (doc.data['tags'] ?? {})['日々の開示事項'] != true)
+                !_hideDaily || (doc.data()['tags'] ?? {})['日々の開示事項'] != true)
             .where((doc) =>
                 isNotFilterSelected ||
                 selectedFilterStr
-                    .any((str) => (doc.data['tags'] ?? {})[str] != null))
+                    .any((str) => (doc.data()['tags'] ?? {})[str] != null))
             .where((doc) => _favorites.length == 0
                 ? true
-                : _favorites.contains(doc.data['code']))
+                : _favorites.contains(doc.data()['code']))
             .toList();
         if (order != null) {
           final comp = comparators[order];
@@ -314,7 +314,8 @@ class AppBloc extends Bloc {
       return createDateStream(start, end);
     }).pipe(_disclosure$);
 
-    FirebaseAuth.instance.onAuthStateChanged
+    FirebaseAuth.instance
+        .authStateChanges()
         .where((u) => u != null)
         .pipe(_userController);
 
@@ -347,18 +348,18 @@ class AppBloc extends Bloc {
     final _publishFavorites = (List<String> _favorites) async {
       final user = await _userController.first;
       if (user == null) return;
-      await Firestore.instance
+      await FirebaseFirestore.instance
           .collection('users')
-          .document(user.uid)
-          .setData({"favorites": _favorites}, merge: true);
+          .doc(user.uid)
+          .set({"favorites": _favorites}, SetOptions(merge: true));
     };
 
     _setVisibleDailyDisclosureController.stream.listen((visible) async {
       final user = await _userController.first;
       if (user == null) return;
-      await Firestore.instance.collection('users').document(user.uid).setData({
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         "setting": {"hideDailyDisclosure": visible}
-      }, merge: true);
+      }, SetOptions(merge: true));
     });
 
     _addFavoriteController.stream.listen((code) {
@@ -386,11 +387,11 @@ class AppBloc extends Bloc {
 
     _userController
         .share()
-        .switchMap((user) => Firestore.instance
+        .switchMap((user) => FirebaseFirestore.instance
             .collection('users')
-            .document(user.uid)
+            .doc(user.uid)
             .snapshots())
-        .map((res) => res.data ?? {})
+        .map((res) => res.data() ?? {})
         .pipe(_setting$);
 
     _setting$
@@ -449,10 +450,10 @@ class AppBloc extends Bloc {
         .forEach((comps) async {
           final user = await _userController.first;
           if (user == null) return;
-          await Firestore.instance
+          await FirebaseFirestore.instance
               .collection('users')
-              .document(user.uid)
-              .setData({"cp_hist": comps}, merge: true);
+              .doc(user.uid)
+              .set({"cp_hist": comps}, SetOptions(merge: true));
         });
   }
 
@@ -476,7 +477,7 @@ class AppBloc extends Bloc {
 
           final ref = _storage.ref().child('companies.json');
           final task = ref.writeToFile(companyJsonFile);
-          yield await task.future
+          yield await task
               .then((snapshot) => companyJsonFile.readAsString())
               .then((str) => jsonDecode(str));
         }
@@ -674,21 +675,21 @@ class AppBloc extends Bloc {
   }
 
   void _createSavedDisclosureStreams() {
-    final collection = (FirebaseUser user) => Firestore.instance
+    final collection = (User user) => FirebaseFirestore.instance
         .collection('users')
-        .document(user.uid)
+        .doc(user.uid)
         .collection('disclosures');
     _userController
         .switchMap((user) =>
             collection(user).orderBy('add_at', descending: true).snapshots())
-        .map((snapshot) => snapshot.documents)
+        .map((snapshot) => snapshot.docs)
         .pipe(_savedDisclosure$);
 
     _saveDisclosureController.stream.listen((disclosure) async {
       final user = await _userController.first;
       final obj = disclosure.toObject();
       obj['add_at'] = DateTime.now().millisecondsSinceEpoch;
-      await collection(user).document(disclosure.document).setData(obj);
+      await collection(user).doc(disclosure.document).set(obj);
     });
   }
 }

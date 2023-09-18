@@ -15,10 +15,10 @@ class SavedDisclosuresScreen extends StatefulWidget {
 }
 
 class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
-  CollectionReference _collection(FirebaseUser user) {
-    return Firestore.instance
+  CollectionReference _collection(User user) {
+    return FirebaseFirestore.instance
         .collection('users')
-        .document(user.uid)
+        .doc(user.uid)
         .collection('disclosures');
   }
 
@@ -40,7 +40,7 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
           .switchMap((user) =>
               _collection(user).orderBy('add_at', descending: true).snapshots())
           .map((snapshot) =>
-              groupBy(snapshot.documents, (e) => toDate(e['add_at']))),
+              groupBy(snapshot.docs, (e) => toDate(e['add_at']))),
       builder: (context, snapshot) => snapshot.hasData
           ? CustomScrollView(
               slivers: snapshot.data.entries
@@ -58,17 +58,17 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, i) => Dismissible(
-                              key: Key(entry.value[i].data['document']),
+                              key: Key(entry.value[i].data()['document']),
                               child: DisclosureListItem(
                                 item: entry.value[i],
                                 showDate: true,
                               ),
                               onDismissed: ((direction) {
-                                final entryBack = entry.value[i].data;
+                                final entryBack = entry.value[i].data();
                                 final entryRef = entry.value[i].reference;
                                 entry.value[i].reference.delete();
                                 final revert = () {
-                                  entryRef.setData(entryBack);
+                                  entryRef.set(entryBack);
                                 };
                                 Scaffold.of(context).showSnackBar(SnackBar(
                                   content: Text('削除しました'),

@@ -58,7 +58,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
         return _auth.signInAnonymously();
       } else {
         return googleUser.authentication.then((googleAuth) =>
-            _auth.signInWithCredential(GoogleAuthProvider.getCredential(
+            _auth.signInWithCredential(GoogleAuthProvider.credential(
               accessToken: googleAuth.accessToken,
               idToken: googleAuth.idToken,
             )));
@@ -71,9 +71,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
       showDialog<dynamic>(
         context: navigatorKey.currentState.overlay.context,
         builder: (context) => AlertDialog(
-              title: Text("エラー！"),
-              content: Text(error.toString()),
-            ),
+          title: Text("エラー！"),
+          content: Text(error.toString()),
+        ),
       );
       print("notification onerror $error");
     });
@@ -82,7 +82,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
     // _message.unsubscribeFromTopic('edinet');
 
     bloc.user$.listen((user) {
-      Crashlytics.instance.setUserIdentifier (user.uid);
+      Crashlytics.instance.setUserIdentifier(user.uid);
       Crashlytics.instance.setUserEmail(user.email);
       Crashlytics.instance.setUserName(user.displayName);
     });

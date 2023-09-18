@@ -24,8 +24,8 @@ Future<Null> downloadAndOpenDisclosure(Disclosure item) async {
       'code': item.code
     });
     await tempFile.create();
-    final StorageFileDownloadTask task = ref.writeToFile(tempFile);
-    final int byteCount = (await task.future).totalByteCount;
+    final DownloadTask task = ref.writeToFile(tempFile);
+    final int byteCount = (await task).totalBytes;
     print(byteCount);
   }
 

@@ -418,7 +418,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate(
                         (context, idx) => DisclosureListItem(
-                            key: Key(snapshot.data[idx].documentID),
+                            key: Key(snapshot.data[idx].id),
                             item: snapshot.data[idx]),
                         childCount: snapshot.data.length),
                   )
