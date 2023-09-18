@@ -109,7 +109,7 @@ class CompanyDisclosureBloc2 extends Bloc {
           )
         : null;
     final disclosure = (company.code != null && company.code != "")
-        ? FirestoreGetCount<DocumentSnapshot>(
+        ? FirestoreGetCount<DocumentSnapshot<Map<String,dynamic>>>(
             user$: user$,
             query: FirebaseFirestore.instance
                 .collection('disclosures')

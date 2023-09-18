@@ -25,7 +25,7 @@ T getOr<T>(T a, T b) {
   return a == 0 ? b : a;
 }
 
-final Map<String, Comparator<DocumentSnapshot>> comparators = {
+final Map<String, Comparator<DocumentSnapshot<Map<String,dynamic>>>> comparators = {
   "最新": null,
   "閲覧回数": (a, b) => getOr(
       (b.data()['view_count'] ?? 0).compareTo(a.data()['view_count'] ?? 0),
@@ -42,7 +42,7 @@ class AppBloc extends Bloc {
   final _edinetFilter$ = BehaviorSubject<String>.seeded('');
   final _showOnlyFavorites$ = BehaviorSubject<bool>.seeded(false);
   final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
-  final _savedDisclosure$ = BehaviorSubject<List<QueryDocumentSnapshot>>();
+  final _savedDisclosure$ = BehaviorSubject<List<QueryDocumentSnapshot<Map<String,dynamic>>>>();
   final _darkMode$ = BehaviorSubject<Brightness>.seeded(Brightness.light);
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
@@ -262,7 +262,7 @@ class AppBloc extends Bloc {
         _newDisclosureCountController.add(e);
       });
 
-      return Rx.combineLatest5<List<Filter>, QuerySnapshot, bool, List<String>,
+      return Rx.combineLatest5<List<Filter>, QuerySnapshot<Map<String,dynamic>>, bool, List<String>,
               String, List<DocumentSnapshot>>(
           this._filter$,
           _disclosures2,
@@ -516,7 +516,7 @@ class AppBloc extends Bloc {
   }
 
   void _createNotificationStreams() {
-    final messaging = FirebaseMessaging();
+    final messaging = FirebaseMessaging.instance;
 
     Set<String> notifications = Set();
 
@@ -529,7 +529,7 @@ class AppBloc extends Bloc {
         .then((token) {
           print(token);
           return http.post(
-              'https://us-central1-disclosure-app.cloudfunctions.net/listTopics',
+              Uri.parse('https://us-central1-disclosure-app.cloudfunctions.net/listTopics'),
               body: json.encode({'IID_TOKEN': token}),
               headers: {'Content-Type': 'application/json'});
         })

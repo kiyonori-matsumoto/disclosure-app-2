@@ -11,7 +11,7 @@ class CompanySettlement {
   String scheduleStr;
   String settlementDate;
 
-  CompanySettlement.fromDocumentSnapshot(DocumentSnapshot snapshot) {
+  CompanySettlement.fromDocumentSnapshot(DocumentSnapshot<Map<String,dynamic>> snapshot) {
     final item = snapshot.exists ? snapshot.data() : null;
     if (item == null) {
       throw Exception("null snapshot");

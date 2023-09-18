@@ -25,7 +25,7 @@ void main() async {
     }
   };
 
-  Crashlytics.instance.enableInDevMode = true;
+  // FirebaseCrashlytics.instance.enableInDevMode = true;
   runZoned<Future<Null>>(() async {
     runApp(AppProvider(
       child: AppRootWidget(),
@@ -38,7 +38,7 @@ void main() async {
     } else {
       // Whenever an error occurs, call the `reportCrash` function. This will send
       // Dart errors to our dev console or Crashlytics depending on the environment.
-      await Crashlytics.instance.recordError(error, stackTrace);
+      await FirebaseCrashlytics.instance.recordError(error, stackTrace);
     }
   });
 }

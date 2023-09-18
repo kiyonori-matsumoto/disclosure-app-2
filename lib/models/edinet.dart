@@ -23,7 +23,7 @@ class Edinet {
   int view_count;
 
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
-    final item = snapshot.data();
+    final item = snapshot.data() as Map<String, dynamic>;
     docDescription = item['docDescription'];
     docId = item['docID'];
     docTypeCode = item['docTypeCode'];

@@ -17,7 +17,7 @@ class TagsDisclosureBloc extends Bloc {
 
   factory TagsDisclosureBloc(
       {@required String tag, @required ValueStream<User> user$}) {
-    final disclosure = FirestoreGetCount<DocumentSnapshot>(
+    final disclosure = FirestoreGetCount<DocumentSnapshot<Map<String,dynamic>>>(
         user$: user$,
         query: FirebaseFirestore.instance
             .collection('disclosures')

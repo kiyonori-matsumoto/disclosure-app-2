@@ -34,18 +34,14 @@ class AppRootWidgetState extends State<AppRootWidget> {
       GlobalKey(debugLabel: "Main Navigation");
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
-  final _message = FirebaseMessaging();
+  final _message = FirebaseMessaging.instance;
   final _admob = FirebaseAdMob.instance
       .initialize(appId: 'ca-app-pub-5131663294295156~3067610804');
   AppBloc bloc;
 
   AppRootWidgetState() {
     print('configure');
-    _message.configure(
-      onMessage: _handleNotificationMsg, //TODO:
-      onLaunch: _handleNotification,
-      onResume: _handleNotification,
-    );
+    FirebaseMessaging.onMessage.listen(_handleNotificationMsg);
   }
 
   @override
@@ -82,17 +78,17 @@ class AppRootWidgetState extends State<AppRootWidget> {
     // _message.unsubscribeFromTopic('edinet');
 
     bloc.user$.listen((user) {
-      Crashlytics.instance.setUserIdentifier(user.uid);
-      Crashlytics.instance.setUserEmail(user.email);
-      Crashlytics.instance.setUserName(user.displayName);
+      FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
+      // FirebaseCrashlytics.instance.setUserEmail(user.email);
+      // FirebaseCrashlytics.instance.setUserName(user.displayName);
     });
   }
 
-  Future<void> _handleNotification(Map<String, dynamic> message) async {
+  Future<void> _handleNotification(RemoteMessage message) async {
     print("###notification handler ###");
     print(message);
     print(navigatorKey.currentContext);
-    final data = message['data'];
+    final data = message.data;
     final String code = data['code'] ?? '';
     await Future<dynamic>.delayed(Duration(milliseconds: 1000));
 
@@ -108,7 +104,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
         .pushNamed('/company-disclosures', arguments: company);
   }
 
-  Future<void> _handleNotificationMsg(Map<String, dynamic> message) async {
+  Future<void> _handleNotificationMsg(RemoteMessage message) async {
     print("###notificationMsg handler ###");
     print(message);
     // final data = message ?? {};
@@ -118,8 +114,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
     await showDialog<dynamic>(
       context: navigatorKey.currentState.overlay.context,
       builder: (context) => AlertDialog(
-          title: Text(message['notification']['title']),
-          content: Text(message['notification']['body'])),
+          title: Text(message.notification.title),
+          content: Text(message.notification.body)),
     );
   }
 
@@ -145,7 +141,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
   @override
   Widget build(BuildContext context) {
-    FirebaseAnalytics analytics = FirebaseAnalytics();
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
     final routeObserver = MyRouteObserver();
     final bloc = BlocProvider.of<AppBloc>(context);
 

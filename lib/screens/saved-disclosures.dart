@@ -58,7 +58,7 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, i) => Dismissible(
-                              key: Key(entry.value[i].data()['document']),
+                              key: Key((entry.value[i].data() as Map<String,dynamic>)['document']),
                               child: DisclosureListItem(
                                 item: entry.value[i],
                                 showDate: true,

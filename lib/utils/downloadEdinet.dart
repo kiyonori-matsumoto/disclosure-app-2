@@ -3,7 +3,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
-final _analytics = FirebaseAnalytics();
+final _analytics = FirebaseAnalytics.instance;
 
 Future<Null> downloadAndOpenEdinet(String docId, {String code = ''}) async {
   print(docId);
