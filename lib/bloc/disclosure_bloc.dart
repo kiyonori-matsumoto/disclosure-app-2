@@ -27,7 +27,7 @@
 //       final start = date.millisecondsSinceEpoch;
 //       final end = date.add(Duration(days: 1)).millisecondsSinceEpoch;
 //       return Observable(
-//         Firestore.instance
+//         FirebaseFirestore.instance
 //             .collection(path)
 //             .where('time', isGreaterThanOrEqualTo: start)
 //             .where('time', isLessThan: end)

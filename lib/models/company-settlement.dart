@@ -12,7 +12,7 @@ class CompanySettlement {
   String settlementDate;
 
   CompanySettlement.fromDocumentSnapshot(DocumentSnapshot snapshot) {
-    final item = snapshot.exists ? snapshot.data : null;
+    final item = snapshot.exists ? snapshot.data() : null;
     if (item == null) {
       throw Exception("null snapshot");
     }

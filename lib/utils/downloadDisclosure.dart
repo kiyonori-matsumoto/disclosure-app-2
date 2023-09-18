@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:open_file/open_file.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 final _storage = FirebaseStorage.instance;
@@ -24,10 +24,10 @@ Future<Null> downloadAndOpenDisclosure(Disclosure item) async {
       'code': item.code
     });
     await tempFile.create();
-    final StorageFileDownloadTask task = ref.writeToFile(tempFile);
-    final int byteCount = (await task.future).totalByteCount;
+    final DownloadTask task = ref.writeToFile(tempFile);
+    final int byteCount = (await task).totalBytes;
     print(byteCount);
   }
 
-  OpenFile.open(tempFile.path);
+  OpenFilex.open(tempFile.path);
 }

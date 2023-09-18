@@ -27,9 +27,9 @@ class EdinetBloc extends Bloc {
       print("***date*** $date");
       final start = dateFormatter.format(date);
       final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return Firestore.instance.collection(path).where('seq', isGreaterThanOrEqualTo: start).where('seq', isLessThan: end).orderBy('seq', descending: true).snapshots().startWith(null);
+      return FirebaseFirestore.instance.collection(path).where('seq', isGreaterThanOrEqualTo: start).where('seq', isLessThan: end).orderBy('seq', descending: true).snapshots().startWith(null);
     }).map((doc) {
-      return doc?.documents;
+      return doc?.docs;
     });
 
     final _mappedEdinets = Rx.combineLatest2<

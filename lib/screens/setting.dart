@@ -97,7 +97,7 @@ class _SettingScreenState extends State<SettingScreen> {
         ListHeader(
           title: 'アカウント設定',
         ),
-        StreamBuilder<FirebaseUser>(
+        StreamBuilder<User>(
           stream: bloc.user$,
           builder: (context, snapshot) => RaisedButton(
             color: Color(0xff4285f4),
@@ -129,30 +129,30 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Future<FirebaseUser> _handleSignIn(BuildContext context) async {
+  Future<User> _handleSignIn(BuildContext context) async {
     try {
       GoogleSignInAccount googleUser = await _googleSignIn.signIn();
       GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final providers =
-          await _auth.fetchSignInMethodsForEmail(email: googleUser.email);
+          await _auth.fetchSignInMethodsForEmail(googleUser.email);
 
-      FirebaseUser user;
+      User user;
       if (providers.contains('google.com')) {
         user =
-            (await _auth.signInWithCredential(GoogleAuthProvider.getCredential(
+            (await _auth.signInWithCredential(GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
                 .user;
       } else {
-        user = await FirebaseAuth.instance.currentUser();
-        user = (await user.linkWithCredential(GoogleAuthProvider.getCredential(
+        user = await FirebaseAuth.instance.currentUser;
+        user = (await user.linkWithCredential(GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
             .user;
       }
-      print(user.providerId);
+      // print(user.providerId);
       // Scaffold.of(context).showSnackBar(SnackBar(
       //   content: Text('Googleアカウントと連携しました'),
       //   duration: Duration(seconds: 5),
@@ -168,12 +168,12 @@ class _SettingScreenState extends State<SettingScreen> {
                 textColor: Theme.of(context).primaryTextTheme.button.color,
                 onPressed: () async {
                   final id = user.uid;
-                  final settings = await Firestore.instance
+                  final settings = await FirebaseFirestore.instance
                       .collection('users')
-                      .document(id)
+                      .doc(id)
                       .get();
                   final List<String> favs =
-                      settings.data['favorites'].cast<String>();
+                      settings.data()['favorites'].cast<String>();
                   favs.forEach((fav) {
                     this.bloc.addNotification.add(fav);
                   });
@@ -191,6 +191,7 @@ class _SettingScreenState extends State<SettingScreen> {
       return user;
     } catch (e) {
       print('exception');
+      print(e);
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text('アカウント連携に失敗しました'),
         duration: Duration(seconds: 5),
@@ -199,8 +200,8 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   _handleSignOut(BuildContext context) async {
-    final user = await _auth.currentUser();
-    await user.unlinkFromProvider('google.com');
+    final user = await _auth.currentUser;
+    await user.unlink('google.com');
     SnackBar snackBar = SnackBar(
       content: Text('連携を解除しました'),
       duration: Duration(seconds: 10),

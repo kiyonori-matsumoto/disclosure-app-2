@@ -16,15 +16,15 @@ class TagsDisclosureBloc extends Bloc {
   });
 
   factory TagsDisclosureBloc(
-      {@required String tag, @required ValueStream<FirebaseUser> user$}) {
+      {@required String tag, @required ValueStream<User> user$}) {
     final disclosure = FirestoreGetCount<DocumentSnapshot>(
         user$: user$,
-        query: Firestore.instance
+        query: FirebaseFirestore.instance
             .collection('disclosures')
             .where('tags2', arrayContains: tag)
             .orderBy('time', descending: true),
         mapper: (doc) => doc,
-        getFn: (doc) => doc.data['time']);
+        getFn: (doc) => doc.data()['time']);
 
     return TagsDisclosureBloc._(tag: tag, disclosure: disclosure);
   }

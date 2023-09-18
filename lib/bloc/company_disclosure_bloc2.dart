@@ -14,7 +14,7 @@ class FirestoreGetCount<T> extends Bloc {
   final Query query;
   final Function(T) getFn;
   final T Function(DocumentSnapshot) mapper;
-  final ValueStream<FirebaseUser> user$;
+  final ValueStream<User> user$;
 
   final StreamController<void> _reloadController = StreamController();
   final StreamController<T> _loadNextController = StreamController();
@@ -45,10 +45,10 @@ class FirestoreGetCount<T> extends Bloc {
               q = q.startAfter([lastData]);
             }
             return Stream.fromFuture(
-                user$.first.then((user) => q.limit(20).getDocuments()));
+                user$.first.then((user) => q.limit(20).get()));
           })
           .doOnData((_) => this._isLoading$.add(false))
-          .map((d) => d.documents.map(mapper).toList())
+          .map((d) => d.docs.map(mapper).toList())
           .scan<List<T>>((acc, curr, i) {
             return acc + curr;
           }, [])
@@ -73,7 +73,7 @@ class CompanyDisclosureBloc2 extends Bloc {
   final FirestoreGetCount<DocumentSnapshot> disclosure;
 
   final ValueStream<Map<String, Company>> companies;
-  final ValueStream<FirebaseUser> user$;
+  final ValueStream<User> user$;
 
   final BehaviorSubject<CompanySettlement> _companySettlement$ =
       BehaviorSubject();
@@ -93,11 +93,11 @@ class CompanyDisclosureBloc2 extends Bloc {
 
   factory CompanyDisclosureBloc2(Company company,
       {@required ValueStream<Map<String, Company>> companies,
-      @required ValueStream<FirebaseUser> user$}) {
-    final edinet = company.edinetCode != null
+      @required ValueStream<User> user$}) {
+    final edinet = (company.edinetCode != null && company.edinetCode != "")
         ? FirestoreGetCount<Edinet>(
             user$: user$,
-            query: Firestore.instance
+            query: FirebaseFirestore.instance
                 .collection('edinets')
                 .where('map.${company.edinetCode}', isGreaterThan: 0)
                 .orderBy('map.${company.edinetCode}', descending: true),
@@ -108,15 +108,15 @@ class CompanyDisclosureBloc2 extends Bloc {
             getFn: (edinet) => edinet.lastEvaluate,
           )
         : null;
-    final disclosure = company.code != null
+    final disclosure = (company.code != null && company.code != "")
         ? FirestoreGetCount<DocumentSnapshot>(
             user$: user$,
-            query: Firestore.instance
+            query: FirebaseFirestore.instance
                 .collection('disclosures')
                 .where('code', isEqualTo: company.code)
                 .orderBy('time', descending: true),
             mapper: (doc) => doc,
-            getFn: (doc) => doc.data['time'],
+            getFn: (doc) => doc.data()['time'],
           )
         : null;
 
@@ -130,7 +130,7 @@ class CompanyDisclosureBloc2 extends Bloc {
   void _settlementControllerHandler(String code) {
     this.user$.first.then((user) {
       print(user);
-      return Firestore.instance.collection('settlements').document(code).get();
+      return FirebaseFirestore.instance.collection('settlements').doc(code).get();
     }).then((doc) {
       if (doc.exists && doc.data != null) {
         print(doc.data);

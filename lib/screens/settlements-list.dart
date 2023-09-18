@@ -61,15 +61,15 @@ class _SettlementsListState extends State<SettlementsList> {
     final bloc = BlocProvider.of<AppBloc>(context);
     return FutureBuilder(
       initialData: null,
-      future: Firestore.instance
+      future: FirebaseFirestore.instance
           .collection('settlements')
           .where('schedule', isEqualTo: toDateHyphenate(current))
-          .getDocuments(),
+          .get(),
       builder: (context, snapshot) => snapshot.data != null
-          ? snapshot.data.documents.length != 0
+          ? snapshot.data.docs.length != 0
               ? ListView.builder(
                   itemBuilder: (context, idx) {
-                    final data = snapshot.data.documents[idx].data;
+                    final data = snapshot.data.docs[idx].data();
                     return ListTile(
                       title: Text("${data['name']} (${data['quote']})"),
                       onTap: () async {
@@ -83,7 +83,7 @@ class _SettlementsListState extends State<SettlementsList> {
                       },
                     );
                   },
-                  itemCount: snapshot.data.documents.length,
+                  itemCount: snapshot.data.docs.length,
                 )
               : SizedBox(
                   child: Card(
@@ -109,7 +109,7 @@ class _SettlementsListState extends State<SettlementsList> {
 
   // Widget _buildBody(BuildContext context) {
   //   return StreamBuilder<QuerySnapshot>(
-  //     stream: Firestore.instance
+  //     stream: FirebaseFirestore.instance
   //         .collection('settlements')
   //         .where('schedule', isEqualTo: toDateHyphenate(current))
   //         .snapshots(),

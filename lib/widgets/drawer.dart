@@ -21,11 +21,11 @@ class AppDrawer extends StatelessWidget {
     return Drawer(
       child: ListView(
         children: <Widget>[
-          StreamBuilder<FirebaseUser>(
+          StreamBuilder<User>(
             builder: (context, snapshot) => UserAccountsDrawerHeader(
                   accountEmail: Text(snapshot.data?.email ?? ''),
                   accountName: Text(snapshot.data?.displayName ?? ''),
-                  currentAccountPicture: _avator(snapshot.data?.photoUrl),
+                  currentAccountPicture: _avator(snapshot.data?.photoURL),
                 ),
             stream: bloc.user$,
           ),

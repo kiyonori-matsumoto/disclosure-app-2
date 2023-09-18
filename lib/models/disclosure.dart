@@ -24,7 +24,7 @@ class Disclosure {
       this.isSelected = false});
 
   Disclosure.fromDocumentSnapshot(DocumentSnapshot snapshot) {
-    final item = snapshot.data;
+    final item = snapshot.data();
     code = item['code'];
     company = item['company'];
     title = item['title'];

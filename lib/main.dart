@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:disclosure_app_fl/provider.dart';
 import 'package:flutter/material.dart';
 import 'app.dart';
-import 'package:flutter_crashlytics/flutter_crashlytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/rendering.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   // add this, and it should be the first line in main method
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Firebase.initializeApp();
   // debugPaintSizeEnabled = true;
   FlutterError.onError = (FlutterErrorDetails details) {
     print("FlutterError onerror handler");
@@ -24,7 +25,7 @@ void main() async {
     }
   };
 
-  await FlutterCrashlytics().initialize();
+  Crashlytics.instance.enableInDevMode = true;
   runZoned<Future<Null>>(() async {
     runApp(AppProvider(
       child: AppRootWidget(),
@@ -37,8 +38,7 @@ void main() async {
     } else {
       // Whenever an error occurs, call the `reportCrash` function. This will send
       // Dart errors to our dev console or Crashlytics depending on the environment.
-      await FlutterCrashlytics()
-          .reportCrash(error, stackTrace, forceCrash: false);
+      await Crashlytics.instance.recordError(error, stackTrace);
     }
   });
 }
