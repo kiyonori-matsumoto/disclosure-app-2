@@ -35,7 +35,7 @@ dependencies:
   http:
   google_sign_in: ^4.0.1
   intl: any
-  open_file: ^2.0.1
+  open_filex: ^3.3.0
   package_info: ^0.4.0
   path_provider: ^0.5.0+1
   rxdart: ^0.23.1
