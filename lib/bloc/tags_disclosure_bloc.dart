@@ -7,24 +7,24 @@ import 'package:rxdart/rxdart.dart';
 import 'company_disclosure_bloc2.dart';
 
 class TagsDisclosureBloc extends Bloc {
-  final String tag;
+  final String? tag;
   final FirestoreGetCount<DocumentSnapshot> disclosure;
 
   TagsDisclosureBloc._({
-    @required this.tag,
-    @required this.disclosure,
+    required this.tag,
+    required this.disclosure,
   });
 
   factory TagsDisclosureBloc(
-      {@required String tag, @required ValueStream<User> user$}) {
-    final disclosure = FirestoreGetCount<DocumentSnapshot>(
+      {required String? tag, required ValueStream<User> user$}) {
+    final disclosure = FirestoreGetCount<DocumentSnapshot<Map<String,dynamic>>>(
         user$: user$,
         query: FirebaseFirestore.instance
             .collection('disclosures')
             .where('tags2', arrayContains: tag)
             .orderBy('time', descending: true),
-        mapper: (doc) => doc,
-        getFn: (doc) => doc.data()['time']);
+        mapper: (doc) => doc as DocumentSnapshot<Map<String, dynamic>>,
+        getFn: (doc) => doc.data()!['time']);
 
     return TagsDisclosureBloc._(tag: tag, disclosure: disclosure);
   }

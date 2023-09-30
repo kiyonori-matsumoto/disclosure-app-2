@@ -1,16 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Disclosure {
-  String code;
-  String company;
-  String title;
-  String document;
-  String exchanges;
-  int time;
-  int viewCount;
-  List<String> tags;
-  bool isSelected;
-  DateTime addAt;
+  String? code;
+  String? company;
+  String? title;
+  String? document;
+  String? exchanges;
+  int? time;
+  int? viewCount;
+  List<String>? tags;
+  bool? isSelected;
+  DateTime? addAt;
 
   Disclosure(
       {this.code,
@@ -24,7 +24,7 @@ class Disclosure {
       this.isSelected = false});
 
   Disclosure.fromDocumentSnapshot(DocumentSnapshot snapshot) {
-    final item = snapshot.data();
+    final item = snapshot.data() as Map<String, dynamic>;
     code = item['code'];
     company = item['company'];
     title = item['title'];
@@ -47,7 +47,7 @@ class Disclosure {
       'document': document,
       'exchanges': exchanges,
       'time': time,
-      'tags': tags.fold<Map<String, dynamic>>({}, (obj, tag) {
+      'tags': tags!.fold<Map<String, dynamic>>({}, (obj, tag) {
         obj[tag] = true;
         return obj;
       }),

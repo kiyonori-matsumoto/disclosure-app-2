@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:disclosure_app_fl/provider.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/rendering.dart';
@@ -10,6 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 void main() async {
   // add this, and it should be the first line in main method
   WidgetsFlutterBinding.ensureInitialized();
+  MobileAds.instance.initialize();
   await Firebase.initializeApp();
   // debugPaintSizeEnabled = true;
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -21,11 +23,11 @@ void main() async {
     } else {
       // In production mode report to the application zone to report to
       // Crashlytics.
-      Zone.current.handleUncaughtError(details.exception, details.stack);
+      Zone.current.handleUncaughtError(details.exception, details.stack!);
     }
   };
 
-  Crashlytics.instance.enableInDevMode = true;
+  // FirebaseCrashlytics.instance.enableInDevMode = true;
   runZoned<Future<Null>>(() async {
     runApp(AppProvider(
       child: AppRootWidget(),
@@ -38,7 +40,7 @@ void main() async {
     } else {
       // Whenever an error occurs, call the `reportCrash` function. This will send
       // Dart errors to our dev console or Crashlytics depending on the environment.
-      await Crashlytics.instance.recordError(error, stackTrace);
+      await FirebaseCrashlytics.instance.recordError(error, stackTrace);
     }
   });
 }

@@ -7,7 +7,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 final _storage = FirebaseStorage.instance;
-final _analytics = FirebaseAnalytics();
+final _analytics = FirebaseAnalytics.instance;
 
 Future<Null> downloadAndOpenDisclosure(Disclosure item) async {
   final pdf = "${item.document}.pdf";

@@ -32,9 +32,9 @@ class _CustomTagScreenState extends State<CustomTagScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: snapshot.data.length > 0
+                  child: snapshot.data!.length > 0
                       ? ListView(
-                          children: snapshot.data.map((filter) {
+                          children: snapshot.data!.map((filter) {
                           return Dismissible(
                             child: ListTile(
                               title: Text(filter.title),

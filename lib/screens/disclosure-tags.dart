@@ -1,14 +1,13 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/tags_disclosure_bloc.dart';
-import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
-import 'package:firebase_admob/firebase_admob.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DisclosureTagsScreen extends StatefulWidget {
-  final String tag;
+  final String? tag;
 
   DisclosureTagsScreen({this.tag});
 
@@ -18,20 +17,20 @@ class DisclosureTagsScreen extends StatefulWidget {
 }
 
 class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
-  final String tag;
-  BannerAd banner;
-  TagsDisclosureBloc bloc2;
+  final String? tag;
+  // BannerAd banner;
+  TagsDisclosureBloc? bloc2;
 
   @override
   initState() {
     super.initState();
-    banner = showBanner("ca-app-pub-5131663294295156/4027309882");
+    // banner = showBanner("ca-app-pub-5131663294295156/4027309882");
     final appBloc = BlocProvider.of<AppBloc>(context);
     this.bloc2 = TagsDisclosureBloc(
       tag: this.tag,
       user$: appBloc.user$,
     );
-    this.bloc2.disclosure.reload.add(null);
+    this.bloc2!.disclosure.reload.add(null);
   }
 
   _DisclosureTagsScreenState({this.tag});
@@ -54,29 +53,29 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
             padding: const EdgeInsets.all(8.0),
             child: RaisedButton(
               child: StreamBuilder<bool>(
-                  stream: bloc2.disclosure.isLoading$,
+                  stream: bloc2!.disclosure.isLoading$,
                   builder: (context, snapshot) {
                     return snapshot.data == false
                         ? Text('更に読み込む')
                         : CircularProgressIndicator();
                   }),
               onPressed: () {
-                this.bloc2.disclosure?.loadNext?.add(snapshot.last);
+                this.bloc2!.disclosure?.loadNext?.add(snapshot.last);
               },
             ),
           ),
         )
       ]),
       onRefresh: () {
-        bloc2.disclosure?.reload?.add(this.tag);
-        return bloc2.disclosure?.isLoading$?.where((e) => e)?.first;
+        bloc2!.disclosure?.reload?.add(this.tag);
+        return bloc2!.disclosure?.isLoading$?.where((e) => e).first as Future<void>;
       },
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    return StreamBuilder<List<DocumentSnapshot>>(
-      stream: bloc2.disclosure.data$,
+    return StreamBuilder<List<DocumentSnapshot>?>(
+      stream: bloc2!.disclosure.data$,
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data == null) {
           return Column(
@@ -85,7 +84,7 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
             ],
           );
         }
-        return _buildList(context, snapshot.data);
+        return _buildList(context, snapshot.data!);
       },
     );
   }
@@ -99,17 +98,17 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
         title: Text("${this.tag}の通知履歴"),
       ),
       body: _buildBody(context),
-      persistentFooterButtons: <Widget>[
-        SizedBox(
-          height: getSmartBannerHeight(mediaQuery) - 16.0,
-        )
-      ],
+      // persistentFooterButtons: <Widget>[
+      //   SizedBox(
+      //     height: getSmartBannerHeight(mediaQuery) - 16.0,
+      //   )
+      // ],
     );
   }
 
   @override
   void dispose() {
-    banner?.dispose();
+    // banner?.dispose();
     bloc2?.dispose();
     super.dispose();
   }

@@ -17,20 +17,20 @@ class FirestoreGetCount<T> extends Bloc {
   final ValueStream<User> user$;
 
   final StreamController<void> _reloadController = StreamController();
-  final StreamController<T> _loadNextController = StreamController();
-  final BehaviorSubject<List<T>> _data$ = BehaviorSubject();
+  final StreamController<T?> _loadNextController = StreamController();
+  final BehaviorSubject<List<T>?> _data$ = BehaviorSubject();
   final BehaviorSubject<bool> _isLoading$ = BehaviorSubject.seeded(true);
 
   Sink<void> get reload => _reloadController.sink;
-  Sink<T> get loadNext => _loadNextController.sink;
-  ValueStream<List<T>> get data$ => _data$.stream;
+  Sink<T?> get loadNext => _loadNextController.sink;
+  ValueStream<List<T>?> get data$ => _data$.stream;
   ValueStream<bool> get isLoading$ => _isLoading$.stream;
 
   FirestoreGetCount({
-    @required this.query,
-    @required this.getFn,
-    @required this.mapper,
-    @required this.user$,
+    required this.query,
+    required this.getFn,
+    required this.mapper,
+    required this.user$,
   }) {
     _reloadController.stream.switchMap((_) {
       return _loadNextController.stream
@@ -49,8 +49,8 @@ class FirestoreGetCount<T> extends Bloc {
           })
           .doOnData((_) => this._isLoading$.add(false))
           .map((d) => d.docs.map(mapper).toList())
-          .scan<List<T>>((acc, curr, i) {
-            return acc + curr;
+          .scan<List<T>?>((acc, curr, i) {
+            return acc! + curr;
           }, [])
           .startWith(null);
     }).pipe(_data$);
@@ -69,31 +69,31 @@ class FirestoreGetCount<T> extends Bloc {
 class CompanyDisclosureBloc2 extends Bloc {
   final Company company;
 
-  final FirestoreGetCount<Edinet> edinet;
-  final FirestoreGetCount<DocumentSnapshot> disclosure;
+  final FirestoreGetCount<Edinet>? edinet;
+  final FirestoreGetCount<DocumentSnapshot>? disclosure;
 
   final ValueStream<Map<String, Company>> companies;
   final ValueStream<User> user$;
 
-  final BehaviorSubject<CompanySettlement> _companySettlement$ =
+  final BehaviorSubject<CompanySettlement?> _companySettlement$ =
       BehaviorSubject();
 
-  ValueStream<CompanySettlement> get companySettlement$ =>
+  ValueStream<CompanySettlement?> get companySettlement$ =>
       _companySettlement$.stream;
 
   CompanyDisclosureBloc2._(
     this.company, {
-    @required this.companies,
-    @required this.user$,
-    @required this.edinet,
-    @required this.disclosure,
+    required this.companies,
+    required this.user$,
+    required this.edinet,
+    required this.disclosure,
   }) {
     _settlementControllerHandler(this.company.code);
   }
 
   factory CompanyDisclosureBloc2(Company company,
-      {@required ValueStream<Map<String, Company>> companies,
-      @required ValueStream<User> user$}) {
+      {required ValueStream<Map<String, Company>> companies,
+      required ValueStream<User> user$}) {
     final edinet = (company.edinetCode != null && company.edinetCode != "")
         ? FirestoreGetCount<Edinet>(
             user$: user$,
@@ -109,14 +109,14 @@ class CompanyDisclosureBloc2 extends Bloc {
           )
         : null;
     final disclosure = (company.code != null && company.code != "")
-        ? FirestoreGetCount<DocumentSnapshot>(
+        ? FirestoreGetCount<DocumentSnapshot<Map<String,dynamic>>>(
             user$: user$,
             query: FirebaseFirestore.instance
                 .collection('disclosures')
                 .where('code', isEqualTo: company.code)
                 .orderBy('time', descending: true),
-            mapper: (doc) => doc,
-            getFn: (doc) => doc.data()['time'],
+            mapper: (doc) => doc as DocumentSnapshot<Map<String, dynamic>>,
+            getFn: (doc) => doc.data()!['time'],
           )
         : null;
 
@@ -127,7 +127,7 @@ class CompanyDisclosureBloc2 extends Bloc {
         disclosure: disclosure);
   }
 
-  void _settlementControllerHandler(String code) {
+  void _settlementControllerHandler(String? code) {
     this.user$.first.then((user) {
       print(user);
       return FirebaseFirestore.instance.collection('settlements').doc(code).get();
@@ -146,8 +146,8 @@ class CompanyDisclosureBloc2 extends Bloc {
 
   @override
   void dispose() {
-    this.edinet.dispose();
-    this.disclosure.dispose();
+    this.edinet?.dispose();
+    this.disclosure?.dispose();
     _companySettlement$.close();
   }
 }

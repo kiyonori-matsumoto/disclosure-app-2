@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info/package_info.dart';
 
 class AppDrawer extends StatelessWidget {
-  Widget _avator(String url) {
+  Widget? _avator(String? url) {
     if (url == null || url.isEmpty) {
       return null;
     }

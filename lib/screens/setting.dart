@@ -19,7 +19,7 @@ class _SettingScreenState extends State<SettingScreen> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  AppBloc bloc;
+  late AppBloc bloc;
 
   @override
   void initState() {
@@ -81,7 +81,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 value: snapshot.data == Brightness.dark,
                 title: Text('ダークモード'),
                 onChanged: (v) {
-                  bloc.setModeBrightness.add(!v);
+                  bloc.setModeBrightness.add(!v!);
                 },
               );
             }),
@@ -104,13 +104,13 @@ class _SettingScreenState extends State<SettingScreen> {
             textColor: Colors.white,
             onPressed: () {
               snapshot.hasData &&
-                      snapshot.data.providerData
+                      snapshot.data!.providerData
                           .any((p) => p.providerId == "google.com")
                   ? this._handleSignOut(context)
                   : this._handleSignIn(context);
             },
             child: snapshot.hasData &&
-                    snapshot.data.providerData
+                    snapshot.data!.providerData
                         .any((p) => p.providerId == "google.com")
                 ? Text('GOOGLE連携を解除')
                 : Text('GOOGLE連携'),
@@ -129,14 +129,14 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Future<User> _handleSignIn(BuildContext context) async {
+  Future<User?> _handleSignIn(BuildContext context) async {
     try {
-      GoogleSignInAccount googleUser = await _googleSignIn.signIn();
+      GoogleSignInAccount googleUser = (await _googleSignIn.signIn())!;
       GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final providers =
           await _auth.fetchSignInMethodsForEmail(googleUser.email);
 
-      User user;
+      User? user;
       if (providers.contains('google.com')) {
         user =
             (await _auth.signInWithCredential(GoogleAuthProvider.credential(
@@ -146,7 +146,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 .user;
       } else {
         user = await FirebaseAuth.instance.currentUser;
-        user = (await user.linkWithCredential(GoogleAuthProvider.credential(
+        user = (await user!.linkWithCredential(GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
@@ -157,7 +157,7 @@ class _SettingScreenState extends State<SettingScreen> {
       //   content: Text('Googleアカウントと連携しました'),
       //   duration: Duration(seconds: 5),
       // ));
-      user.reload();
+      user!.reload();
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -165,15 +165,15 @@ class _SettingScreenState extends State<SettingScreen> {
           actions: <Widget>[
             RaisedButton(
                 child: const Text('復元する'),
-                textColor: Theme.of(context).primaryTextTheme.button.color,
+                textColor: Theme.of(context).primaryTextTheme.button!.color,
                 onPressed: () async {
-                  final id = user.uid;
+                  final id = user!.uid;
                   final settings = await FirebaseFirestore.instance
                       .collection('users')
                       .doc(id)
                       .get();
                   final List<String> favs =
-                      settings.data()['favorites'].cast<String>();
+                      settings.data()!['favorites'].cast<String>();
                   favs.forEach((fav) {
                     this.bloc.addNotification.add(fav);
                   });
@@ -200,7 +200,7 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   _handleSignOut(BuildContext context) async {
-    final user = await _auth.currentUser;
+    final user = await _auth.currentUser!;
     await user.unlink('google.com');
     SnackBar snackBar = SnackBar(
       content: Text('連携を解除しました'),
@@ -215,8 +215,8 @@ class ListHeader extends StatelessWidget {
   final String title;
 
   const ListHeader({
-    Key key,
-    @required this.title,
+    Key? key,
+    required this.title,
   }) : super(key: key);
 
   @override
@@ -226,7 +226,7 @@ class ListHeader extends StatelessWidget {
       child: Text(
         this.title,
         style: TextStyle(
-          color: Theme.of(context).textTheme.caption.color,
+          color: Theme.of(context).textTheme.caption!.color,
         ),
       ),
     );

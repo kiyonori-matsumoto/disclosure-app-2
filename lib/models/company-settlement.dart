@@ -4,14 +4,14 @@ import 'package:intl/intl.dart';
 final formatter = DateFormat.yMd('ja');
 
 class CompanySettlement {
-  String name;
-  String code;
-  String quote;
-  DateTime schedule;
-  String scheduleStr;
-  String settlementDate;
+  String? name;
+  String? code;
+  String? quote;
+  DateTime? schedule;
+  String? scheduleStr;
+  String? settlementDate;
 
-  CompanySettlement.fromDocumentSnapshot(DocumentSnapshot snapshot) {
+  CompanySettlement.fromDocumentSnapshot(DocumentSnapshot<Map<String,dynamic>> snapshot) {
     final item = snapshot.exists ? snapshot.data() : null;
     if (item == null) {
       throw Exception("null snapshot");
@@ -30,6 +30,6 @@ class CompanySettlement {
   }
 
   String toMessage() {
-    return "次回の決算${this.quote == '' ? '' : '(' + this.quote + ')'}発表予定日は${this.schedule != null ? formatter.format(this.schedule) : this.scheduleStr}です";
+    return "次回の決算${this.quote == '' ? '' : '(' + this.quote! + ')'}発表予定日は${this.schedule != null ? formatter.format(this.schedule!) : this.scheduleStr}です";
   }
 }
