@@ -104,7 +104,7 @@ class EdinetListItem extends StatelessWidget {
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            title: Text(edinet.docDescription!),
+            title: Text(edinet.docDescription ?? ""),
             subtitle: Text(edinet.relatedCompaniesName),
             onTap: () => downloadAndOpenEdinet(edinet.docId),
             onLongPress: _onLongPress(context, edinet.companies),

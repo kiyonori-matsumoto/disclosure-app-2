@@ -8,6 +8,7 @@ import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
+import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
@@ -56,30 +57,14 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   initState() {
     super.initState();
     this.bloc = BlocProvider.of<AppBloc>(context);
-    // if (banner == null) {
-    //   banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    // }
   }
 
   @override
   dispose() {
     print('dispose disclosure-stream');
     routeObserver.unsubscribe(this);
-    // banner?.dispose();
-    // banner = null;
     this.sliverScrollController.dispose();
     super.dispose();
-  }
-
-  void didPopNext() {
-    // if (banner == null) {
-    //   banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    // }
-  }
-
-  void didPushNext() {
-    // banner?.dispose();
-    // banner = null;
   }
 
   Widget _dialog(BuildContext context, AppBloc bloc) =>
@@ -110,45 +95,43 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     return runZoned(() {
       final bloc = BlocProvider.of<AppBloc>(context);
 
-      final mediaQuery = MediaQuery.of(context);
-      return StreamBuilder<DateTime>(
-          stream: bloc.date$,
-          builder: (context, snapshot) {
-            if (snapshot.data == null) return Container();
+      return WithBannerAdWidget(
+        child: StreamBuilder<DateTime>(
+            stream: bloc.date$,
+            builder: (context, snapshot) {
+              if (snapshot.data == null) return Container();
 
-            return Scaffold(
-              body: buildSliverBody(context, bloc: bloc),
-              drawer: AppDrawer(),
-              // persistentFooterButtons: <Widget>[
-              //   SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
-              // ],
-              floatingActionButton: StreamBuilder<int?>(
-                stream: bloc.newDisclosureCount,
-                builder: (context, snapshot) => snapshot.data == 0
-                    ? const SizedBox(
-                        width: 0.0,
-                        height: 0.0,
-                      )
-                    : FloatingActionButton.extended(
-                        onPressed: () {
-                          this.sliverScrollController.animateTo(
-                                0,
-                                duration: Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                              );
-                          this
-                              .bloc
-                              .refreshDisclosures
-                              .add(Random().nextInt(65535));
-                        },
-                        label: Text('${snapshot.data} NEW MESSAGE'),
-                        icon: Icon(Icons.refresh),
-                      ),
-              ),
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerFloat,
-            );
-          });
+              return Scaffold(
+                body: buildSliverBody(context, bloc: bloc),
+                drawer: AppDrawer(),
+                floatingActionButton: StreamBuilder<int?>(
+                  stream: bloc.newDisclosureCount,
+                  builder: (context, snapshot) => snapshot.data == 0
+                      ? const SizedBox(
+                          width: 0.0,
+                          height: 0.0,
+                        )
+                      : FloatingActionButton.extended(
+                          onPressed: () {
+                            this.sliverScrollController.animateTo(
+                                  0,
+                                  duration: Duration(milliseconds: 500),
+                                  curve: Curves.easeOut,
+                                );
+                            this
+                                .bloc
+                                .refreshDisclosures
+                                .add(Random().nextInt(65535));
+                          },
+                          label: Text('${snapshot.data} NEW MESSAGE'),
+                          icon: Icon(Icons.refresh),
+                        ),
+                ),
+                floatingActionButtonLocation:
+                    FloatingActionButtonLocation.centerFloat,
+              );
+            }),
+      );
     }, onError: (error, stacktrace) {
       showDialog(
         context: context,
@@ -196,20 +179,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       floating: true,
       snap: true,
       actions: <Widget>[
-        // Badge(
-        //   badgeContent: StreamBuilder(
-        //     stream: this.bloc.newDisclosureCount,
-        //     builder: (context, snapshot) =>
-        //         snapshot.hasData ? Text(snapshot.data.toString()) : null,
-        //   ),
-        //   child: IconButton(
-        //     icon: Icon(Icons.refresh),
-        //     onPressed: () {
-        //       bloc.refreshDisclosures.add(Random().nextInt(65535));
-        //     },
-        //     tooltip: "リフレッシュ",
-        //   ),
-        // ),
         IconButton(
           icon: Icon(Icons.new_releases),
           onPressed: () {

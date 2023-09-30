@@ -5,6 +5,7 @@ import 'package:disclosure_app_fl/bloc/company_disclosure_bloc2.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
@@ -31,7 +32,6 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   @override
   initState() {
     super.initState();
-    // banner = showBanner("ca-app-pub-5131663294295156/4027309882");
     final appBloc = BlocProvider.of<AppBloc>(context);
     if (company!.edinetCode != '') {
       tabLength = 2;
@@ -144,73 +144,50 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
   @override
   Widget build(BuildContext context) {
     final appBloc = BlocProvider.of<AppBloc>(context);
-    final mediaQuery = MediaQuery.of(context);
 
-    return DefaultTabController(
-      length: this.tabLength!,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("${this.company!.name} (${this.company!.code})"),
-          actions: <Widget>[
-            StreamBuilder<List<Company>>(
-              stream: appBloc.favoritesWithName$,
-              builder: (context, snapshot) {
-                final isFavorite = snapshot.hasData &&
-                    snapshot.data!.any((fav) => fav.code == this.company!.code);
-                return IconButton(
-                  icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-                  tooltip: 'お気に入り',
-                  onPressed: () {
-                    appBloc.switchFavorite.add(this.company!.code);
-                    Scaffold.of(context).showSnackBar(SnackBar(
-                      content:
-                          Text(isFavorite ? 'お気に入りを解除しました' : 'お気に入りに追加しました'),
-                    ));
-                  },
-                );
-              },
-            ),
-            // StreamBuilder<List<Company>>(
-            //   stream: appBloc.notifications$,
-            //   builder: (context, snapshot) {
-            //     final hasNotification = snapshot.hasData &&
-            //         snapshot.data.any((comp) => comp.code == this.company.code);
-            //     return IconButton(
-            //       icon: Icon(hasNotification
-            //           ? Icons.notifications
-            //           : Icons.notifications_off),
-            //       tooltip: '通知',
-            //       onPressed: () {
-            //         appBloc.switchNotification.add(this.company.code);
-            //         Scaffold.of(context).showSnackBar(SnackBar(
-            //           content:
-            //               Text(hasNotification ? '通知を解除しました' : '通知を登録しました'),
-            //         ));
-            //       },
-            //     );
-            //   },
-            // )
-          ],
-          bottom: TabBar(tabs: <Widget>[
-            Tab(
-              text: 'TDNET',
-            ),
-            if (this.company!.edinetCode != '')
-              Tab(
-                text: 'EDINET',
+    return WithBannerAdWidget(
+      child: DefaultTabController(
+        length: this.tabLength!,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text("${this.company!.name} (${this.company!.code})"),
+            actions: <Widget>[
+              StreamBuilder<List<Company>>(
+                stream: appBloc.favoritesWithName$,
+                builder: (context, snapshot) {
+                  final isFavorite = snapshot.hasData &&
+                      snapshot.data!
+                          .any((fav) => fav.code == this.company!.code);
+                  return IconButton(
+                    icon: Icon(isFavorite ? Icons.star : Icons.star_border),
+                    tooltip: 'お気に入り',
+                    onPressed: () {
+                      appBloc.switchFavorite.add(this.company!.code);
+                      Scaffold.of(context).showSnackBar(SnackBar(
+                        content:
+                            Text(isFavorite ? 'お気に入りを解除しました' : 'お気に入りに追加しました'),
+                      ));
+                    },
+                  );
+                },
               ),
-          ]),
+            ],
+            bottom: TabBar(tabs: <Widget>[
+              Tab(
+                text: 'TDNET',
+              ),
+              if (this.company!.edinetCode != '')
+                Tab(
+                  text: 'EDINET',
+                ),
+            ]),
+          ),
+          body: TabBarView(
+              children: <Widget?>[
+            _buildBody(context),
+            this.tabLength == 2 ? _buildEdinetList(context) : null,
+          ].whereNotNull().toList()),
         ),
-        body: TabBarView(
-            children: <Widget?>[
-          _buildBody(context),
-          this.tabLength == 2 ? _buildEdinetList(context) : null,
-        ].whereNotNull().toList()),
-        // persistentFooterButtons: <Widget>[
-        //   SizedBox(
-        //     height: getSmartBannerHeight(mediaQuery) - 16.0,
-        //   )
-        // ],
       ),
     );
   }
@@ -281,7 +258,6 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
 
   @override
   void dispose() {
-    // banner?.dispose();
     bloc2?.dispose();
     super.dispose();
   }
