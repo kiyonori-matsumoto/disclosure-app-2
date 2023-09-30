@@ -18,9 +18,9 @@ final smallGrey = TextStyle(
 
 class DisclosureListItem extends StatefulWidget {
   const DisclosureListItem({
-    Key key,
+    Key? key,
     this.showDate = false,
-    @required this.item,
+    required this.item,
   }) : super(key: key);
 
   final DocumentSnapshot item;
@@ -51,14 +51,14 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ),
               Row(
                 children: <Widget>[
-                  if (disclosure.tags.length > 0)
+                  if (disclosure.tags!.length > 0)
                     Text(
                       "${(disclosure.tags ?? []).join(', ')} | ",
                       style: smallGrey,
                     ),
                   new ContentViewCount(viewCount: disclosure.viewCount),
                   Text(
-                    toTime(disclosure.time, showDate: widget.showDate),
+                    toTime(disclosure.time!, showDate: widget.showDate),
                     style: smallGrey,
                   ),
                 ],
@@ -66,7 +66,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             ],
           ),
           subtitle: Text(
-            disclosure.title,
+            disclosure.title!,
             overflow: TextOverflow.fade,
           ),
           isThreeLine: true,
@@ -83,7 +83,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             }
           },
           onLongPress: () async {
-            RenderBox renderBox = context.findRenderObject();
+            RenderBox renderBox = context.findRenderObject() as RenderBox;
             final point = renderBox.localToGlobal(Offset.zero);
             final size = MediaQuery.of(context).size;
             print(point);
@@ -112,7 +112,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             );
             if (choice == 0) {
               bloc.saveDisclosure.add(disclosure);
-              return Scaffold.of(context).showSnackBar(SnackBar(
+              Scaffold.of(context).showSnackBar(SnackBar(
                 content: Text('保存しました'),
                 duration: Duration(seconds: 3),
               ));
@@ -120,7 +120,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             if (choice == 1) {
               final company = await getCompany(bloc,
                   code: disclosure.code, name: disclosure.company);
-              return Navigator.pushNamed(context, '/company-disclosures',
+              Navigator.pushNamed(context, '/company-disclosures',
                   arguments: company);
             }
           },

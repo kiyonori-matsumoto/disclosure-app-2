@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 
 class ContentViewCount extends StatelessWidget {
   const ContentViewCount({
-    Key key,
-    @required this.viewCount,
+    Key? key,
+    required this.viewCount,
   }) : super(key: key);
 
-  final int viewCount;
+  final int? viewCount;
 
   @override
   Widget build(BuildContext context) {

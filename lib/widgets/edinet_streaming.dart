@@ -24,8 +24,8 @@ class EdinetStreamingWidget extends StatefulWidget {
 }
 
 class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
-  EdinetBloc edinetBloc;
-  AppBloc bloc;
+  late EdinetBloc edinetBloc;
+  AppBloc? bloc;
 
   @override
   void initState() {
@@ -41,13 +41,13 @@ class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
 }
 
 class EdinetSliverList extends StatelessWidget {
-  final ValueStream<List<Edinet>> stream;
+  final ValueStream<List<Edinet>?> stream;
 
-  EdinetSliverList({@required this.stream});
+  EdinetSliverList({required this.stream});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Edinet>>(
+    return StreamBuilder<List<Edinet>?>(
       stream: stream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
@@ -65,15 +65,15 @@ class EdinetSliverList extends StatelessWidget {
           );
         }
         return (snapshot.hasData && snapshot.data != null)
-            ? snapshot.data.length > 0
+            ? snapshot.data!.length > 0
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate((context, idx) {
-                      final edinet = snapshot.data[idx];
+                      final edinet = snapshot.data![idx];
                       return Builder(
                         builder: (context) =>
                             new EdinetListItem(edinet: edinet),
                       );
-                    }, childCount: snapshot.data.length),
+                    }, childCount: snapshot.data!.length),
                   )
                 : SliverFillRemaining(
                     child: new NoDisclosures(),
@@ -88,8 +88,8 @@ class EdinetSliverList extends StatelessWidget {
 
 class EdinetListItem extends StatelessWidget {
   const EdinetListItem({
-    Key key,
-    @required this.edinet,
+    Key? key,
+    required this.edinet,
     this.showDate = false,
   }) : super(key: key);
 
@@ -99,12 +99,12 @@ class EdinetListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(
-        key: Key(edinet.docId),
+        key: Key(edinet.docId!),
         alignment: Alignment.topRight,
         children: <Widget>[
           ListTile(
             contentPadding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            title: Text(edinet.docDescription),
+            title: Text(edinet.docDescription!),
             subtitle: Text(edinet.relatedCompaniesName),
             onTap: () => downloadAndOpenEdinet(edinet.docId),
             onLongPress: _onLongPress(context, edinet.companies),
@@ -123,7 +123,7 @@ class EdinetListItem extends StatelessWidget {
                   viewCount: edinet.view_count,
                 ),
                 Text(
-                  this.showDate ? toDate(edinet.time) : toTime(edinet.time),
+                  this.showDate ? toDate(edinet.time!) : toTime(edinet.time!),
                   style: smallGrey,
                 )
               ],
@@ -132,10 +132,10 @@ class EdinetListItem extends StatelessWidget {
         ]);
   }
 
-  _onLongPress(BuildContext context, List<Company> companies) => () async {
+  _onLongPress(BuildContext context, List<Company?> companies) => () async {
         if (companies.length == 0) return;
 
-        RenderBox renderBox = context.findRenderObject();
+        RenderBox renderBox = context.findRenderObject() as RenderBox;
         final point = renderBox.localToGlobal(Offset.zero);
         final size = MediaQuery.of(context).size;
         print(point);
@@ -145,7 +145,7 @@ class EdinetListItem extends StatelessWidget {
           items: companies
               .map((company) => PopupMenuItem(
                     child: ListTile(
-                      title: Text('${company.name}'),
+                      title: Text('${company!.name}'),
                     ),
                     value: company,
                   ))

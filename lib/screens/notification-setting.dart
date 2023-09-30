@@ -37,13 +37,13 @@ class _NotificationSettingScreenState extends State<NotificationSettingScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: snapshot.data.length > 0
+                  child: snapshot.data!.length > 0
                       ? ListView(
-                          children: snapshot.data.map((notification) {
+                          children: snapshot.data!.map((notification) {
                           return Dismissible(
                             child:
                                 ListTile(title: Text(notification.toString())),
-                            key: notification.key,
+                            key: notification.key!,
                             onDismissed: (direction) {
                               bloc.removeNotification.add(notification.code);
                             },

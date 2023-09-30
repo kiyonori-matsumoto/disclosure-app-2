@@ -35,7 +35,7 @@ class _NotificationTagSettingScreenState
         : SafeArea(
             child: ListView(
               children: filterStrings.map((s) {
-                final value = snapshot.data.contains(s);
+                final value = snapshot.data!.contains(s);
                 return SwitchListTile(
                   title: Text(s),
                   value: value,

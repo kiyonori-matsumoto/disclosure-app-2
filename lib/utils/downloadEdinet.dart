@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 final _analytics = FirebaseAnalytics.instance;
 
-Future<Null> downloadAndOpenEdinet(String docId, {String code = ''}) async {
+Future<Null> downloadAndOpenEdinet(String? docId, {String code = ''}) async {
   print(docId);
   final client = HttpClient();
   client.badCertificateCallback = (_, __, ___) => true;
@@ -15,7 +15,7 @@ Future<Null> downloadAndOpenEdinet(String docId, {String code = ''}) async {
   final res = await req.close();
   final Directory systemTempDir = await getTemporaryDirectory();
   final tmpFile = File('${systemTempDir.path}/$docId.pdf');
-  await res.pipe(tmpFile.openWrite(encoding: null));
+  await res.pipe(tmpFile.openWrite());
   await OpenFilex.open(tmpFile.path);
   await _analytics.logEvent(name: 'select_content', parameters: {
     'content_type': 'edinet_pdf',

@@ -43,7 +43,7 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
               groupBy(snapshot.docs, (e) => toDate(e['add_at']))),
       builder: (context, snapshot) => snapshot.hasData
           ? CustomScrollView(
-              slivers: snapshot.data.entries
+              slivers: snapshot.data!.entries
                   .map((entry) => SliverStickyHeader(
                         header: Container(
                           height: 50.0,

@@ -13,7 +13,7 @@ class SettlementsList extends StatefulWidget {
 }
 
 class _SettlementsListState extends State<SettlementsList> {
-  DateTime current;
+  late DateTime current;
   final DateTime today;
   final DateTime start;
   final DateTime end;
@@ -66,10 +66,10 @@ class _SettlementsListState extends State<SettlementsList> {
           .where('schedule', isEqualTo: toDateHyphenate(current))
           .get(),
       builder: (context, snapshot) => snapshot.data != null
-          ? snapshot.data.docs.length != 0
+          ? (snapshot.data as QuerySnapshot).docs.length != 0
               ? ListView.builder(
                   itemBuilder: (context, idx) {
-                    final data = snapshot.data.docs[idx].data();
+                    final data = (snapshot.data as QuerySnapshot<Map<String, dynamic>>).docs[idx].data();
                     return ListTile(
                       title: Text("${data['name']} (${data['quote']})"),
                       onTap: () async {
@@ -83,7 +83,7 @@ class _SettlementsListState extends State<SettlementsList> {
                       },
                     );
                   },
-                  itemCount: snapshot.data.docs.length,
+                  itemCount: (snapshot.data as QuerySnapshot).docs.length,
                 )
               : SizedBox(
                   child: Card(

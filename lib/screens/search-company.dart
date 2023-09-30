@@ -33,7 +33,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
           onSubmitted: (code) {
             _controller.clear();
             final company = Company(code);
-            return Navigator.pushNamed(context, '/company-disclosures',
+            Navigator.pushNamed(context, '/company-disclosures',
                 arguments: company);
           },
         ),
@@ -83,12 +83,12 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
 }
 
 class CompanyListView extends StatelessWidget {
-  final List<Company> companies;
+  final List<Company>? companies;
   final bool history;
 
   const CompanyListView(
     this.companies, {
-    Key key,
+    Key? key,
     this.history = false,
   }) : super(key: key);
 
@@ -98,13 +98,13 @@ class CompanyListView extends StatelessWidget {
 
     return ListView.builder(
       itemBuilder: (context, index) {
-        final company = companies[index];
+        final company = companies![index];
         return ListTile(
-          title: Text(company.name),
+          title: Text(company.name!),
           leading: history ? Icon(Icons.history) : null,
           onTap: () {
             bloc.addHistory.add(company);
-            return Navigator.pushNamed(
+            Navigator.pushNamed(
               context,
               '/company-disclosures',
               arguments: company,
@@ -117,7 +117,7 @@ class CompanyListView extends StatelessWidget {
                     value: 'add_favorite',
                   )
                 ],
-            onSelected: (value) {
+            onSelected: (dynamic value) {
               switch (value) {
                 case "add_favorite":
                   bloc.addFavorite.add(company.code);
@@ -131,7 +131,7 @@ class CompanyListView extends StatelessWidget {
           ),
         );
       },
-      itemCount: companies.length,
+      itemCount: companies!.length,
     );
   }
 }

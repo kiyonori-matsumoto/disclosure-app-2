@@ -25,11 +25,11 @@ T getOr<T>(T a, T b) {
   return a == 0 ? b : a;
 }
 
-final Map<String, Comparator<DocumentSnapshot<Map<String,dynamic>>>> comparators = {
+final Map<String, Comparator<DocumentSnapshot<Map<String,dynamic>>>?> comparators = {
   "最新": null,
   "閲覧回数": (a, b) => getOr(
-      (b.data()['view_count'] ?? 0).compareTo(a.data()['view_count'] ?? 0),
-      (b.data()['time'] ?? 0).compareTo(a.data()['time'] ?? 0)),
+      (b.data()!['view_count'] ?? 0).compareTo(a.data()!['view_count'] ?? 0),
+      (b.data()!['time'] ?? 0).compareTo(a.data()!['time'] ?? 0)),
 };
 
 class AppBloc extends Bloc {
@@ -47,7 +47,7 @@ class AppBloc extends Bloc {
   final _setModeBrightness = StreamController<bool>();
   final StreamController<Disclosure> _saveDisclosureController =
       StreamController();
-  final _setDisclosureOrder$ = BehaviorSubject<String>.seeded("最新");
+  final _setDisclosureOrder$ = BehaviorSubject<String?>.seeded("最新");
 
   final StreamController<String> _addCustomFilterController =
       StreamController();
@@ -57,8 +57,8 @@ class AppBloc extends Bloc {
 
   final StreamController<String> _filterChangeController = StreamController();
 
-  final PublishSubject<int> _refreshDisclosuresController = PublishSubject();
-  final BehaviorSubject<int> _newDisclosureCountController =
+  final PublishSubject<int?> _refreshDisclosuresController = PublishSubject();
+  final BehaviorSubject<int?> _newDisclosureCountController =
       BehaviorSubject.seeded(0);
 
   // users
@@ -67,15 +67,15 @@ class AppBloc extends Bloc {
   // settings
   final BehaviorSubject<Map<String, dynamic>> _setting$ = BehaviorSubject();
   final BehaviorSubject<bool> _hideDailyDisclosure$ = BehaviorSubject();
-  final StreamController<bool> _setVisibleDailyDisclosureController =
+  final StreamController<bool?> _setVisibleDailyDisclosureController =
       StreamController();
 
   // favorites
   final BehaviorSubject<List<String>> _favorit$ = BehaviorSubject();
   final BehaviorSubject<List<Company>> _favoritWithName$ = BehaviorSubject();
-  final StreamController<String> _addFavoriteController = StreamController();
-  final StreamController<String> _removeFavoriteController = StreamController();
-  final StreamController<String> _switchFavoriteController = StreamController();
+  final StreamController<String?> _addFavoriteController = StreamController();
+  final StreamController<String?> _removeFavoriteController = StreamController();
+  final StreamController<String?> _switchFavoriteController = StreamController();
 
   // companyList
   final _filtetrdCompanies$ = BehaviorSubject<List<Company>>();
@@ -90,16 +90,16 @@ class AppBloc extends Bloc {
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
   final _tagsNotifications$ = BehaviorSubject<List<String>>();
-  final _addNotificationController = StreamController<String>();
-  final _removeNotificationController = StreamController<String>();
+  final _addNotificationController = StreamController<String?>();
+  final _removeNotificationController = StreamController<String?>();
   final _switchNotificationController = StreamController<String>();
   final _addTagsNotificationController = StreamController<String>();
   final _removeTagsNotificationController = StreamController<String>();
 
   ValueStream<List<DocumentSnapshot>> get disclosure$ => _disclosure$.stream;
 
-  Sink<int> get refreshDisclosures => _refreshDisclosuresController.sink;
-  ValueStream<int> get newDisclosureCount =>
+  Sink<int?> get refreshDisclosures => _refreshDisclosuresController.sink;
+  ValueStream<int?> get newDisclosureCount =>
       _newDisclosureCountController.stream;
 
   Sink<DateTime> get date => _dateController.sink;
@@ -129,12 +129,12 @@ class AppBloc extends Bloc {
 
   ValueStream<Map<String, dynamic>> get settings$ => _setting$.stream;
   Stream<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
-  Sink<bool> get setVisibleDailyDisclosure =>
+  Sink<bool?> get setVisibleDailyDisclosure =>
       _setVisibleDailyDisclosureController.sink;
 
-  Sink<String> get addFavorite => _addFavoriteController.sink;
-  Sink<String> get removeFavorite => _removeFavoriteController.sink;
-  Sink<String> get switchFavorite => _switchFavoriteController.sink;
+  Sink<String?> get addFavorite => _addFavoriteController.sink;
+  Sink<String?> get removeFavorite => _removeFavoriteController.sink;
+  Sink<String?> get switchFavorite => _switchFavoriteController.sink;
   ValueStream<List<String>> get favorites$ => _favorit$.stream;
   ValueStream<List<Company>> get favoritesWithName$ => _favoritWithName$.stream;
 
@@ -144,8 +144,8 @@ class AppBloc extends Bloc {
   ValueStream<List<Company>> get notifications$ => _notifications$.stream;
   ValueStream<List<String>> get tagsNotifications$ =>
       _tagsNotifications$.stream;
-  Sink<String> get addNotification => _addNotificationController.sink;
-  Sink<String> get removeNotification => _removeNotificationController.sink;
+  Sink<String?> get addNotification => _addNotificationController.sink;
+  Sink<String?> get removeNotification => _removeNotificationController.sink;
   Sink<String> get switchNotification => _switchNotificationController.sink;
   Sink<String> get addTagsNotification => _addTagsNotificationController.sink;
   Sink<String> get removeTagsNotification =>
@@ -161,8 +161,8 @@ class AppBloc extends Bloc {
   ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
   Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
-  ValueStream<String> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
-  Sink<String> get setDisclosureOrder => _setDisclosureOrder$.sink;
+  ValueStream<String?> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
+  Sink<String?> get setDisclosureOrder => _setDisclosureOrder$.sink;
 
   final _handleFilterChange = (List<Filter> prev, String element, _) {
     prev.firstWhere((filter) => filter.title == element).toggle();
@@ -225,7 +225,7 @@ class AppBloc extends Bloc {
     });
 
     final createDateStream = (int start, int end) {
-      final _disclosures = store
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> _disclosures = store
           .collection(this.path)
           .where('time', isGreaterThanOrEqualTo: start)
           .where('time', isLessThan: end)
@@ -233,23 +233,23 @@ class AppBloc extends Bloc {
           .snapshots()
           .share();
 
-      final first = _disclosures.take(1).startWith(null);
-      final cont = _disclosures
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> first = _disclosures.take(1).startWith(null);
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> cont = _disclosures
           .skip(1)
           .sample(_refreshDisclosuresController.stream); //.doOnData(print));
 
-      final _disclosures2 = first.mergeWith([cont]);
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> _disclosures2 = first.mergeWith([cont]);
 
       final disclosureCount = _disclosures
           .skip(1)
-          .doOnData((data) => print(data.docChanges.map((v) => v.type)))
-          .map((data) => data.docChanges
+          .doOnData((data) => print(data?.docChanges.map((v) => v.type)))
+          .map((data) => data?.docChanges
               .where((change) => change.type == DocumentChangeType.added)
               .length);
       final newDisclosureCount = Rx.merge([
         disclosureCount,
         _refreshDisclosuresController.stream.map((_) => null)
-      ]).scan((a, e, _) {
+      ]).scan((dynamic a, e, _) {
         print([a, e]);
         if (e == null) {
           return 0;
@@ -262,15 +262,15 @@ class AppBloc extends Bloc {
         _newDisclosureCountController.add(e);
       });
 
-      return Rx.combineLatest5<List<Filter>, QuerySnapshot<Map<String,dynamic>>, bool, List<String>,
-              String, List<DocumentSnapshot>>(
+      return Rx.combineLatest5<List<Filter>, QuerySnapshot<Map<String,dynamic>>?, bool, List<String>,
+              String?, List<DocumentSnapshot>>(
           this._filter$,
           _disclosures2,
           _hideDailyDisclosure$,
           showingFavorite,
           _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
         print([_filters, d, _hideDaily, _favorites, order]);
-        if (d == null) return null;
+        if (d == null) return [];
         final isNotFilterSelected =
             _filters.where((filter) => filter.isSelected).length == 0;
 
@@ -292,7 +292,7 @@ class AppBloc extends Bloc {
         if (order != null) {
           final comp = comparators[order];
           if (comp != null) {
-            docs.sort(comp);
+            docs.sort(comp as int Function(QueryDocumentSnapshot<Map<String, dynamic>>, QueryDocumentSnapshot<Map<String, dynamic>>)?);
           }
         }
         return docs;
@@ -316,7 +316,7 @@ class AppBloc extends Bloc {
 
     FirebaseAuth.instance
         .authStateChanges()
-        .where((u) => u != null)
+        .whereNotNull()
         .pipe(_userController);
 
     _createSettingStream();
@@ -327,14 +327,14 @@ class AppBloc extends Bloc {
 
     _createSavedDisclosureStreams();
 
-    final br = _setModeBrightness.stream.doOnData((mode) =>
+    final Stream<bool> br = _setModeBrightness.stream.doOnData((mode) =>
         SharedPreferences.getInstance()
             .then((pref) => pref.setBool('setDarkMode', mode)));
 
     Rx.concat(<Stream<bool>>[
       Stream.fromFuture(SharedPreferences.getInstance().then((pref) =>
           pref.containsKey('setDarkMode')
-              ? pref.getBool('setDarkMode')
+              ? pref.getBool('setDarkMode')!
               : true)),
       br
     ])
@@ -343,9 +343,9 @@ class AppBloc extends Bloc {
   }
 
   void _createSettingStream() {
-    final favorites = Set<String>();
+    final favorites = Set<String?>();
 
-    final _publishFavorites = (List<String> _favorites) async {
+    final _publishFavorites = (List<String?> _favorites) async {
       final user = await _userController.first;
       if (user == null) return;
       await FirebaseFirestore.instance
@@ -511,7 +511,7 @@ class AppBloc extends Bloc {
     ).pipe(_filtetrdCompanies$);
 
     _companies$.share().map((companies) {
-      return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode, c)));
+      return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode!, c)));
     }).pipe(_companiesMap$);
   }
 
@@ -537,7 +537,7 @@ class AppBloc extends Bloc {
           if (res.body != '') {
             final data = json.decode(res.body);
             final List<String> topics =
-                (data['topics'] as Map<String, dynamic>)?.keys?.toList() ?? [];
+                (data['topics'] as Map<String, dynamic>?)?.keys.toList() ?? [];
             notifications = topics.toSet();
             print('notifications = $notifications');
             return topics;

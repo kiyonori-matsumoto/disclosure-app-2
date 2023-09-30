@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 
-Future<Company> getCompany(AppBloc bloc,
-    {String code, String edinetCode, String name}) async {
+Future<Company> getCompany(AppBloc? bloc,
+    {String? code, String? edinetCode, String? name}) async {
   assert(
       edinetCode != null || code != null, 'must specify code or edinetCode.',);
 
-  Company company;
+  Company? company;
 
   if (bloc != null) {
     if (edinetCode != null) {
@@ -17,7 +17,7 @@ Future<Company> getCompany(AppBloc bloc,
     } else if (code != null) {
       final companies = await bloc.company$.first;
       company = companies.firstWhere((e) => e.code == code,
-          orElse: () => Company(code, edinetCode: edinetCode, name: name));
+          orElse: () => Company(code, edinetCode: edinetCode, name: name!));
     }
   }
 
@@ -25,5 +25,5 @@ Future<Company> getCompany(AppBloc bloc,
     print("company is " + company.toString());
     return company;
   }
-  return Company(code, edinetCode: edinetCode, name: name);
+  return Company(code, edinetCode: edinetCode, name: name!);
 }

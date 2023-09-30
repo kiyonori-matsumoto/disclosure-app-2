@@ -4,7 +4,7 @@ import 'package:disclosure_app_fl/bloc/edinet_bloc.dart';
 import 'package:flutter/material.dart';
 
 class AppProvider extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
   AppProvider({this.child});
 
   @override

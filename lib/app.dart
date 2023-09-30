@@ -11,7 +11,7 @@ import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements-list.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
-import 'package:firebase_admob/firebase_admob.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -35,9 +35,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
-  final _admob = FirebaseAdMob.instance
-      .initialize(appId: 'ca-app-pub-5131663294295156~3067610804');
-  AppBloc bloc;
+
+  AppBloc? bloc;
+  late BannerAd _bannerAd;
 
   AppRootWidgetState() {
     print('configure');
@@ -49,7 +49,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
     super.initState();
     _googleSignIn
         .signInSilently(suppressErrors: true)
-        .then((GoogleSignInAccount googleUser) {
+        .then((GoogleSignInAccount? googleUser) {
       if (googleUser == null) {
         return _auth.signInAnonymously();
       } else {
@@ -63,9 +63,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     bloc = BlocProvider.of<AppBloc>(context);
 
-    bloc.notifications$.listen((data) {}, onError: (dynamic error) {
+    bloc!.notifications$.listen((data) {}, onError: (dynamic error) {
       showDialog<dynamic>(
-        context: navigatorKey.currentState.overlay.context,
+        context: navigatorKey.currentState!.overlay!.context,
         builder: (context) => AlertDialog(
           title: Text("エラー！"),
           content: Text(error.toString()),
@@ -77,32 +77,61 @@ class AppRootWidgetState extends State<AppRootWidget> {
     _message.subscribeToTopic('edinet_notification');
     // _message.unsubscribeFromTopic('edinet');
 
-    bloc.user$.listen((user) {
+    bloc!.user$.listen((user) {
       FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
       // FirebaseCrashlytics.instance.setUserEmail(user.email);
       // FirebaseCrashlytics.instance.setUserName(user.displayName);
     });
+    // (
+    //   keywords: <String>[
+    //     'disclosure',
+    //     'tdnet',
+    //     '株',
+    //     '適時開示',
+    //     'edinet',
+    //     '株式',
+    //     '投資',
+    //     '投機'
+    //   ],
+    //   childDirected: false,
+    //   testDevices: <String>[
+    //     'BBAD97782D98B8B76526B5A34CDE98A7'
+    //   ], // Android emulators are considered test devices
+    // );
+    _bannerAd = BannerAd(
+      size: AdSize.banner,
+      adUnitId: "ca-app-pub-5131663294295156/8292017322",
+      listener: BannerAdListener(),
+      request: AdRequest(),
+    );
+    _bannerAd.load();
   }
 
-  Future<void> _handleNotification(RemoteMessage message) async {
-    print("###notification handler ###");
-    print(message);
-    print(navigatorKey.currentContext);
-    final data = message.data;
-    final String code = data['code'] ?? '';
-    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
-
-    if (data['type'] == 'tag') {
-      final tag = data['tag'];
-      return navigatorKey.currentState
-          .pushNamed('/tag-disclosures', arguments: tag);
-    }
-
-    final company =
-        await getCompany(bloc, code: code, name: data['name'] ?? '');
-    return navigatorKey.currentState
-        .pushNamed('/company-disclosures', arguments: company);
+  @override
+  void dispose() {
+    super.dispose();
+    _bannerAd.dispose();
   }
+
+  // Future<void> _handleNotification(RemoteMessage message) async {
+  //   print("###notification handler ###");
+  //   print(message);
+  //   print(navigatorKey.currentContext);
+  //   final data = message.data;
+  //   final String code = data['code'] ?? '';
+  //   await Future<dynamic>.delayed(Duration(milliseconds: 1000));
+  //
+  //   if (data['type'] == 'tag') {
+  //     final tag = data['tag'];
+  //     return navigatorKey.currentState!
+  //         .pushNamed('/tag-disclosures', arguments: tag);
+  //   }
+  //
+  //   final company =
+  //       await getCompany(bloc, code: code, name: data['name'] ?? '');
+  //   return navigatorKey.currentState!
+  //       .pushNamed('/company-disclosures', arguments: company);
+  // }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
     print("###notificationMsg handler ###");
@@ -112,10 +141,10 @@ class AppRootWidgetState extends State<AppRootWidget> {
     // final company = Company(code, name: data['name'] ?? '');
 
     await showDialog<dynamic>(
-      context: navigatorKey.currentState.overlay.context,
+      context: navigatorKey.currentState!.overlay!.context,
       builder: (context) => AlertDialog(
-          title: Text(message.notification.title),
-          content: Text(message.notification.body)),
+          title: Text(message.notification!.title!),
+          content: Text(message.notification!.body!)),
     );
   }
 
@@ -173,16 +202,16 @@ class AppRootWidgetState extends State<AppRootWidget> {
             },
             onGenerateRoute: (route) {
               print("onGenerateRoute $route");
-              if (route.name.startsWith('/company-disclosures')) {
+              if (route.name!.startsWith('/company-disclosures')) {
                 return MaterialPageRoute<dynamic>(
                   builder: (context) =>
-                      DisclosureCompanyScreen(company: route.arguments),
+                      DisclosureCompanyScreen(company: route.arguments as dynamic),
                 );
               }
-              if (route.name.startsWith('/tag-disclosures')) {
+              if (route.name!.startsWith('/tag-disclosures')) {
                 return MaterialPageRoute<dynamic>(
                   builder: (context) =>
-                      DisclosureTagsScreen(tag: route.arguments),
+                      DisclosureTagsScreen(tag: route.arguments as String?),
                 );
               }
             },
@@ -192,10 +221,12 @@ class AppRootWidgetState extends State<AppRootWidget> {
             ],
           );
         });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+        // Container(
+        //   padding: EdgeInsets.only(bottom: 10.0),
+        //   alignment: Alignment.bottomCenter,
+        //   child: AdWidget(ad: _bannerAd),
+        // ),
+      // ],
+    // );
   }
 }

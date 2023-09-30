@@ -1,4 +1,3 @@
-import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:flutter/material.dart';
 
 class WhatsNewScreen extends StatefulWidget {
@@ -8,7 +7,7 @@ class WhatsNewScreen extends StatefulWidget {
 
 class _WhatsNewScreenState extends State<WhatsNewScreen>
     with SingleTickerProviderStateMixin {
-  TabController _tabController;
+  TabController? _tabController;
 
   @override
   void initState() {
@@ -31,9 +30,9 @@ class _WhatsNewScreenState extends State<WhatsNewScreen>
           ],
         ),
       ),
-      persistentFooterButtons: <Widget>[
-        SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
-      ],
+      // persistentFooterButtons: <Widget>[
+      //   SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
+      // ],
     );
   }
 }

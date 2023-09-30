@@ -34,9 +34,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: snapshot.data.length > 0
+                  child: snapshot.data!.length > 0
                       ? ListView(
-                          children: snapshot.data.map((fav) {
+                          children: snapshot.data!.map((fav) {
                           return Dismissible(
                             background: Container(
                               color: Colors.red,
@@ -45,7 +45,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                               fav: fav,
                               key: fav.key,
                             ),
-                            key: fav.key,
+                            key: fav.key!,
                             onDismissed: (direction) {
                               final revert = () {
                                 bloc.addFavorite.add(fav.code);
@@ -95,8 +95,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 class FadedListTile extends StatefulWidget {
   final Company fav;
   const FadedListTile({
-    @required this.fav,
-    Key key,
+    required this.fav,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -123,7 +123,7 @@ class _FadedListTileState extends State<FadedListTile> {
       child: ListTile(
         title: Text(widget.fav.toString()),
         onTap: () {
-          return Navigator.pushNamed(context, '/company-disclosures',
+          Navigator.pushNamed(context, '/company-disclosures',
               arguments: widget.fav);
         },
       ),

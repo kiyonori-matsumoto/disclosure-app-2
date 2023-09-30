@@ -5,14 +5,13 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
-import 'package:disclosure_app_fl/utils/admob.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
-import 'package:firebase_admob/firebase_admob.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -33,11 +32,11 @@ class DisclosureStreamScreen extends StatefulWidget {
 class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     with RouteAware {
   DateTime date = DateTime.now();
-  BannerAd banner;
+  // BannerAd banner;
   MyRouteObserver routeObserver = MyRouteObserver();
-  String displayTarget;
+  String? displayTarget;
 
-  AppBloc bloc;
+  late AppBloc bloc;
 
   DisclosureStreamScreenState() {
     displayTarget = "tdnet";
@@ -50,37 +49,37 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context));
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute<dynamic>);
   }
 
   @override
   initState() {
     super.initState();
     this.bloc = BlocProvider.of<AppBloc>(context);
-    if (banner == null) {
-      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    }
+    // if (banner == null) {
+    //   banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    // }
   }
 
   @override
   dispose() {
     print('dispose disclosure-stream');
     routeObserver.unsubscribe(this);
-    banner?.dispose();
-    banner = null;
+    // banner?.dispose();
+    // banner = null;
     this.sliverScrollController.dispose();
     super.dispose();
   }
 
   void didPopNext() {
-    if (banner == null) {
-      banner = showBanner("ca-app-pub-5131663294295156/8292017322");
-    }
+    // if (banner == null) {
+    //   banner = showBanner("ca-app-pub-5131663294295156/8292017322");
+    // }
   }
 
   void didPushNext() {
-    banner?.dispose();
-    banner = null;
+    // banner?.dispose();
+    // banner = null;
   }
 
   Widget _dialog(BuildContext context, AppBloc bloc) =>
@@ -120,10 +119,10 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             return Scaffold(
               body: buildSliverBody(context, bloc: bloc),
               drawer: AppDrawer(),
-              persistentFooterButtons: <Widget>[
-                SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
-              ],
-              floatingActionButton: StreamBuilder<int>(
+              // persistentFooterButtons: <Widget>[
+              //   SizedBox(height: getSmartBannerHeight(mediaQuery) - 16.0),
+              // ],
+              floatingActionButton: StreamBuilder<int?>(
                 stream: bloc.newDisclosureCount,
                 builder: (context, snapshot) => snapshot.data == 0
                     ? const SizedBox(
@@ -162,7 +161,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     });
   }
 
-  buildSliverBody(BuildContext context, {@required AppBloc bloc}) {
+  buildSliverBody(BuildContext context, {required AppBloc bloc}) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
       title: Theme(
@@ -170,7 +169,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
         child: DropdownButtonHideUnderline(
           child: DropdownButton(
             hint: Text(
-              displayTarget.toUpperCase(),
+              displayTarget!.toUpperCase(),
               style: Theme.of(context).primaryTextTheme.title,
             ),
             items: [
@@ -185,7 +184,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                     'EDINET',
                   )),
             ],
-            onChanged: (v) {
+            onChanged: (dynamic v) {
               setState(() {
                 displayTarget = v;
               });
@@ -257,11 +256,11 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 child: ActionChip(
                   avatar: Icon(Icons.calendar_today),
                   label: Text(
-                      snapshot.hasData ? formatter.format(snapshot.data) : ''),
+                      snapshot.hasData ? formatter.format(snapshot.data!) : ''),
                   onPressed: () async {
                     final _date = await showDatePicker(
                       context: context,
-                      initialDate: snapshot.data,
+                      initialDate: snapshot.data!,
                       firstDate: DateTime(2019, 3, 1),
                       lastDate: DateTime.now(),
                     );
@@ -315,7 +314,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                     title: Text(type),
                     value: type == snapshot.data,
                     onChanged: (value) {
-                      Navigator.of(context).pop(value ? type : '');
+                      Navigator.of(context).pop(value! ? type : '');
                     },
                   ),
                   padding: EdgeInsets.only(left: 16.0),
@@ -341,9 +340,9 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 child: ActionChip(
                   avatar: Icon(Icons.calendar_today),
                   label: Text(
-                      snapshot.hasData ? formatter.format(snapshot.data) : ''),
+                      snapshot.hasData ? formatter.format(snapshot.data!) : ''),
                   onPressed: () {
-                    changeDate(bloc, initial: snapshot.data);
+                    changeDate(bloc, initial: snapshot.data!);
                   },
                 ),
               ),
@@ -371,7 +370,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
             ),
             Padding(
               padding: EdgeInsets.all(4.0),
-              child: StreamBuilder<String>(
+              child: StreamBuilder<String?>(
                 stream: bloc.setDisclosureOrder$,
                 builder: (context, snapshot) {
                   return ActionChip(
@@ -414,13 +413,13 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           );
         }
         return (snapshot.hasData && snapshot.data != null)
-            ? snapshot.data.length > 0
+            ? snapshot.data!.length > 0
                 ? SliverList(
                     delegate: SliverChildBuilderDelegate(
                         (context, idx) => DisclosureListItem(
-                            key: Key(snapshot.data[idx].id),
-                            item: snapshot.data[idx]),
-                        childCount: snapshot.data.length),
+                            key: Key(snapshot.data![idx].id),
+                            item: snapshot.data![idx]),
+                        childCount: snapshot.data!.length),
                   )
                 : SliverFillRemaining(
                     child: NoDisclosures(),
@@ -432,7 +431,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
     );
   }
 
-  changeDate(AppBloc bloc, {DateTime initial}) async {
+  changeDate(AppBloc bloc, {required DateTime initial}) async {
     final _date = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -448,11 +447,11 @@ class ShowFavoritOnlyTooltipWidget extends StatelessWidget {
   const ShowFavoritOnlyTooltipWidget({
     this.onSelected,
     this.stream,
-    Key key,
+    Key? key,
   }) : super(key: key);
 
-  final void Function(bool) onSelected;
-  final Stream<bool> stream;
+  final void Function(bool)? onSelected;
+  final Stream<bool>? stream;
 
   @override
   Widget build(BuildContext context) {
@@ -463,7 +462,7 @@ class ShowFavoritOnlyTooltipWidget extends StatelessWidget {
         child: ChoiceChip(
           avatar: Icon(Icons.favorite),
           label: Text('お気に入りのみ表示する'),
-          selected: snapshot.hasData && snapshot.data,
+          selected: snapshot.hasData && snapshot.data!,
           onSelected: onSelected,
         ),
       ),

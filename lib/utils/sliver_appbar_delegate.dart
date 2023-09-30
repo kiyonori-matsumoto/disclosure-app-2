@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   SliverAppBarDelegate({
-    @required this.child,
+    required this.child,
   });
 
   final Widget child;

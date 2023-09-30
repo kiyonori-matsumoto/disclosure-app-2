@@ -2,25 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 
 class Edinet {
-  String docDescription;
-  String docId;
-  String docTypeCode;
-  String edinetCode;
-  String filerName;
-  Company filer;
-  String formCode;
-  String issuerEdinetCode;
-  Company issuer;
-  String ordinanceCode;
-  String pdfFlag;
-  int seqNumber;
-  String subjectEdinetCode;
-  Company subject;
-  String subsidiaryEdinetCode;
-  Company subsidiary;
-  int time;
-  int lastEvaluate;
-  int view_count;
+  String? docDescription;
+  String? docId;
+  String? docTypeCode;
+  String? edinetCode;
+  String? filerName;
+  Company? filer;
+  String? formCode;
+  String? issuerEdinetCode;
+  Company? issuer;
+  String? ordinanceCode;
+  String? pdfFlag;
+  int? seqNumber;
+  String? subjectEdinetCode;
+  Company? subject;
+  String? subsidiaryEdinetCode;
+  Company? subsidiary;
+  int? time;
+  int? lastEvaluate;
+  int? view_count;
 
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
     final item = snapshot.data() as Map<String, dynamic>;
@@ -53,7 +53,7 @@ class Edinet {
         .join(',');
   }
 
-  List<Company> get companies {
+  List<Company?> get companies {
     return [filer, issuer, subject, subsidiary]
         .where((c) => c?.code != null)
         .toList();

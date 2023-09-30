@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class BottomTextFieldWithIcon extends StatefulWidget {
   const BottomTextFieldWithIcon({
-    Key key,
-    @required this.onSubmit,
+    Key? key,
+    required this.onSubmit,
     this.onChanged,
     this.hintText,
     this.keyboardType,
@@ -11,9 +11,9 @@ class BottomTextFieldWithIcon extends StatefulWidget {
   }) : super(key: key);
 
   final void Function(String) onSubmit;
-  final void Function(String) onChanged;
-  final String hintText;
-  final TextInputType keyboardType;
+  final void Function(String)? onChanged;
+  final String? hintText;
+  final TextInputType? keyboardType;
   final IconData iconData;
 
   @override
