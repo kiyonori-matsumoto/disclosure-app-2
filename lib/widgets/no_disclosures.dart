@@ -15,7 +15,7 @@ class NoDisclosures extends StatelessWidget {
           // Icon(Icons.event_busy),
           Image.asset(
             'images/sorry.png',
-            color: Theme.of(context).textTheme.body1!.color,
+            color: Theme.of(context).textTheme.bodyText2!.color,
             height: 200.0,
           ),
           Text("選択した条件の適時開示は0件です"),

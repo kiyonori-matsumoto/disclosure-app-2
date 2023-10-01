@@ -23,10 +23,10 @@ class AppDrawer extends StatelessWidget {
         children: <Widget>[
           StreamBuilder<User>(
             builder: (context, snapshot) => UserAccountsDrawerHeader(
-                  accountEmail: Text(snapshot.data?.email ?? ''),
-                  accountName: Text(snapshot.data?.displayName ?? ''),
-                  currentAccountPicture: _avator(snapshot.data?.photoURL),
-                ),
+              accountEmail: Text(snapshot.data?.email ?? ''),
+              accountName: Text(snapshot.data?.displayName ?? ''),
+              currentAccountPicture: _avator(snapshot.data?.photoURL),
+            ),
             stream: bloc.user$,
           ),
           ListTile(
@@ -62,11 +62,11 @@ class AppDrawer extends StatelessWidget {
           ),
           FutureBuilder<PackageInfo>(
             builder: (context, snapshot) => AboutListTile(
-                  applicationLegalese: '(c) 2019 Matsukiyo Lab.',
-                  applicationVersion: snapshot?.data?.version ?? '',
-                  child: Text('このアプリについて'),
-                  icon: Icon(Icons.info),
-                ),
+              applicationLegalese: '(c) 2019-2023 Matsukiyo Lab.',
+              applicationVersion: snapshot.data?.version ?? '',
+              child: Text('このアプリについて'),
+              icon: Icon(Icons.info),
+            ),
             future: PackageInfo.fromPlatform(),
           )
         ],

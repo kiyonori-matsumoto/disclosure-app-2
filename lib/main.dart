@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/rendering.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
@@ -28,11 +27,11 @@ void main() async {
   };
 
   // FirebaseCrashlytics.instance.enableInDevMode = true;
-  runZoned<Future<Null>>(() async {
+  runZonedGuarded<Future<Null>>(() async {
     runApp(AppProvider(
       child: AppRootWidget(),
     ));
-  }, onError: (dynamic error, dynamic stackTrace) async {
+  }, (Object error, StackTrace stackTrace) async {
     print("runZoned onerror handler");
     if (isInDebugMode) {
       print(error);

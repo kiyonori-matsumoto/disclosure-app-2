@@ -1,8 +1,6 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
-import 'package:disclosure_app_fl/screens/disclosure-company.dart';
 import 'package:disclosure_app_fl/widgets/content-view-count.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -112,7 +110,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             );
             if (choice == 0) {
               bloc.saveDisclosure.add(disclosure);
-              Scaffold.of(context).showSnackBar(SnackBar(
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('保存しました'),
                 duration: Duration(seconds: 3),
               ));

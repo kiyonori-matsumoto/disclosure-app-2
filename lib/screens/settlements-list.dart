@@ -1,11 +1,9 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collection/collection.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 
 class SettlementsList extends StatefulWidget {
   @override
@@ -25,7 +23,6 @@ class _SettlementsListState extends State<SettlementsList> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     current = DateTime.now();
   }
@@ -69,7 +66,10 @@ class _SettlementsListState extends State<SettlementsList> {
           ? (snapshot.data as QuerySnapshot).docs.length != 0
               ? ListView.builder(
                   itemBuilder: (context, idx) {
-                    final data = (snapshot.data as QuerySnapshot<Map<String, dynamic>>).docs[idx].data();
+                    final data =
+                        (snapshot.data as QuerySnapshot<Map<String, dynamic>>)
+                            .docs[idx]
+                            .data();
                     return ListTile(
                       title: Text("${data['name']} (${data['quote']})"),
                       onTap: () async {

@@ -39,8 +39,8 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
       stream: appBloc.user$
           .switchMap((user) =>
               _collection(user).orderBy('add_at', descending: true).snapshots())
-          .map((snapshot) =>
-              groupBy(snapshot.docs, (e) => toDate(e['add_at']))),
+          .map(
+              (snapshot) => groupBy(snapshot.docs, (e) => toDate(e['add_at']))),
       builder: (context, snapshot) => snapshot.hasData
           ? CustomScrollView(
               slivers: snapshot.data!.entries
@@ -58,7 +58,8 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, i) => Dismissible(
-                              key: Key((entry.value[i].data() as Map<String,dynamic>)['document']),
+                              key: Key((entry.value[i].data()
+                                  as Map<String, dynamic>)['document']),
                               child: DisclosureListItem(
                                 item: entry.value[i],
                                 showDate: true,
@@ -70,7 +71,8 @@ class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
                                 final revert = () {
                                   entryRef.set(entryBack);
                                 };
-                                Scaffold.of(context).showSnackBar(SnackBar(
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(
                                   content: Text('削除しました'),
                                   action: SnackBarAction(
                                     onPressed: revert,

@@ -1,7 +1,6 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
 import 'package:flutter/material.dart';
 
 class FavoriteScreen extends StatefulWidget {
@@ -51,7 +50,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 bloc.addFavorite.add(fav.code);
                               };
                               bloc.removeFavorite.add(fav.code);
-                              Scaffold.of(context).showSnackBar(SnackBar(
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
                                 content: Text("削除しました"),
                                 action: SnackBarAction(
                                   label: "取り消す",
@@ -69,26 +69,15 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 Divider(
                   height: 8.0,
                 ),
-                RaisedButton(
+                ElevatedButton(
                   child: Text('検索して追加'),
                   onPressed: () {
                     Navigator.pushNamed(context, '/companies');
                   },
                 )
-                // BottomTextFieldWithIcon(
-                //   onSubmit: (code) {
-                //     this._handleSubmit(bloc, code);
-                //   },
-                //   hintText: '証券コード',
-                //   keyboardType: TextInputType.number,
-                // )
               ],
             ),
           );
-  }
-
-  void _handleSubmit(AppBloc bloc, String code) {
-    bloc.addFavorite.add(code);
   }
 }
 

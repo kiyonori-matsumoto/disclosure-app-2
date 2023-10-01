@@ -21,7 +21,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
         iconTheme: Theme.of(context).iconTheme.copyWith(color: Colors.black),
         title: TextField(
           autofocus: true,
-          style: Theme.of(context).textTheme.title,
+          style: Theme.of(context).textTheme.headline6,
           decoration: InputDecoration.collapsed(hintText: '証券コード or 会社名'),
           controller: _controller,
           onChanged: (text) {
@@ -49,7 +49,6 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
               })
         ],
       ),
-      // drawer: AppDrawer(),
       body: _buildBody(context),
     );
   }
@@ -75,9 +74,9 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
         : StreamBuilder<List<Company>>(
             stream: _bloc.companyHistory$,
             builder: (context, snapshot) => CompanyListView(
-                  snapshot?.data ?? [],
-                  history: true,
-                ),
+              snapshot.data ?? [],
+              history: true,
+            ),
           );
   }
 }
@@ -112,16 +111,16 @@ class CompanyListView extends StatelessWidget {
           },
           trailing: PopupMenuButton(
             itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: Text('お気に入りに追加'),
-                    value: 'add_favorite',
-                  )
-                ],
+              PopupMenuItem(
+                child: Text('お気に入りに追加'),
+                value: 'add_favorite',
+              )
+            ],
             onSelected: (dynamic value) {
               switch (value) {
                 case "add_favorite":
                   bloc.addFavorite.add(company.code);
-                  Scaffold.of(context).showSnackBar((SnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar((SnackBar(
                     content: Text('${company.name}をお気に入りに追加しました'),
                   )));
                   break;

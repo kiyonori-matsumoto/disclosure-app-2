@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:badges/badges.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -12,7 +11,6 @@ import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -92,56 +90,59 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
 
   @override
   Widget build(BuildContext context) {
-    return runZoned(() {
-      final bloc = BlocProvider.of<AppBloc>(context);
+    final bloc = BlocProvider.of<AppBloc>(context);
 
-      return WithBannerAdWidget(
-        child: StreamBuilder<DateTime>(
-            stream: bloc.date$,
-            builder: (context, snapshot) {
-              if (snapshot.data == null) return Container();
+    return WithBannerAdWidget(
+      child: StreamBuilder<DateTime>(
+          stream: bloc.date$,
+          builder: (context, snapshot) {
+            if (snapshot.data == null) return Container();
 
+            if (snapshot.hasError) {
               return Scaffold(
-                body: buildSliverBody(context, bloc: bloc),
-                drawer: AppDrawer(),
-                floatingActionButton: StreamBuilder<int?>(
-                  stream: bloc.newDisclosureCount,
-                  builder: (context, snapshot) => snapshot.data == 0
-                      ? const SizedBox(
-                          width: 0.0,
-                          height: 0.0,
-                        )
-                      : FloatingActionButton.extended(
-                          onPressed: () {
-                            this.sliverScrollController.animateTo(
-                                  0,
-                                  duration: Duration(milliseconds: 500),
-                                  curve: Curves.easeOut,
-                                );
-                            this
-                                .bloc
-                                .refreshDisclosures
-                                .add(Random().nextInt(65535));
-                          },
-                          label: Text('${snapshot.data} NEW MESSAGE'),
-                          icon: Icon(Icons.refresh),
-                        ),
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.event_busy),
+                      Text(snapshot.error.toString()),
+                    ],
+                  ),
                 ),
-                floatingActionButtonLocation:
-                    FloatingActionButtonLocation.centerFloat,
               );
-            }),
-      );
-    }, onError: (error, stacktrace) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(error.toString()),
-          content: Text(stacktrace.toString()),
-        ),
-      );
-      throw (error);
-    });
+            }
+
+            return Scaffold(
+              body: buildSliverBody(context, bloc: bloc),
+              drawer: AppDrawer(),
+              floatingActionButton: StreamBuilder<int?>(
+                stream: bloc.newDisclosureCount,
+                builder: (context, snapshot) => snapshot.data == 0
+                    ? const SizedBox(
+                        width: 0.0,
+                        height: 0.0,
+                      )
+                    : FloatingActionButton.extended(
+                        onPressed: () {
+                          this.sliverScrollController.animateTo(
+                                0,
+                                duration: Duration(milliseconds: 500),
+                                curve: Curves.easeOut,
+                              );
+                          this
+                              .bloc
+                              .refreshDisclosures
+                              .add(Random().nextInt(65535));
+                        },
+                        label: Text('${snapshot.data} NEW MESSAGE'),
+                        icon: Icon(Icons.refresh),
+                      ),
+              ),
+              floatingActionButtonLocation:
+                  FloatingActionButtonLocation.centerFloat,
+            );
+          }),
+    );
   }
 
   buildSliverBody(BuildContext context, {required AppBloc bloc}) {
@@ -153,7 +154,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           child: DropdownButton(
             hint: Text(
               displayTarget!.toUpperCase(),
-              style: Theme.of(context).primaryTextTheme.title,
+              style: Theme.of(context).primaryTextTheme.headline6,
             ),
             items: [
               DropdownMenuItem(
@@ -182,7 +183,6 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
         IconButton(
           icon: Icon(Icons.new_releases),
           onPressed: () {
-            // Navigator.of(context).pushNamed('/whatsnew');
             launchURL("https://disclosure-app.firebaseapp.com/whatsnew/1.1/");
           },
           tooltip: "新機能",
@@ -255,7 +255,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                         builder: (context) => _edinetFilterDialog(context),
                       );
                       if (result != null) {
-                        bloc.edintFilterController.add(result);
+                        bloc.edinetFilterController.add(result);
                       }
                     },
                     selected: text != '',
@@ -263,7 +263,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 );
               },
             ),
-            ShowFavoritOnlyTooltipWidget(
+            ShowFavoriteOnlyTooltipWidget(
               stream: bloc.edinetShowOnlyFavorite$,
               onSelected: (val) => bloc.edinetSetShowOnlyFavorite.add(val),
             ),
@@ -343,17 +343,17 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
                 stream: bloc.setDisclosureOrder$,
                 builder: (context, snapshot) {
                   return ActionChip(
-                    label: Text(snapshot?.data ?? ''),
+                    label: Text(snapshot.data ?? ''),
                     avatar: Icon(Icons.sort),
                     onPressed: () {
                       final next = {'閲覧回数': '最新', '最新': '閲覧回数'};
-                      bloc.setDisclosureOrder.add(next[snapshot?.data ?? '']);
+                      bloc.setDisclosureOrder.add(next[snapshot.data ?? '']);
                     },
                   );
                 },
               ),
             ),
-            ShowFavoritOnlyTooltipWidget(
+            ShowFavoriteOnlyTooltipWidget(
               stream: bloc.showOnlyFavorites$,
               onSelected: (val) => bloc.setShowOnlyFavorites.add(val),
             ),
@@ -412,8 +412,8 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   }
 }
 
-class ShowFavoritOnlyTooltipWidget extends StatelessWidget {
-  const ShowFavoritOnlyTooltipWidget({
+class ShowFavoriteOnlyTooltipWidget extends StatelessWidget {
+  const ShowFavoriteOnlyTooltipWidget({
     this.onSelected,
     this.stream,
     Key? key,

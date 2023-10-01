@@ -99,9 +99,11 @@ class _SettingScreenState extends State<SettingScreen> {
         ),
         StreamBuilder<User>(
           stream: bloc.user$,
-          builder: (context, snapshot) => RaisedButton(
-            color: Color(0xff4285f4),
-            textColor: Colors.white,
+          builder: (context, snapshot) => ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: Color(0xff4285f4),
+              onPrimary: Colors.white,
+            ),
             onPressed: () {
               snapshot.hasData &&
                       snapshot.data!.providerData
@@ -138,14 +140,13 @@ class _SettingScreenState extends State<SettingScreen> {
 
       User? user;
       if (providers.contains('google.com')) {
-        user =
-            (await _auth.signInWithCredential(GoogleAuthProvider.credential(
+        user = (await _auth.signInWithCredential(GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
-                .user;
+            .user;
       } else {
-        user = await FirebaseAuth.instance.currentUser;
+        user = FirebaseAuth.instance.currentUser;
         user = (await user!.linkWithCredential(GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
@@ -163,9 +164,11 @@ class _SettingScreenState extends State<SettingScreen> {
         builder: (context) => AlertDialog(
           content: const Text('お気に入りから通知を復元しますか？'),
           actions: <Widget>[
-            RaisedButton(
+            ElevatedButton(
                 child: const Text('復元する'),
-                textColor: Theme.of(context).primaryTextTheme.button!.color,
+                style: ElevatedButton.styleFrom(
+                  primary: Theme.of(context).primaryColor,
+                ),
                 onPressed: () async {
                   final id = user!.uid;
                   final settings = await FirebaseFirestore.instance
@@ -179,7 +182,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   });
                   Navigator.pop(context);
                 }),
-            FlatButton(
+            TextButton(
               child: const Text('キャンセル'),
               onPressed: () {
                 Navigator.pop(context);
@@ -192,22 +195,23 @@ class _SettingScreenState extends State<SettingScreen> {
     } catch (e) {
       print('exception');
       print(e);
-      Scaffold.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('アカウント連携に失敗しました'),
         duration: Duration(seconds: 5),
       ));
+      return null;
     }
   }
 
   _handleSignOut(BuildContext context) async {
-    final user = await _auth.currentUser!;
+    final user = _auth.currentUser!;
     await user.unlink('google.com');
     SnackBar snackBar = SnackBar(
       content: Text('連携を解除しました'),
       duration: Duration(seconds: 10),
     );
     user.reload();
-    Scaffold.of(context).showSnackBar(snackBar);
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }
 
