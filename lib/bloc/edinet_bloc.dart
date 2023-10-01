@@ -68,7 +68,7 @@ class EdinetBloc extends Bloc {
         return null;
       }
       return edinets.where((edinet) {
-        if (filter == null || filter == '') {
+        if (filter == '') {
           return true;
         }
         return edinet.docType == filter;

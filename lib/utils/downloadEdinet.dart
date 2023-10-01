@@ -10,7 +10,7 @@ Future<Null> downloadAndOpenEdinet(String? docId, {String code = ''}) async {
   final client = HttpClient();
   client.badCertificateCallback = (_, __, ___) => true;
   final req = await client.getUrl(Uri.parse(
-      "https://disclosure.edinet-fsa.go.jp/api/v1/documents/${docId}?type=2"));
+      "https://disclosure.edinet-fsa.go.jp/api/v1/documents/$docId?type=2"));
 
   final res = await req.close();
   final Directory systemTempDir = await getTemporaryDirectory();

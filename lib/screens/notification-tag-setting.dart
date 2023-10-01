@@ -10,8 +10,6 @@ class NotificationTagSettingScreen extends StatefulWidget {
 
 class _NotificationTagSettingScreenState
     extends State<NotificationTagSettingScreen> {
-  TextEditingController _controller = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -9,11 +9,9 @@ import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements-list.dart';
-import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -184,6 +182,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
             localizationsDelegates: [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: [
               Locale('ja', ''),
@@ -204,8 +203,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
               print("onGenerateRoute $route");
               if (route.name!.startsWith('/company-disclosures')) {
                 return MaterialPageRoute<dynamic>(
-                  builder: (context) =>
-                      DisclosureCompanyScreen(company: route.arguments as dynamic),
+                  builder: (context) => DisclosureCompanyScreen(
+                      company: route.arguments as dynamic),
                 );
               }
               if (route.name!.startsWith('/tag-disclosures')) {
@@ -214,6 +213,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
                       DisclosureTagsScreen(tag: route.arguments as String?),
                 );
               }
+              return null;
             },
             navigatorObservers: [
               FirebaseAnalyticsObserver(analytics: analytics),
@@ -221,12 +221,5 @@ class AppRootWidgetState extends State<AppRootWidget> {
             ],
           );
         });
-        // Container(
-        //   padding: EdgeInsets.only(bottom: 10.0),
-        //   alignment: Alignment.bottomCenter,
-        //   child: AdWidget(ad: _bannerAd),
-        // ),
-      // ],
-    // );
   }
 }

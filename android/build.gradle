@@ -9,10 +9,11 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.3'
-        classpath 'com.google.gms:google-services:4.3.0'
+        classpath 'com.android.tools.build:gradle:7.0.0'
+        classpath 'com.google.gms:google-services:4.3.15'
         // Add dependency
-        classpath 'io.fabric.tools:gradle:1.26.1'
+        // classpath 'io.fabric.tools:gradle:1.28.0'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.5'
     }
 }
 
@@ -34,7 +35,7 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-task clean(type: Delete) {
+tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
 

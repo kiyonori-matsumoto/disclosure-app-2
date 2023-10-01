@@ -20,7 +20,7 @@ class Edinet {
   Company? subsidiary;
   int? time;
   int? lastEvaluate;
-  int? view_count;
+  int? viewCount;
 
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
     final item = snapshot.data() as Map<String, dynamic>;
@@ -37,7 +37,7 @@ class Edinet {
     subsidiaryEdinetCode = item['subsidiaryEdinetCode'];
     time = (item['time'] - 9 * 60 * 60) * 1000;
     lastEvaluate = item['time'];
-    view_count = item['view_count'];
+    viewCount = item['view_count'];
   }
 
   void fillCompanyName(Map<String, Company> companies) {

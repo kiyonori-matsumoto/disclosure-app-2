@@ -120,7 +120,7 @@ class EdinetListItem extends StatelessWidget {
                   style: smallGrey,
                 ),
                 new ContentViewCount(
-                  viewCount: edinet.view_count,
+                  viewCount: edinet.viewCount,
                 ),
                 Text(
                   this.showDate ? toDate(edinet.time!) : toTime(edinet.time!),

@@ -4,10 +4,8 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
 class FirestoreGetCount<T> extends Bloc {
@@ -109,7 +107,7 @@ class CompanyDisclosureBloc2 extends Bloc {
           )
         : null;
     final disclosure = (company.code != null && company.code != "")
-        ? FirestoreGetCount<DocumentSnapshot<Map<String,dynamic>>>(
+        ? FirestoreGetCount<DocumentSnapshot<Map<String, dynamic>>>(
             user$: user$,
             query: FirebaseFirestore.instance
                 .collection('disclosures')
@@ -130,9 +128,12 @@ class CompanyDisclosureBloc2 extends Bloc {
   void _settlementControllerHandler(String? code) {
     this.user$.first.then((user) {
       print(user);
-      return FirebaseFirestore.instance.collection('settlements').doc(code).get();
+      return FirebaseFirestore.instance
+          .collection('settlements')
+          .doc(code)
+          .get();
     }).then((doc) {
-      if (doc.exists && doc.data != null) {
+      if (doc.exists) {
         print(doc.data);
         print(CompanySettlement.fromDocumentSnapshot(doc));
         this

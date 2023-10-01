@@ -1,8 +1,8 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/tags_disclosure_bloc.dart';
+import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -18,13 +18,11 @@ class DisclosureTagsScreen extends StatefulWidget {
 
 class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
   final String? tag;
-  // BannerAd banner;
   TagsDisclosureBloc? bloc2;
 
   @override
   initState() {
     super.initState();
-    // banner = showBanner("ca-app-pub-5131663294295156/4027309882");
     final appBloc = BlocProvider.of<AppBloc>(context);
     this.bloc2 = TagsDisclosureBloc(
       tag: this.tag,
@@ -41,17 +39,17 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) => DisclosureListItem(
-                  item: snapshot[index],
-                  showDate: true,
-                  key: Key(snapshot[index]['document']),
-                ),
+              item: snapshot[index],
+              showDate: true,
+              key: Key(snapshot[index]['document']),
+            ),
             childCount: snapshot.length,
           ),
         ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: RaisedButton(
+            child: ElevatedButton(
               child: StreamBuilder<bool>(
                   stream: bloc2!.disclosure.isLoading$,
                   builder: (context, snapshot) {
@@ -60,15 +58,15 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
                         : CircularProgressIndicator();
                   }),
               onPressed: () {
-                this.bloc2!.disclosure?.loadNext?.add(snapshot.last);
+                this.bloc2!.disclosure.loadNext.add(snapshot.last);
               },
             ),
           ),
         )
       ]),
       onRefresh: () {
-        bloc2!.disclosure?.reload?.add(this.tag);
-        return bloc2!.disclosure?.isLoading$?.where((e) => e).first as Future<void>;
+        bloc2!.disclosure.reload.add(this.tag);
+        return bloc2!.disclosure.isLoading$.where((e) => e).first;
       },
     );
   }
@@ -91,24 +89,16 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text("${this.tag}の通知履歴"),
       ),
-      body: _buildBody(context),
-      // persistentFooterButtons: <Widget>[
-      //   SizedBox(
-      //     height: getSmartBannerHeight(mediaQuery) - 16.0,
-      //   )
-      // ],
+      body: WithBannerAdWidget(child: _buildBody(context)),
     );
   }
 
   @override
   void dispose() {
-    // banner?.dispose();
     bloc2?.dispose();
     super.dispose();
   }

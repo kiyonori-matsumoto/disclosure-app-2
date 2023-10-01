@@ -9,7 +9,6 @@ import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -49,7 +48,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
     }
   }
 
-  _DisclosureCompanyScreenState({this.company}) {}
+  _DisclosureCompanyScreenState({this.company});
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
     return RefreshIndicator(
@@ -75,8 +74,9 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                                     ListTile(
                                       leading: Icon(
                                         Icons.announcement,
-                                        color:
-                                            Theme.of(context).backgroundColor,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .background,
                                       ),
                                       title: Text(snapshot.data!.toMessage()),
                                     )
@@ -102,7 +102,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: RaisedButton(
+                  child: ElevatedButton(
                     child: StreamBuilder<bool>(
                         stream: bloc2!.disclosure!.isLoading$,
                         builder: (context, snapshot) {
@@ -111,15 +111,15 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                               : CircularProgressIndicator();
                         }),
                     onPressed: () {
-                      this.bloc2!.disclosure?.loadNext?.add(snapshot.last);
+                      this.bloc2!.disclosure?.loadNext.add(snapshot.last);
                     },
                   ),
                 ),
               )
             ])),
       onRefresh: () {
-        bloc2!.disclosure?.reload?.add(this.company!.code);
-        return bloc2!.disclosure?.isLoading$?.where((e) => e).first
+        bloc2!.disclosure?.reload.add(this.company!.code);
+        return bloc2!.disclosure?.isLoading$.where((e) => e).first
             as Future<void>;
       },
     );
@@ -163,7 +163,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                     tooltip: 'お気に入り',
                     onPressed: () {
                       appBloc.switchFavorite.add(this.company!.code);
-                      Scaffold.of(context).showSnackBar(SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content:
                             Text(isFavorite ? 'お気に入りを解除しました' : 'お気に入りに追加しました'),
                       ));
@@ -222,7 +222,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                   return idx == snapshot.data!.length
                       ? Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: RaisedButton(
+                          child: ElevatedButton(
                             child: StreamBuilder<bool>(
                               stream: bloc2!.edinet!.isLoading$,
                               builder: (context, snapshot) {
@@ -236,7 +236,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                                   .bloc2!
                                   .edinet
                                   ?.loadNext
-                                  ?.add(snapshot.data!.last);
+                                  .add(snapshot.data!.last);
                             },
                           ),
                         )
