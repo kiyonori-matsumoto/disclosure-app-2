@@ -8,26 +8,19 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
-  // add this, and it should be the first line in main method
-  WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
-  await Firebase.initializeApp();
-  // debugPaintSizeEnabled = true;
-  FlutterError.onError = (FlutterErrorDetails details) {
-    print("FlutterError onerror handler");
-    print(isInDebugMode);
-    if (isInDebugMode) {
-      // In development mode simply print to console.
-      FlutterError.dumpErrorToConsole(details);
-    } else {
-      // In production mode report to the application zone to report to
-      // Crashlytics.
-      Zone.current.handleUncaughtError(details.exception, details.stack!);
-    }
-  };
-
   // FirebaseCrashlytics.instance.enableInDevMode = true;
   runZonedGuarded<Future<Null>>(() async {
+    // add this, and it should be the first line in main method
+    WidgetsFlutterBinding.ensureInitialized();
+    MobileAds.instance.initialize();
+    await Firebase.initializeApp();
+    // debugPaintSizeEnabled = true;
+
+    FlutterError.onError = (errorDetails) {
+      FlutterError.dumpErrorToConsole(errorDetails);
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+
     runApp(AppProvider(
       child: AppRootWidget(),
     ));

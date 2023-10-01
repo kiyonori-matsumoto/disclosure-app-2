@@ -92,7 +92,7 @@ class _SettlementsListState extends State<SettlementsList> {
                         ListTile(
                           leading: Icon(
                             Icons.announcement,
-                            color: Theme.of(context).backgroundColor,
+                            color: Theme.of(context).colorScheme.background,
                           ),
                           title: Text('指定された日の決算予定はありません'),
                         )

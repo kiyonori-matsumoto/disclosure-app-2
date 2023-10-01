@@ -101,8 +101,8 @@ class _SettingScreenState extends State<SettingScreen> {
           stream: bloc.user$,
           builder: (context, snapshot) => ElevatedButton(
             style: ElevatedButton.styleFrom(
-              primary: Color(0xff4285f4),
-              onPrimary: Colors.white,
+              backgroundColor: Color(0xff4285f4),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               snapshot.hasData &&
@@ -167,7 +167,7 @@ class _SettingScreenState extends State<SettingScreen> {
             ElevatedButton(
                 child: const Text('復元する'),
                 style: ElevatedButton.styleFrom(
-                  primary: Theme.of(context).primaryColor,
+                  backgroundColor: Theme.of(context).primaryColor,
                 ),
                 onPressed: () async {
                   final id = user!.uid;
@@ -230,7 +230,7 @@ class ListHeader extends StatelessWidget {
       child: Text(
         this.title,
         style: TextStyle(
-          color: Theme.of(context).textTheme.caption!.color,
+          color: Theme.of(context).textTheme.bodySmall!.color,
         ),
       ),
     );

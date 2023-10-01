@@ -12,7 +12,7 @@ import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
 import 'package:intl/intl.dart';
 import '../widgets/drawer.dart';
 
@@ -154,7 +154,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
           child: DropdownButton(
             hint: Text(
               displayTarget!.toUpperCase(),
-              style: Theme.of(context).primaryTextTheme.headline6,
+              style: Theme.of(context).primaryTextTheme.titleLarge,
             ),
             items: [
               DropdownMenuItem(

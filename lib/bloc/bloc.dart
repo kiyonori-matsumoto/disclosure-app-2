@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:bloc_provider/bloc_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/models/filter.dart';

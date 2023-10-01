@@ -74,8 +74,9 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                                     ListTile(
                                       leading: Icon(
                                         Icons.announcement,
-                                        color:
-                                            Theme.of(context).backgroundColor,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .background,
                                       ),
                                       title: Text(snapshot.data!.toMessage()),
                                     )

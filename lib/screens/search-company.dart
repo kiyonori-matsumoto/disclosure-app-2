@@ -21,7 +21,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
         iconTheme: Theme.of(context).iconTheme.copyWith(color: Colors.black),
         title: TextField(
           autofocus: true,
-          style: Theme.of(context).textTheme.headline6,
+          style: Theme.of(context).textTheme.titleLarge,
           decoration: InputDecoration.collapsed(hintText: '証券コード or 会社名'),
           controller: _controller,
           onChanged: (text) {
