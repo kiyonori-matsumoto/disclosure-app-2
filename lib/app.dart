@@ -182,6 +182,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
             localizationsDelegates: [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
             ],
             supportedLocales: [
               Locale('ja', ''),
