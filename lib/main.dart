@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:disclosure_app_fl/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
@@ -20,6 +21,27 @@ void main() async {
       FlutterError.dumpErrorToConsole(errorDetails);
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
     };
+
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
 
     runApp(AppProvider(
       child: AppRootWidget(),
