@@ -190,6 +190,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
             theme: ThemeData(
               primarySwatch: Colors.deepPurple,
               brightness: snapshot.data,
+              useMaterial3: false,
             ),
             routes: {
               '/': (context) => DisclosureStreamScreen(),
