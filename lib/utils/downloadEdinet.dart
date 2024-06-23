@@ -29,7 +29,7 @@ Future<Null> downloadAndOpenEdinet(String? docId, {String code = ''}) async {
     final downloadUrl = await downloadUrlRes.transform(utf8.decoder).join();
 
     final req =
-        await client.getUrl(Uri.parse(jsonDecode(downloadUrl)['signedUrl'][0]));
+        await client.getUrl(Uri.parse(jsonDecode(downloadUrl)['signedUrl']));
 
     final res = await req.close();
 
