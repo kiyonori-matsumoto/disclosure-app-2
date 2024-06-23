@@ -19,6 +19,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'screens/disclosure-stream.dart';
+import 'utils/get_company.dart';
 
 class AppRootWidget extends StatefulWidget {
   @override
@@ -40,6 +41,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   AppRootWidgetState() {
     print('configure');
     FirebaseMessaging.onMessage.listen(_handleNotificationMsg);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification);
   }
 
   @override
@@ -77,25 +79,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     bloc!.user$.listen((user) {
       FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
-      // FirebaseCrashlytics.instance.setUserEmail(user.email);
-      // FirebaseCrashlytics.instance.setUserName(user.displayName);
     });
-    // (
-    //   keywords: <String>[
-    //     'disclosure',
-    //     'tdnet',
-    //     '株',
-    //     '適時開示',
-    //     'edinet',
-    //     '株式',
-    //     '投資',
-    //     '投機'
-    //   ],
-    //   childDirected: false,
-    //   testDevices: <String>[
-    //     'BBAD97782D98B8B76526B5A34CDE98A7'
-    //   ], // Android emulators are considered test devices
-    // );
     _bannerAd = BannerAd(
       size: AdSize.banner,
       adUnitId: "ca-app-pub-5131663294295156/8292017322",
@@ -111,25 +95,25 @@ class AppRootWidgetState extends State<AppRootWidget> {
     _bannerAd.dispose();
   }
 
-  // Future<void> _handleNotification(RemoteMessage message) async {
-  //   print("###notification handler ###");
-  //   print(message);
-  //   print(navigatorKey.currentContext);
-  //   final data = message.data;
-  //   final String code = data['code'] ?? '';
-  //   await Future<dynamic>.delayed(Duration(milliseconds: 1000));
-  //
-  //   if (data['type'] == 'tag') {
-  //     final tag = data['tag'];
-  //     return navigatorKey.currentState!
-  //         .pushNamed('/tag-disclosures', arguments: tag);
-  //   }
-  //
-  //   final company =
-  //       await getCompany(bloc, code: code, name: data['name'] ?? '');
-  //   return navigatorKey.currentState!
-  //       .pushNamed('/company-disclosures', arguments: company);
-  // }
+  Future<void> _handleNotification(RemoteMessage message) async {
+    print("###notification handler ###");
+    print(message);
+    print(navigatorKey.currentContext);
+    final data = message.data;
+    final String code = data['code'] ?? '';
+    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
+
+    if (data['type'] == 'tag') {
+      final tag = data['tag'];
+      await navigatorKey.currentState!
+          .pushNamed('/tag-disclosures', arguments: tag);
+    }
+
+    final company =
+        await getCompany(bloc, code: code, name: data['name'] ?? '');
+    await navigatorKey.currentState!
+        .pushNamed('/company-disclosures', arguments: company);
+  }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
     print("###notificationMsg handler ###");
