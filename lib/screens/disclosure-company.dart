@@ -76,7 +76,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                                         Icons.announcement,
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .background,
+                                            .surface,
                                       ),
                                       title: Text(snapshot.data!.toMessage()),
                                     )

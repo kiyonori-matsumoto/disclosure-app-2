@@ -21,7 +21,7 @@ class Company {
   }
 
   bool operator ==(o) => o is Company && code == o.code;
-  int get hashCode => int.parse(this.code!);
+  int get hashCode => this.code.hashCode;
 
   @override
   String toString() {
