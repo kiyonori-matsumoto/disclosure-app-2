@@ -11,6 +11,15 @@ class CompanySettlement {
   String? scheduleStr;
   String? settlementDate;
 
+  CompanySettlement({
+    this.name,
+    this.code,
+    this.quote,
+    this.schedule,
+    this.scheduleStr,
+    this.settlementDate,
+  });
+
   CompanySettlement.fromDocumentSnapshot(DocumentSnapshot<Map<String,dynamic>> snapshot) {
     final item = snapshot.exists ? snapshot.data() : null;
     if (item == null) {
