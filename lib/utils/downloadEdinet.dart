@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:open_file_safe/open_file_safe.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
 final _analytics = FirebaseAnalytics.instance;
@@ -40,5 +40,5 @@ Future<Null> downloadAndOpenEdinet(String? docId, {String code = ''}) async {
       'code': code,
     });
   }
-  await OpenFile.open(tmpFile.path);
+  await OpenFilex.open(tmpFile.path);
 }
