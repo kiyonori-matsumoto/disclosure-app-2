@@ -22,6 +22,28 @@ class Edinet {
   int? lastEvaluate;
   int? viewCount;
 
+  Edinet({
+    this.docDescription,
+    this.docId,
+    this.docTypeCode,
+    this.edinetCode,
+    this.filerName,
+    this.filer,
+    this.formCode,
+    this.issuerEdinetCode,
+    this.issuer,
+    this.ordinanceCode,
+    this.pdfFlag,
+    this.seqNumber,
+    this.subjectEdinetCode,
+    this.subject,
+    this.subsidiaryEdinetCode,
+    this.subsidiary,
+    this.time,
+    this.lastEvaluate,
+    this.viewCount,
+  });
+
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
     final item = snapshot.data() as Map<String, dynamic>;
     docDescription = item['docDescription'];
