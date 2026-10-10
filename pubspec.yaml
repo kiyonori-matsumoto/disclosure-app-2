@@ -21,6 +21,7 @@ dependencies:
   bloc_provider: ^1.0.0
   cupertino_icons: ^1.0.5
   cloud_firestore: ^4.9.2
+  firebase_app_check: ^0.1.5
   google_mobile_ads: ^3.0.0
   firebase_analytics: ^10.5.0
   firebase_auth: ^4.10.0
