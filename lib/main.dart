@@ -7,6 +7,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 void main() async {
   // FirebaseCrashlytics.instance.enableInDevMode = true;
@@ -15,6 +16,10 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
     MobileAds.instance.initialize();
     await Firebase.initializeApp();
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity,
+      appleProvider: AppleProvider.appAttest,
+    );
     // debugPaintSizeEnabled = true;
 
     FlutterError.onError = (errorDetails) {
