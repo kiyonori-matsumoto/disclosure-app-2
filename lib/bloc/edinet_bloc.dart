@@ -27,12 +27,13 @@ class EdinetBloc extends Bloc {
       print("***date*** $date");
       final start = dateFormatter.format(date);
       final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return (FirebaseFirestore.instance
-              .collection(path)
-              .where('seq', isGreaterThanOrEqualTo: start)
-              .where('seq', isLessThan: end)
-              .orderBy('seq', descending: true)
-              .snapshots() as Stream<QuerySnapshot<Map<String, dynamic>>?>)
+      return FirebaseFirestore.instance
+          .collection(path)
+          .where('seq', isGreaterThanOrEqualTo: start)
+          .where('seq', isLessThan: end)
+          .orderBy('seq', descending: true)
+          .snapshots()
+          .cast<QuerySnapshot<Map<String, dynamic>>?>()
           .startWith(null);
     }).map((doc) {
       return doc?.docs;
