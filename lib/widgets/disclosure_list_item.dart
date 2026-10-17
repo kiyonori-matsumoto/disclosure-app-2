@@ -40,7 +40,9 @@ class DisclosureListItemState extends State<DisclosureListItem> {
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
-        isDownloading ? CircularProgressIndicator() : Container(),
+        // ⚡ Bolt: Use collection if instead of ternary with empty Container.
+        // Saves layout overhead when not downloading.
+        if (isDownloading) const CircularProgressIndicator(),
         ListTile(
           title: Row(
             children: <Widget>[

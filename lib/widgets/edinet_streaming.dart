@@ -67,12 +67,11 @@ class EdinetSliverList extends StatelessWidget {
         return (snapshot.hasData && snapshot.data != null)
             ? snapshot.data!.length > 0
                 ? SliverList(
+                    // ⚡ Bolt: Remove unnecessary Builder wrapper.
+                    // Avoids instantiating an unnecessary StatelessElement per list item.
                     delegate: SliverChildBuilderDelegate((context, idx) {
                       final edinet = snapshot.data![idx];
-                      return Builder(
-                        builder: (context) =>
-                            new EdinetListItem(edinet: edinet),
-                      );
+                      return EdinetListItem(edinet: edinet);
                     }, childCount: snapshot.data!.length),
                   )
                 : SliverFillRemaining(
