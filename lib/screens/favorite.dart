@@ -34,35 +34,39 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               children: [
                 Expanded(
                   child: snapshot.data!.length > 0
-                      ? ListView(
-                          children: snapshot.data!.map((fav) {
-                          return Dismissible(
-                            background: Container(
-                              color: Colors.red,
-                            ),
-                            child: new FadedListTile(
-                              fav: fav,
-                              key: fav.key,
-                            ),
-                            key: fav.key!,
-                            onDismissed: (direction) {
-                              final revert = () {
-                                bloc.addFavorite.add(fav.code);
-                              };
-                              bloc.removeFavorite.add(fav.code);
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                content: Text("削除しました"),
-                                action: SnackBarAction(
-                                  label: "取り消す",
-                                  onPressed: revert,
-                                ),
-                              ));
-                            },
-                          );
-                        }).toList())
-                      : Container(
-                          alignment: AlignmentDirectional.center,
+                      // ⚡ Bolt: Use ListView.builder for virtualization.
+                      // Renders favorites lazily, greatly improving performance for long lists.
+                      ? ListView.builder(
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, index) {
+                            final fav = snapshot.data![index];
+                            return Dismissible(
+                              background: Container(
+                                color: Colors.red,
+                              ),
+                              child: new FadedListTile(
+                                fav: fav,
+                                key: fav.key,
+                              ),
+                              key: fav.key!,
+                              onDismissed: (direction) {
+                                final revert = () {
+                                  bloc.addFavorite.add(fav.code);
+                                };
+                                bloc.removeFavorite.add(fav.code);
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(
+                                  content: Text("削除しました"),
+                                  action: SnackBarAction(
+                                    label: "取り消す",
+                                    onPressed: revert,
+                                  ),
+                                ));
+                              },
+                            );
+                          },
+                        )
+                      : Center(
                           child: Text('お気に入りはありません'),
                         ),
                 ),
