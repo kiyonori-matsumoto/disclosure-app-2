@@ -1,5 +1,4 @@
 import 'package:bloc_provider/bloc_provider.dart';
-import 'package:collection/collection.dart' show IterableNullableExtension;
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/company_disclosure_bloc2.dart';
 import 'package:disclosure_app_fl/models/company-settlement.dart';
@@ -186,7 +185,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
               children: <Widget?>[
             _buildBody(context),
             this.tabLength == 2 ? _buildEdinetList(context) : null,
-          ].whereNotNull().toList()),
+          ].nonNulls.toList()),
         ),
       ),
     );

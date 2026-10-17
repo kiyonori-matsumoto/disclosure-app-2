@@ -1,29 +1,17 @@
-buildscript {
-    repositories {
-        google()
-        jcenter()
-        maven {
-           url 'https://maven.fabric.io/public'
-        }
- 
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
-        classpath 'com.google.gms:google-services:4.3.15'
-        // Add dependency
-        // classpath 'io.fabric.tools:gradle:1.28.0'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.5'
-    }
-}
-
 allprojects {
     repositories {
         google()
-        jcenter()
-       maven {
-           url 'https://maven.google.com/'
-       }
+        mavenCentral()
+    }
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.datastore:datastore:1.1.7'
+            force 'androidx.datastore:datastore-android:1.1.7'
+            force 'androidx.datastore:datastore-core:1.1.7'
+            force 'androidx.datastore:datastore-core-android:1.1.7'
+            force 'androidx.datastore:datastore-preferences:1.1.7'
+            force 'androidx.datastore:datastore-preferences-android:1.1.7'
+        }
     }
 }
 
@@ -35,17 +23,17 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
-
 subprojects {
-    project.configurations.all {
-        resolutionStrategy.eachDependency { details ->
-            if (details.requested.group == 'com.android.support'
-                    && !details.requested.name.contains('multidex') ) {
-                details.useVersion "27.1.1"
+    project.plugins.withId("com.android.library") {
+        project.android {
+            if (namespace == null) {
+                namespace project.group ?: "com.example.${project.name}"
             }
         }
     }
 }
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+

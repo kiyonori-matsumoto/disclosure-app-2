@@ -22,7 +22,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   cloud_firestore: ^4.9.2
   firebase_app_check: ^0.1.5
-  google_mobile_ads: ^3.0.0
+  google_mobile_ads: ^5.2.0
   firebase_analytics: ^10.5.0
   firebase_auth: ^4.10.0
   firebase_core: ^2.16.0
@@ -31,12 +31,12 @@ dependencies:
   firebase_storage: ^11.2.7
   flutter_localizations:
     sdk: flutter
-  flutter_sticky_header: ^0.6.5
+  flutter_sticky_header: ^0.7.0
   http: ^1.1.0
   google_sign_in: ^6.1.5
   intl: any
   open_filex: ^4.3.4
-  package_info: ^2.0.2
+  package_info_plus: ^8.1.0
   path_provider: ^2.1.0
   rxdart: ^0.28.0
   shared_preferences: ^2.2.0
