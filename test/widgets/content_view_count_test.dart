@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:disclosure_app_fl/widgets/content-view-count.dart';
+import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 
 void main() {
   testWidgets('ContentViewCount renders empty SizedBox when viewCount is null',

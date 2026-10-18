@@ -3,13 +3,13 @@ import 'dart:io';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/screens/disclosure-company.dart';
-import 'package:disclosure_app_fl/screens/disclosure-tags.dart';
+import 'package:disclosure_app_fl/screens/disclosure_company.dart';
+import 'package:disclosure_app_fl/screens/disclosure_tags.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
-import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
-import 'package:disclosure_app_fl/screens/search-company.dart';
+import 'package:disclosure_app_fl/screens/saved_disclosures.dart';
+import 'package:disclosure_app_fl/screens/search_company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
-import 'package:disclosure_app_fl/screens/settlements-list.dart';
+import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/ad_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -20,7 +20,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'screens/disclosure-stream.dart';
+import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
 
 class AppRootWidget extends StatefulWidget {

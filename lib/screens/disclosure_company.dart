@@ -1,7 +1,7 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/company_disclosure_bloc2.dart';
-import 'package:disclosure_app_fl/models/company-settlement.dart';
+import 'package:disclosure_app_fl/models/company_settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';

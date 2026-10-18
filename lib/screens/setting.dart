@@ -2,13 +2,13 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
-import 'package:disclosure_app_fl/screens/notification-setting.dart';
+import 'package:disclosure_app_fl/screens/notification_setting.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import 'notification-tag-setting.dart';
+import 'notification_tag_setting.dart';
 
 class SettingScreen extends StatefulWidget {
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:disclosure_app_fl/utils/downloadEdinet.dart';
-import 'package:disclosure_app_fl/utils/downloadDisclosure.dart';
+import 'package:disclosure_app_fl/utils/download_edinet.dart';
+import 'package:disclosure_app_fl/utils/download_disclosure.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 
 void main() {
