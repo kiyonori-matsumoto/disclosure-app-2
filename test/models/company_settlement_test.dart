@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:disclosure_app_fl/models/company-settlement.dart';
+import 'package:disclosure_app_fl/models/company_settlement.dart';
 
 void main() {
   setUpAll(() async {

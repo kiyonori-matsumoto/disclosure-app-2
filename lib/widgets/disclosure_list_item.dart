@@ -1,12 +1,12 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
-import 'package:disclosure_app_fl/widgets/content-view-count.dart';
+import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 
-import 'package:disclosure_app_fl/utils/downloadDisclosure.dart';
+import 'package:disclosure_app_fl/utils/download_disclosure.dart';
 import '../utils/time.dart';
 
 final smallGrey = TextStyle(

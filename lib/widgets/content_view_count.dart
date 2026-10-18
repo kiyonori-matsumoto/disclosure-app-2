@@ -1,4 +1,4 @@
-import 'package:disclosure_app_fl/screens/disclosure-stream.dart';
+import 'package:disclosure_app_fl/screens/disclosure_stream.dart';
 import 'package:flutter/material.dart';
 
 class ContentViewCount extends StatelessWidget {
