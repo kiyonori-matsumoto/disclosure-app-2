@@ -1,0 +1,3 @@
+## 2024-05-18 - Avoid committing automatically generated Flutter environment files
+**Learning:** During build/testing phases (e.g., `flutter analyze`, `flutter test`), Flutter might automatically update or create environment-specific generated files (like `.flutter-plugins-dependencies`, `ios/Flutter/flutter_export_environment.sh`, and `ios/Flutter/ephemeral/*`).
+**Action:** Exclude these files from any git commits to prevent breaking the build on other machines due to hardcoded absolute paths specific to the agent's environment. Use `git checkout HEAD <file>` to revert changes to these files before submission.

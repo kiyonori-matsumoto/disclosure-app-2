@@ -96,7 +96,7 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
       child: StreamBuilder<DateTime>(
           stream: bloc.date$,
           builder: (context, snapshot) {
-            if (snapshot.data == null) return Container();
+            if (snapshot.data == null) return const SizedBox.shrink();
 
             if (snapshot.hasError) {
               return Scaffold(
