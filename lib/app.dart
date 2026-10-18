@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc_provider/bloc_provider.dart';
@@ -9,6 +10,7 @@ import 'package:disclosure_app_fl/screens/saved-disclosures.dart';
 import 'package:disclosure_app_fl/screens/search-company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements-list.dart';
+import 'package:disclosure_app_fl/utils/ad_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -34,19 +36,19 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
+  final List<StreamSubscription> _subscriptions = [];
 
   AppBloc? bloc;
   late BannerAd _bannerAd;
 
-  AppRootWidgetState() {
-    print('configure');
-    FirebaseMessaging.onMessage.listen(_handleNotificationMsg);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification);
-  }
-
   @override
   void initState() {
     super.initState();
+    _subscriptions.add(
+        FirebaseMessaging.onMessage.listen(_handleNotificationMsg));
+    _subscriptions.add(
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification));
+
     _googleSignIn
         .signInSilently(suppressErrors: true)
         .then((GoogleSignInAccount? googleUser) {
@@ -59,30 +61,41 @@ class AppRootWidgetState extends State<AppRootWidget> {
               idToken: googleAuth.idToken,
             )));
       }
-    }).then(print);
+    }).then((user) {
+      debugPrint("Signed in user: $user");
+    }).catchError((dynamic error) {
+      debugPrint("Silent sign in error: $error");
+    });
 
     bloc = BlocProvider.of<AppBloc>(context);
 
-    bloc!.notifications$.listen((data) {}, onError: (dynamic error) {
-      showDialog<dynamic>(
-        context: navigatorKey.currentState!.overlay!.context,
-        builder: (context) => AlertDialog(
-          title: Text("エラー！"),
-          content: Text(error.toString()),
-        ),
-      );
-      print("notification onerror $error");
-    });
+    _subscriptions.add(
+      bloc!.notifications$.listen((data) {}, onError: (dynamic error) {
+        final dialogContext = navigatorKey.currentState?.overlay?.context;
+        if (dialogContext != null) {
+          showDialog<dynamic>(
+            context: dialogContext,
+            builder: (context) => AlertDialog(
+              title: const Text("エラー！"),
+              content: Text(error.toString()),
+            ),
+          );
+        }
+        debugPrint("notification onerror $error");
+      }),
+    );
 
     _message.subscribeToTopic('edinet_notification');
     // _message.unsubscribeFromTopic('edinet');
 
-    bloc!.user$.listen((user) {
-      FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
-    });
+    _subscriptions.add(
+      bloc!.user$.listen((user) {
+        FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
+      }),
+    );
     _bannerAd = BannerAd(
       size: AdSize.banner,
-      adUnitId: "ca-app-pub-5131663294295156/8292017322",
+      adUnitId: AdHelper.bannerAdUnitId,
       listener: BannerAdListener(),
       request: AdRequest(),
     );
@@ -91,17 +104,21 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
   @override
   void dispose() {
-    super.dispose();
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
     _bannerAd.dispose();
+    super.dispose();
   }
 
   Future<void> _handleNotification(RemoteMessage message) async {
-    print("###notification handler ###");
-    print(message);
-    print(navigatorKey.currentContext);
+    debugPrint("###notification handler ###: ${message.messageId}");
     final data = message.data;
     final String code = data['code'] ?? '';
-    await Future<dynamic>.delayed(Duration(milliseconds: 1000));
+    await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
+
+    if (navigatorKey.currentState == null) return;
 
     if (data['type'] == 'tag') {
       final tag = data['tag'];
@@ -116,18 +133,16 @@ class AppRootWidgetState extends State<AppRootWidget> {
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
-    print("###notificationMsg handler ###");
-    print(message);
-    // final data = message ?? {};
-    // final String code = data['code'] ?? '';
-    // final company = Company(code, name: data['name'] ?? '');
-
-    await showDialog<dynamic>(
-      context: navigatorKey.currentState!.overlay!.context,
-      builder: (context) => AlertDialog(
-          title: Text(message.notification!.title!),
-          content: Text(message.notification!.body!)),
-    );
+    debugPrint("###notificationMsg handler ###: ${message.messageId}");
+    final dialogContext = navigatorKey.currentState?.overlay?.context;
+    if (dialogContext != null && message.notification != null) {
+      await showDialog<dynamic>(
+        context: dialogContext,
+        builder: (context) => AlertDialog(
+            title: Text(message.notification?.title ?? ''),
+            content: Text(message.notification?.body ?? '')),
+      );
+    }
   }
 
   double getSmartBannerHeight(MediaQueryData mediaQuery) {
