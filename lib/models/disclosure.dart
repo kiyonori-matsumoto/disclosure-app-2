@@ -47,7 +47,7 @@ class Disclosure {
       'document': document,
       'exchanges': exchanges,
       'time': time,
-      'tags': tags!.fold<Map<String, dynamic>>({}, (obj, tag) {
+      'tags': (tags ?? []).fold<Map<String, dynamic>>({}, (obj, tag) {
         obj[tag] = true;
         return obj;
       }),

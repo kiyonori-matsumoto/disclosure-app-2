@@ -60,5 +60,15 @@ void main() {
       final map = disclosure.toObject();
       expect(map['tags'], <String, dynamic>{});
     });
+
+    test('toObject handles null tags safely without throwing', () {
+      final disclosure = Disclosure(
+        code: '7203',
+        tags: null,
+      );
+
+      final map = disclosure.toObject();
+      expect(map['tags'], <String, dynamic>{});
+    });
   });
 }

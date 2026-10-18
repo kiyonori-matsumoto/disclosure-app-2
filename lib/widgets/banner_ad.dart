@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:disclosure_app_fl/utils/ad_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -52,30 +53,29 @@ class _WithBannerAdWidgetState extends State<WithBannerAdWidget> {
             MediaQuery.of(context).size.width.truncate());
 
     if (size == null) {
-      print("Unable to get height of anchored banner.");
+      debugPrint("Unable to get height of anchored banner.");
       return;
     }
 
     _bannerAd = BannerAd(
       size: size,
-      adUnitId: "ca-app-pub-5131663294295156/8292017322",
-      // adUnitId: "ca-app-pub-3940256099942544/6300978111", // test
+      adUnitId: AdHelper.bannerAdUnitId,
       listener: BannerAdListener(
         // 広告が正常にロードされたときに呼ばれます。
         onAdLoaded: (Ad ad) {
-          print('バナー広告がロードされました。');
+          debugPrint('バナー広告がロードされました。');
           setState(() {
             _bannerAd = ad as BannerAd?;
           });
         },
         // 広告のロードが失敗した際に呼ばれます。
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          print('バナー広告のロードに失敗しました。: $error');
+          debugPrint('バナー広告のロードに失敗しました。: $error');
         },
         // 広告が開かれたときに呼ばれます。
-        onAdOpened: (Ad ad) => print('バナー広告が開かれました。'),
+        onAdOpened: (Ad ad) => debugPrint('バナー広告が開かれました。'),
         // 広告が閉じられたときに呼ばれます。
-        onAdClosed: (Ad ad) => print('バナー広告が閉じられました。'),
+        onAdClosed: (Ad ad) => debugPrint('バナー広告が閉じられました。'),
       ),
       request: AdRequest(),
     );
@@ -128,30 +128,29 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
             MediaQuery.of(context).size.width.truncate());
 
     if (size == null) {
-      print("Unable to get height of anchored banner.");
+      debugPrint("Unable to get height of anchored banner.");
       return;
     }
 
     _bannerAd = BannerAd(
       size: size,
-      // adUnitId: "ca-app-pub-5131663294295156/8292017322",
-      adUnitId: "ca-app-pub-3940256099942544/6300978111", // test
+      adUnitId: AdHelper.bannerAdUnitId,
       listener: BannerAdListener(
         // 広告が正常にロードされたときに呼ばれます。
         onAdLoaded: (Ad ad) {
-          print('バナー広告がロードされました。');
+          debugPrint('バナー広告がロードされました。');
           setState(() {
             _bannerAd = ad as BannerAd?;
           });
         },
         // 広告のロードが失敗した際に呼ばれます。
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          print('バナー広告のロードに失敗しました。: $error');
+          debugPrint('バナー広告のロードに失敗しました。: $error');
         },
         // 広告が開かれたときに呼ばれます。
-        onAdOpened: (Ad ad) => print('バナー広告が開かれました。'),
+        onAdOpened: (Ad ad) => debugPrint('バナー広告が開かれました。'),
         // 広告が閉じられたときに呼ばれます。
-        onAdClosed: (Ad ad) => print('バナー広告が閉じられました。'),
+        onAdClosed: (Ad ad) => debugPrint('バナー広告が閉じられました。'),
       ),
       request: AdRequest(),
     );
