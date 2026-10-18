@@ -541,7 +541,7 @@ class AppBloc extends Bloc {
           print(token);
           return http.post(
               Uri.parse(
-                  'https://us-central1-disclosure-app.cloudfunctions.net/listTopics'),
+                  'https://asia-northeast1-disclosure-app.cloudfunctions.net/listTopicsV2'),
               body: json.encode({'IID_TOKEN': token}),
               headers: {'Content-Type': 'application/json'});
         })

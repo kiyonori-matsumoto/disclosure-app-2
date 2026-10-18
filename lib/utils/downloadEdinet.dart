@@ -17,7 +17,7 @@ Future<Null> downloadAndOpenEdinet(String? docId, {String code = ''}) async {
     client.badCertificateCallback = (_, __, ___) => true;
 
     final downloadUrlReq = await client.getUrl(Uri.parse(
-        "https://us-central1-disclosure-app-dev.cloudfunctions.net/getDownloadUrlEdinet?docId=$docId"));
+        "https://asia-northeast1-disclosure-app.cloudfunctions.net/getDownloadUrlEdinetV2?docId=$docId"));
     final downloadUrlRes = await downloadUrlReq.close();
     if (downloadUrlRes.statusCode != 200) {
       print("failed to get download url");
