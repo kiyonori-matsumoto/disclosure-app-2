@@ -31,8 +31,9 @@ class AppRootWidget extends StatefulWidget {
 }
 
 class AppRootWidgetState extends State<AppRootWidget> {
-  final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey(debugLabel: "Main Navigation");
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
+    debugLabel: "Main Navigation",
+  );
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
@@ -45,53 +46,65 @@ class AppRootWidgetState extends State<AppRootWidget> {
   void initState() {
     super.initState();
     _subscriptions.add(
-        FirebaseMessaging.onMessage.listen(_handleNotificationMsg));
+      FirebaseMessaging.onMessage.listen(_handleNotificationMsg),
+    );
     _subscriptions.add(
-        FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification));
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
+    );
 
     _googleSignIn
         .signInSilently(suppressErrors: true)
         .then((GoogleSignInAccount? googleUser) {
-      if (googleUser == null) {
-        return _auth.signInAnonymously();
-      } else {
-        return googleUser.authentication.then((googleAuth) =>
-            _auth.signInWithCredential(GoogleAuthProvider.credential(
-              accessToken: googleAuth.accessToken,
-              idToken: googleAuth.idToken,
-            )));
-      }
-    }).then((user) {
-      debugPrint("Signed in user: $user");
-    }).catchError((dynamic error) {
-      debugPrint("Silent sign in error: $error");
-    });
+          if (googleUser == null) {
+            return _auth.signInAnonymously();
+          } else {
+            return googleUser.authentication.then(
+              (googleAuth) => _auth.signInWithCredential(
+                GoogleAuthProvider.credential(
+                  accessToken: googleAuth.accessToken,
+                  idToken: googleAuth.idToken,
+                ),
+              ),
+            );
+          }
+        })
+        .then((user) {
+          debugPrint("Signed in user: $user");
+        })
+        .catchError((dynamic error) {
+          debugPrint("Silent sign in error: $error");
+        });
 
     bloc = BlocProvider.of<AppBloc>(context);
 
     _subscriptions.add(
-      bloc!.notifications$.listen((data) {}, onError: (dynamic error) {
-        final dialogContext = navigatorKey.currentState?.overlay?.context;
-        if (dialogContext != null) {
-          showDialog<dynamic>(
-            context: dialogContext,
-            builder: (context) => AlertDialog(
-              title: const Text("エラー！"),
-              content: Text(error.toString()),
-            ),
-          );
-        }
-        debugPrint("notification onerror $error");
-      }),
+      bloc?.notifications$.listen(
+            (data) {},
+            onError: (dynamic error) {
+              final dialogContext = navigatorKey.currentState?.overlay?.context;
+              if (dialogContext != null) {
+                showDialog<dynamic>(
+                  context: dialogContext,
+                  builder: (context) => AlertDialog(
+                    title: const Text("エラー！"),
+                    content: Text(error.toString()),
+                  ),
+                );
+              }
+              debugPrint("notification onerror $error");
+            },
+          ) ??
+          const Stream<void>.empty().listen((_) {}),
     );
 
     _message.subscribeToTopic('edinet_notification');
     // _message.unsubscribeFromTopic('edinet');
 
     _subscriptions.add(
-      bloc!.user$.listen((user) {
-        FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
-      }),
+      bloc?.user$.listen((user) {
+            FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
+          }) ??
+          const Stream<void>.empty().listen((_) {}),
     );
     _bannerAd = BannerAd(
       size: AdSize.banner,
@@ -122,14 +135,21 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     if (data['type'] == 'tag') {
       final tag = data['tag'];
-      await navigatorKey.currentState!
-          .pushNamed('/tag-disclosures', arguments: tag);
+      await navigatorKey.currentState?.pushNamed(
+        '/tag-disclosures',
+        arguments: tag,
+      );
     }
 
-    final company =
-        await getCompany(bloc, code: code, name: data['name'] ?? '');
-    await navigatorKey.currentState!
-        .pushNamed('/company-disclosures', arguments: company);
+    final company = await getCompany(
+      bloc,
+      code: code,
+      name: data['name'] ?? '',
+    );
+    await navigatorKey.currentState?.pushNamed(
+      '/company-disclosures',
+      arguments: company,
+    );
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
@@ -139,8 +159,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
       await showDialog<dynamic>(
         context: dialogContext,
         builder: (context) => AlertDialog(
-            title: Text(message.notification?.title ?? ''),
-            content: Text(message.notification?.body ?? '')),
+          title: Text(message.notification?.title ?? ''),
+          content: Text(message.notification?.body ?? ''),
+        ),
       );
     }
   }
@@ -172,54 +193,57 @@ class AppRootWidgetState extends State<AppRootWidget> {
     final bloc = BlocProvider.of<AppBloc>(context);
 
     return StreamBuilder<Brightness>(
-        stream: bloc.darkMode$,
-        builder: (context, snapshot) {
-          return MaterialApp(
-            navigatorKey: navigatorKey,
-            title: '適時開示(TDNet/Edinet) Notifier',
-            locale: Locale('ja', 'JP'),
-            localizationsDelegates: [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: [
-              Locale('ja', ''),
-            ],
-            theme: ThemeData(
-              primarySwatch: Colors.deepPurple,
-              brightness: snapshot.data,
-              useMaterial3: false,
-            ),
-            routes: {
-              '/': (context) => DisclosureStreamScreen(),
-              '/companies': (context) => SearchCompanyScreen(),
-              '/favorites': (context) => FavoriteScreen(),
-              '/settings': (context) => SettingScreen(),
-              '/savedDisclosures': (context) => SavedDisclosuresScreen(),
-              '/settlements': (context) => SettlementsList(),
-            },
-            onGenerateRoute: (route) {
-              print("onGenerateRoute $route");
-              if (route.name!.startsWith('/company-disclosures')) {
+      stream: bloc.darkMode$,
+      builder: (context, snapshot) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: '適時開示(TDNet/Edinet) Notifier',
+          locale: Locale('ja', 'JP'),
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: [Locale('ja', '')],
+          theme: ThemeData(
+            primarySwatch: Colors.deepPurple,
+            brightness: snapshot.data,
+            useMaterial3: false,
+          ),
+          routes: {
+            '/': (context) => DisclosureStreamScreen(),
+            '/companies': (context) => SearchCompanyScreen(),
+            '/favorites': (context) => FavoriteScreen(),
+            '/settings': (context) => SettingScreen(),
+            '/savedDisclosures': (context) => SavedDisclosuresScreen(),
+            '/settlements': (context) => SettlementsList(),
+          },
+          onGenerateRoute: (route) {
+            print("onGenerateRoute $route");
+            final routeName = route.name;
+            if (routeName != null) {
+              if (routeName.startsWith('/company-disclosures')) {
                 return MaterialPageRoute<dynamic>(
                   builder: (context) => DisclosureCompanyScreen(
-                      company: route.arguments as dynamic),
+                    company: route.arguments as dynamic,
+                  ),
                 );
               }
-              if (route.name!.startsWith('/tag-disclosures')) {
+              if (routeName.startsWith('/tag-disclosures')) {
                 return MaterialPageRoute<dynamic>(
                   builder: (context) =>
                       DisclosureTagsScreen(tag: route.arguments as String?),
                 );
               }
-              return null;
-            },
-            navigatorObservers: [
-              FirebaseAnalyticsObserver(analytics: analytics),
-              routeObserver
-            ],
-          );
-        });
+            }
+            return null;
+          },
+          navigatorObservers: [
+            FirebaseAnalyticsObserver(analytics: analytics),
+            routeObserver,
+          ],
+        );
+      },
+    );
   }
 }
