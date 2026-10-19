@@ -14,10 +14,12 @@ class Company {
     this.edinetCode = edinetCode ?? '';
   }
 
-  bool match(String text) {
+  bool match(String text, [String? kanaText]) {
+    // Optimization: avoid converting text on every match if already computed.
+    final kana = kanaText ?? hiraToKanaStatic(text);
     return this.name!.toLowerCase().contains(text) ||
         this.code!.startsWith(text) ||
-        this.nameKana!.contains(hiraToKana((text)));
+        this.nameKana!.contains(kana);
   }
 
   bool operator ==(o) => o is Company && code == o.code;
@@ -29,7 +31,13 @@ class Company {
   }
 
   String hiraToKana(String str) {
-    return str.replaceAllMapped(new RegExp("[ぁ-ゔ]"),
+    return hiraToKanaStatic(str);
+  }
+
+  // Optimization: use static RegExp to avoid recompiling it for every method call.
+  static final RegExp _hiraRegExp = RegExp("[ぁ-ゔ]");
+  static String hiraToKanaStatic(String str) {
+    return str.replaceAllMapped(_hiraRegExp,
         (Match m) => String.fromCharCode(m.group(0)!.codeUnitAt(0) + 0x60));
   }
 }

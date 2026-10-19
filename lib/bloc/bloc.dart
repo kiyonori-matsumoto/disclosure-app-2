@@ -508,7 +508,9 @@ class AppBloc extends Bloc {
       (data, str) {
         if (str.length < 2) return [];
         final lowerStr = str.toLowerCase();
-        return data.where((d) => d.match(lowerStr)).take(100).toList();
+        // Optimization: compute kanaStr once instead of in every d.match loop.
+        final kanaStr = Company.hiraToKanaStatic(lowerStr);
+        return data.where((d) => d.match(lowerStr, kanaStr)).take(100).toList();
       },
     ).pipe(_filteredCompanies$);
 
