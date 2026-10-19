@@ -1,0 +1,3 @@
+## 2024-05-15 - [Repeated Regex Compilation in Filtering]
+**Learning:** In Dart/Flutter, repeated instantiation of `RegExp` objects inside tight loops or filtering functions (like `replaceAllMapped(new RegExp("[ぁ-ゔ]"))` inside a `where` clause iterating over thousands of items) creates significant performance and memory overhead. Computing regex statically and memoizing conversions outside of loop contexts can improve the performance by order of magnitude.
+**Action:** Always extract `RegExp` instantiations to `static final` fields when used repeatedly. Pre-compute constant string conversions outside list traversals when filtering large collections in `RxDart` or standard `where` streams.
