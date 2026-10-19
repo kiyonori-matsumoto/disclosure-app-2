@@ -1,0 +1,57 @@
+workflows:
+  android-release:
+    name: Android Release (AAB)
+    max_build_duration: 60
+    instance_type: mac_mini_m2 # または linux_x2
+    environment:
+      flutter: 3.27.4
+      java: 17
+      # CodemagicのWebコンソール（Team settings / App settings > Code signing identities > Android keystores）
+      # で設定したキーストアのリファレンス名を指定してください（例: android_keystore）。
+      # android_signing:
+      #   - android_keystore
+      #
+      # Google Play Consoleへの自動配布用のサービスアカウント認証情報をCodemagicの環境変数グループに登録している場合は指定
+      # groups:
+      #   - google_play_credentials
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$FLUTTER_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Build Android App Bundle (Release)
+        script: |
+          # pubspec.yaml からベースバージョン (x.y.z) を取得
+          PACKAGE_VERSION=$(grep '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          
+          # Web UI（Start new build）で CUSTOM_VERSION_NAME / CUSTOM_VERSION_CODE が指定されていればそれを優先
+          FINAL_VERSION_NAME="${CUSTOM_VERSION_NAME:-${PACKAGE_VERSION}.${BUILD_NUMBER}}"
+          FINAL_VERSION_CODE="${CUSTOM_VERSION_CODE:-${BUILD_NUMBER}}"
+          
+          echo "=========================================="
+          echo "Base Version: ${PACKAGE_VERSION}"
+          echo "Target Version Name: ${FINAL_VERSION_NAME}"
+          echo "Target Version Code: ${FINAL_VERSION_CODE}"
+          echo "=========================================="
+          
+          flutter build appbundle --release \
+            --build-name="${FINAL_VERSION_NAME}" \
+            --build-number="${FINAL_VERSION_CODE}"
+    artifacts:
+      - build/**/outputs/bundle/**/*.aab
+      - build/**/outputs/apk/**/*.apk
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      # Google Playへの自動アップロードを有効にする場合は以下をコメント解除して設定してください
+      # google_play:
+      #   credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal # internal, alpha, beta, production
+      #   submit_as_draft: true

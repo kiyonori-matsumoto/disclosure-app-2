@@ -1,0 +1,9 @@
+[tagpr]
+# Tagpr automatically creates and updates a release PR against this branch.
+releaseBranch = "master"
+
+# Use 'v' prefix for tags (e.g. v2.4.2)
+vPrefix = true
+
+# The version file to be checked and committed (tagpr natively parses and updates pubspec.yaml)
+versionFile = "pubspec.yaml"
