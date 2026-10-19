@@ -6,6 +6,8 @@ import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/bloc/bloc_util.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -33,6 +35,10 @@ class EdinetBloc extends Bloc {
           .where('seq', isLessThan: end)
           .orderBy('seq', descending: true)
           .snapshots()
+          .handleError((dynamic error, StackTrace stack) {
+            debugPrint("Edinets stream error: $error");
+            FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+          })
           .cast<QuerySnapshot<Map<String, dynamic>>?>()
           .startWith(null);
     }).map((doc) {

@@ -9,6 +9,7 @@ import 'app.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,9 +20,29 @@ void main() async {
     appleProvider: AppleProvider.appAttest,
   );
 
+  // デバッグ時は Crashlytics へのデータ送信を無効化してノイズを防止
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(!kDebugMode);
+
+  if (!kDebugMode) {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      await FirebaseCrashlytics.instance
+          .setCustomKey('app_version', packageInfo.version);
+      await FirebaseCrashlytics.instance
+          .setCustomKey('build_number', packageInfo.buildNumber);
+      FirebaseCrashlytics.instance.log("App launched: version ${packageInfo.version} (${packageInfo.buildNumber})");
+    } catch (e) {
+      debugPrint("Failed to initialize package info for Crashlytics: $e");
+    }
+  }
+
   FlutterError.onError = (errorDetails) {
-    FlutterError.dumpErrorToConsole(errorDetails);
-    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(errorDetails);
+    } else {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    }
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
