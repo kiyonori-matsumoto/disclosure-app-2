@@ -5,6 +5,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/disclosure_company.dart';
 import 'package:disclosure_app_fl/screens/disclosure_tags.dart';
+import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved_disclosures.dart';
 import 'package:disclosure_app_fl/screens/search_company.dart';
@@ -221,9 +222,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
             final routeName = route.name;
             if (routeName != null) {
               if (routeName.startsWith('/company-disclosures')) {
+                final company =
+                    route.arguments is Company ? route.arguments as Company : null;
                 return MaterialPageRoute<dynamic>(
                   builder: (context) => DisclosureCompanyScreen(
-                    company: route.arguments as dynamic,
+                    company: company,
                   ),
                 );
               }

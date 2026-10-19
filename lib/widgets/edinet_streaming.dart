@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:rxdart/rxdart.dart';
@@ -98,32 +99,49 @@ class EdinetListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final docId = edinet.docId ?? '';
+    final time = edinet.time ?? 0;
     return Stack(
-        key: Key(edinet.docId!),
+        key: Key(docId),
         alignment: Alignment.topRight,
         children: <Widget>[
           ListTile(
-            contentPadding: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
+            contentPadding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
             title: Text(edinet.docDescription ?? ""),
             subtitle: Text(edinet.relatedCompaniesName),
-            onTap: () => downloadAndOpenEdinet(edinet.docId),
+            onTap: () async {
+              try {
+                await downloadAndOpenEdinet(edinet.docId);
+              } catch (e, stack) {
+                debugPrint("Failed to download EDINET document: $e");
+                FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('EDINET文書の取得に失敗しました'),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                }
+              }
+            },
             onLongPress: _onLongPress(context, edinet.companies),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
                 Text(
-                  edinet.docType + " | ",
+                  "${edinet.docType} | ",
                   style: smallGrey,
                 ),
-                new ContentViewCount(
+                ContentViewCount(
                   viewCount: edinet.viewCount,
                 ),
                 Text(
-                  this.showDate ? toDate(edinet.time!) : toTime(edinet.time!),
+                  showDate ? toDate(time) : toTime(time),
                   style: smallGrey,
                 )
               ],

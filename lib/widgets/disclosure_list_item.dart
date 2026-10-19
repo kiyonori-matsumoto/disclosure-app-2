@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 
 import 'package:disclosure_app_fl/utils/download_disclosure.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../utils/time.dart';
 
 final smallGrey = TextStyle(
@@ -49,14 +50,14 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ),
               Row(
                 children: <Widget>[
-                  if (disclosure.tags!.length > 0)
+                  if ((disclosure.tags ?? []).isNotEmpty)
                     Text(
                       "${(disclosure.tags ?? []).join(', ')} | ",
                       style: smallGrey,
                     ),
-                  new ContentViewCount(viewCount: disclosure.viewCount),
+                  ContentViewCount(viewCount: disclosure.viewCount),
                   Text(
-                    toTime(disclosure.time!, showDate: widget.showDate),
+                    toTime(disclosure.time ?? 0, showDate: widget.showDate),
                     style: smallGrey,
                   ),
                 ],
@@ -64,7 +65,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
             ],
           ),
           subtitle: Text(
-            disclosure.title!,
+            disclosure.title ?? '',
             overflow: TextOverflow.fade,
           ),
           isThreeLine: true,
@@ -74,10 +75,23 @@ class DisclosureListItemState extends State<DisclosureListItem> {
                 isDownloading = true;
               });
               await downloadAndOpenDisclosure(disclosure);
+            } catch (e, stack) {
+              debugPrint("Failed to download disclosure document: $e");
+              FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('適時開示文書の取得に失敗しました'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
             } finally {
-              setState(() {
-                isDownloading = false;
-              });
+              if (mounted) {
+                setState(() {
+                  isDownloading = false;
+                });
+              }
             }
           },
           onLongPress: () async {

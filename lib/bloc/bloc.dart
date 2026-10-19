@@ -9,6 +9,7 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
@@ -233,6 +234,10 @@ class AppBloc extends Bloc {
           .where('time', isLessThan: end)
           .orderBy('time', descending: true)
           .snapshots()
+          .handleError((dynamic error, StackTrace stack) {
+            debugPrint("Disclosures stream error: $error");
+            FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+          })
           .share();
 
       final Stream<QuerySnapshot<Map<String, dynamic>>?> first =
@@ -393,7 +398,11 @@ class AppBloc extends Bloc {
         .switchMap((user) => FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
-            .snapshots())
+            .snapshots()
+            .handleError((dynamic error, StackTrace stack) {
+              debugPrint("User settings stream error: $error");
+              FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+            }))
         .map((res) => res.data() ?? {})
         .pipe(_setting$);
 
@@ -671,8 +680,13 @@ class AppBloc extends Bloc {
         .doc(user.uid)
         .collection('disclosures');
     _userController
-        .switchMap((user) =>
-            collection(user).orderBy('add_at', descending: true).snapshots())
+        .switchMap((user) => collection(user)
+            .orderBy('add_at', descending: true)
+            .snapshots()
+            .handleError((dynamic error, StackTrace stack) {
+              debugPrint("Saved disclosures stream error: $error");
+              FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+            }))
         .map((snapshot) => snapshot.docs)
         .pipe(_savedDisclosure$);
 

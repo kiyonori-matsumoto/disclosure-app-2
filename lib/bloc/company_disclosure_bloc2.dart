@@ -6,6 +6,8 @@ import 'package:disclosure_app_fl/models/company_settlement.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rxdart/rxdart.dart';
 
 class FirestoreGetCount<T> extends Bloc {
@@ -35,22 +37,26 @@ class FirestoreGetCount<T> extends Bloc {
           .startWith(null)
           .doOnData((_) => this._isLoading$.add(true))
           .flatMap((last) {
-            print("last data = $last");
             var q = query;
             if (last != null) {
               var lastData = getFn(last);
-              print("start after = $lastData");
               q = q.startAfter([lastData]);
             }
             return Stream.fromFuture(
-                user$.first.then((user) => q.limit(20).get()));
+              user$.first.then((user) => q.limit(20).get()),
+            );
           })
           .doOnData((_) => this._isLoading$.add(false))
           .map((d) => d.docs.map(mapper).toList())
           .scan<List<T>?>((acc, curr, i) {
-            return acc! + curr;
+            return (acc ?? []) + curr;
           }, [])
-          .startWith(null);
+          .startWith(null)
+          .handleError((dynamic error, StackTrace stack) {
+            debugPrint("FirestoreGetCount error: $error");
+            FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+            this._isLoading$.add(false);
+          });
     }).pipe(_data$);
   }
 
@@ -114,7 +120,7 @@ class CompanyDisclosureBloc2 extends Bloc {
                 .where('code', isEqualTo: company.code)
                 .orderBy('time', descending: true),
             mapper: (doc) => doc as DocumentSnapshot<Map<String, dynamic>>,
-            getFn: (doc) => doc.data()!['time'],
+            getFn: (doc) => doc.data()?['time'],
           )
         : null;
 
@@ -126,22 +132,26 @@ class CompanyDisclosureBloc2 extends Bloc {
   }
 
   void _settlementControllerHandler(String? code) {
-    this.user$.first.then((user) {
-      print(user);
+    if (code == null || code.isEmpty) {
+      _companySettlement$.add(null);
+      return;
+    }
+    user$.first.then((user) {
       return FirebaseFirestore.instance
           .collection('settlements')
           .doc(code)
           .get();
     }).then((doc) {
       if (doc.exists) {
-        print(doc.data);
-        print(CompanySettlement.fromDocumentSnapshot(doc));
-        this
-            ._companySettlement$
+        _companySettlement$
             .add(CompanySettlement.fromDocumentSnapshot(doc));
       } else {
-        this._companySettlement$.add(null);
+        _companySettlement$.add(null);
       }
+    }).catchError((dynamic error, StackTrace stackTrace) {
+      debugPrint("Failed to fetch settlement for $code: $error");
+      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
+      _companySettlement$.add(null);
     });
   }
 
