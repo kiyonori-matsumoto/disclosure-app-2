@@ -55,56 +55,53 @@ class AppRootWidgetState extends State<AppRootWidget> {
     _googleSignIn
         .signInSilently(suppressErrors: true)
         .then((GoogleSignInAccount? googleUser) {
-          if (googleUser == null) {
-            return _auth.signInAnonymously();
-          } else {
-            return googleUser.authentication.then(
-              (googleAuth) => _auth.signInWithCredential(
-                GoogleAuthProvider.credential(
-                  accessToken: googleAuth.accessToken,
-                  idToken: googleAuth.idToken,
-                ),
+      if (googleUser == null) {
+        return _auth.signInAnonymously();
+      } else {
+        return googleUser.authentication.then(
+          (googleAuth) => _auth.signInWithCredential(
+            GoogleAuthProvider.credential(
+              accessToken: googleAuth.accessToken,
+              idToken: googleAuth.idToken,
+            ),
+          ),
+        );
+      }
+    }).then((user) {
+      debugPrint("Signed in user: $user");
+    }).catchError((dynamic error) {
+      debugPrint("Silent sign in error: $error");
+    });
+
+    final appBloc = BlocProvider.of<AppBloc>(context);
+    bloc = appBloc;
+
+    _subscriptions.add(
+      appBloc.notifications$.listen(
+        (data) {},
+        onError: (dynamic error) {
+          final dialogContext = navigatorKey.currentState?.overlay?.context;
+          if (dialogContext != null) {
+            showDialog<dynamic>(
+              context: dialogContext,
+              builder: (context) => AlertDialog(
+                title: const Text("エラー！"),
+                content: Text(error.toString()),
               ),
             );
           }
-        })
-        .then((user) {
-          debugPrint("Signed in user: $user");
-        })
-        .catchError((dynamic error) {
-          debugPrint("Silent sign in error: $error");
-        });
-
-    bloc = BlocProvider.of<AppBloc>(context);
-
-    _subscriptions.add(
-      bloc?.notifications$.listen(
-            (data) {},
-            onError: (dynamic error) {
-              final dialogContext = navigatorKey.currentState?.overlay?.context;
-              if (dialogContext != null) {
-                showDialog<dynamic>(
-                  context: dialogContext,
-                  builder: (context) => AlertDialog(
-                    title: const Text("エラー！"),
-                    content: Text(error.toString()),
-                  ),
-                );
-              }
-              debugPrint("notification onerror $error");
-            },
-          ) ??
-          const Stream<void>.empty().listen((_) {}),
+          debugPrint("notification onerror $error");
+        },
+      ),
     );
 
     _message.subscribeToTopic('edinet_notification');
     // _message.unsubscribeFromTopic('edinet');
 
     _subscriptions.add(
-      bloc?.user$.listen((user) {
-            FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
-          }) ??
-          const Stream<void>.empty().listen((_) {}),
+      appBloc.user$.listen((user) {
+        FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
+      }),
     );
     _bannerAd = BannerAd(
       size: AdSize.banner,
@@ -139,6 +136,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
         '/tag-disclosures',
         arguments: tag,
       );
+      return;
     }
 
     final company = await getCompany(
