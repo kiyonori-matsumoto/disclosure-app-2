@@ -41,7 +41,7 @@ class DisclosureListItemState extends State<DisclosureListItem> {
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
-        isDownloading ? CircularProgressIndicator() : Container(),
+        isDownloading ? const CircularProgressIndicator() : const SizedBox.shrink(),
         ListTile(
           title: Row(
             children: <Widget>[

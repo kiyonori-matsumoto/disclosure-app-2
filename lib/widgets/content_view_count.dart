@@ -12,7 +12,7 @@ class ContentViewCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (viewCount == null || viewCount == 0)
-      return const SizedBox(width: 0.0, height: 0.0);
+      return const SizedBox.shrink();
     return Row(
       children: <Widget>[
         Icon(Icons.cloud_download, size: 10, color: Colors.grey),
