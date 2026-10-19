@@ -32,17 +32,19 @@ workflows:
           # pubspec.yaml からベースバージョン (x.y.z) を取得
           PACKAGE_VERSION=$(grep '^version:' pubspec.yaml | sed -E 's/version:[[:space:]]*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
           
-          # 表示バージョン (versionName): x.y.z.BUILD_NUMBER (例: 2.4.2.105)
-          # 内部バージョン (versionCode): BUILD_NUMBER (例: 105)
+          # Web UI（Start new build）で CUSTOM_VERSION_NAME / CUSTOM_VERSION_CODE が指定されていればそれを優先
+          FINAL_VERSION_NAME="${CUSTOM_VERSION_NAME:-${PACKAGE_VERSION}.${BUILD_NUMBER}}"
+          FINAL_VERSION_CODE="${CUSTOM_VERSION_CODE:-${BUILD_NUMBER}}"
+          
           echo "=========================================="
           echo "Base Version: ${PACKAGE_VERSION}"
-          echo "Build Number (versionCode): ${BUILD_NUMBER}"
-          echo "Full Version Name: ${PACKAGE_VERSION}.${BUILD_NUMBER}"
+          echo "Target Version Name: ${FINAL_VERSION_NAME}"
+          echo "Target Version Code: ${FINAL_VERSION_CODE}"
           echo "=========================================="
           
           flutter build appbundle --release \
-            --build-name="${PACKAGE_VERSION}.${BUILD_NUMBER}" \
-            --build-number="${BUILD_NUMBER}"
+            --build-name="${FINAL_VERSION_NAME}" \
+            --build-number="${FINAL_VERSION_CODE}"
     artifacts:
       - build/**/outputs/bundle/**/*.aab
       - build/**/outputs/apk/**/*.apk
