@@ -511,9 +511,13 @@ class AppBloc extends Bloc {
             .toList())
         .pipe(_companies$);
 
+    // ⚡ Bolt Optimization: Debounce the search input stream by 300ms.
+    // Filtering thousands of companies synchronously blocks the main thread
+    // on every keystroke. Adding this debounce dramatically improves typing
+    // responsiveness and prevents jank in the search screen.
     Rx.combineLatest2<List<Company>, String, List<Company>>(
       _companies$.stream,
-      _codeStrController.stream,
+      _codeStrController.stream.debounceTime(const Duration(milliseconds: 300)),
       (data, str) {
         if (str.length < 2) return [];
         final lowerStr = str.toLowerCase();
