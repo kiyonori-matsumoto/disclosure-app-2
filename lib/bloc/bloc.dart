@@ -25,7 +25,7 @@ final filterStrings = DisclosureFilterHelper.defaultFilterStrings;
 final dateFormatter = DateFormat("yyyy-MM-dd");
 
 final Map<String, Comparator<DocumentSnapshot<Map<String, dynamic>>>?>
-    comparators = {
+comparators = {
   "最新": null,
   "閲覧回数": (a, b) =>
       DisclosureFilterHelper.compareByViewCount(a.data(), b.data()),
@@ -34,8 +34,9 @@ final Map<String, Comparator<DocumentSnapshot<Map<String, dynamic>>>?>
 class AppBloc extends Bloc {
   final path = 'disclosures';
   final _dateController = BehaviorSubject<DateTime>.seeded(DateTime.now());
-  final _edinetDateController =
-      BehaviorSubject<DateTime>.seeded(DateTime.now());
+  final _edinetDateController = BehaviorSubject<DateTime>.seeded(
+    DateTime.now(),
+  );
   final _disclosure$ = BehaviorSubject<List<DocumentSnapshot>>();
   final _filter$ = BehaviorSubject<List<Filter>>();
   final _edinetFilter$ = BehaviorSubject<String>.seeded('');
@@ -193,9 +194,11 @@ class AppBloc extends Bloc {
     _customFilter$
         .map((v) => initialFilters + v)
         .doOnEach(print)
-        .switchMap((list) => _change
-            .scan<List<Filter>>(_handleFilterChange, list)
-            .startWith(list))
+        .switchMap(
+          (list) => _change
+              .scan<List<Filter>>(_handleFilterChange, list)
+              .startWith(list),
+        )
         .pipe(_filter$);
 
     // _customFilter$.add([]);
@@ -204,7 +207,7 @@ class AppBloc extends Bloc {
       final user = await _userController.first;
       final customTag = await this._customFilter$.first;
       FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "tags": customTag.map((t) => t.title).toList() + [name]
+        "tags": customTag.map((t) => t.title).toList() + [name],
       }, SetOptions(merge: true));
     });
 
@@ -216,7 +219,7 @@ class AppBloc extends Bloc {
         "tags": customTag
             .where((f) => f.title != filter.title)
             .map((t) => t.title)
-            .toList()
+            .toList(),
       }, SetOptions(merge: true));
     });
 
@@ -236,35 +239,45 @@ class AppBloc extends Bloc {
           .snapshots()
           .handleError((dynamic error, StackTrace stack) {
             debugPrint("Disclosures stream error: $error");
-            FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
+            FirebaseCrashlytics.instance.recordError(
+              error,
+              stack,
+              fatal: false,
+            );
           })
           .share();
 
-      final Stream<QuerySnapshot<Map<String, dynamic>>?> first =
-          _disclosures.take(1).startWith(null);
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> first = _disclosures
+          .take(1)
+          .startWith(null);
       final Stream<QuerySnapshot<Map<String, dynamic>>?> cont = _disclosures
           .skip(1)
           .sample(_refreshDisclosuresController.stream); //.doOnData(print));
 
-      final Stream<QuerySnapshot<Map<String, dynamic>>?> _disclosures2 =
-          first.mergeWith([cont]);
+      final Stream<QuerySnapshot<Map<String, dynamic>>?> _disclosures2 = first
+          .mergeWith([cont]);
 
       final disclosureCount = _disclosures
           .skip(1)
           .doOnData((data) => print(data?.docChanges.map((v) => v.type)))
-          .map((data) => data?.docChanges
-              .where((change) => change.type == DocumentChangeType.added)
-              .length);
-      final newDisclosureCount = Rx.merge([
-        disclosureCount,
-        _refreshDisclosuresController.stream.map((_) => null)
-      ]).scan((dynamic a, e, _) {
-        print([a, e]);
-        if (e == null) {
-          return 0;
-        }
-        return a + e;
-      }, 0).startWith(0);
+          .map(
+            (data) => data?.docChanges
+                .where((change) => change.type == DocumentChangeType.added)
+                .length,
+          );
+      final newDisclosureCount =
+          Rx.merge([
+                disclosureCount,
+                _refreshDisclosuresController.stream.map((_) => null),
+              ])
+              .scan((dynamic a, e, _) {
+                print([a, e]);
+                if (e == null) {
+                  return 0;
+                }
+                return a + e;
+              }, 0)
+              .startWith(0);
 
       newDisclosureCount.listen((e) {
         print("new disclosure count is " + e.toString());
@@ -272,60 +285,66 @@ class AppBloc extends Bloc {
       });
 
       return Rx.combineLatest5<
-              List<Filter>,
-              QuerySnapshot<Map<String, dynamic>>?,
-              bool,
-              List<String>,
-              String?,
-              List<DocumentSnapshot>>(
-          this._filter$,
-          _disclosures2,
-          _hideDailyDisclosure$,
-          showingFavorite,
-          _setDisclosureOrder$, (_filters, d, _hideDaily, _favorites, order) {
-        print([_filters, d, _hideDaily, _favorites, order]);
-        if (d == null) return [];
-        final selectedFilterStr = _filters
-            .where((filter) => filter.isSelected)
-            .map((filter) => filter.title);
+        List<Filter>,
+        QuerySnapshot<Map<String, dynamic>>?,
+        bool,
+        List<String>,
+        String?,
+        List<DocumentSnapshot>
+      >(
+        this._filter$,
+        _disclosures2,
+        _hideDailyDisclosure$,
+        showingFavorite,
+        _setDisclosureOrder$,
+        (_filters, d, _hideDaily, _favorites, order) {
+          print([_filters, d, _hideDaily, _favorites, order]);
+          if (d == null) return [];
+          final selectedFilterStr = _filters
+              .where((filter) => filter.isSelected)
+              .map((filter) => filter.title);
 
-        final docs = d.docs
-            .where((doc) => DisclosureFilterHelper.matchesFilter(
+          final docs = d.docs
+              .where(
+                (doc) => DisclosureFilterHelper.matchesFilter(
                   data: doc.data(),
                   selectedFilterTitles: selectedFilterStr,
                   hideDailyDisclosure: _hideDaily,
                   favoriteCompanyCodes: _favorites,
-                ))
-            .toList();
-        if (order != null) {
-          final comp = comparators[order];
-          if (comp != null) {
-            docs.sort(comp);
+                ),
+              )
+              .toList();
+          if (order != null) {
+            final comp = comparators[order];
+            if (comp != null) {
+              docs.sort(comp);
+            }
           }
-        }
-        return docs;
-      });
+          return docs;
+        },
+      );
     };
 
     Rx.combineLatest2<String, DateTime, List<int>>(
-      _userController.map((u) => u.uid).distinct(),
-      _dateController,
-      (user, date) {
-        final _date = DateTime(date.year, date.month, date.day);
-        final start = _date.millisecondsSinceEpoch;
-        final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
-        return [start, end];
-      },
-    ).switchMap((value) {
-      final start = value[0];
-      final end = value[1];
-      return createDateStream(start, end);
-    }).pipe(_disclosure$);
+          _userController.map((u) => u.uid).distinct(),
+          _dateController,
+          (user, date) {
+            final _date = DateTime(date.year, date.month, date.day);
+            final start = _date.millisecondsSinceEpoch;
+            final end = _date.add(Duration(days: 1)).millisecondsSinceEpoch;
+            return [start, end];
+          },
+        )
+        .switchMap((value) {
+          final start = value[0];
+          final end = value[1];
+          return createDateStream(start, end);
+        })
+        .pipe(_disclosure$);
 
-    FirebaseAuth.instance
-        .authStateChanges()
-        .whereNotNull()
-        .pipe(_userController);
+    FirebaseAuth.instance.authStateChanges().whereNotNull().pipe(
+      _userController,
+    );
 
     _createSettingStream();
 
@@ -335,17 +354,22 @@ class AppBloc extends Bloc {
 
     _createSavedDisclosureStreams();
 
-    final Stream<bool> br = _setModeBrightness.stream.doOnData((mode) =>
-        SharedPreferences.getInstance()
-            .then((pref) => pref.setBool('setDarkMode', mode)));
+    final Stream<bool> br = _setModeBrightness.stream.doOnData(
+      (mode) => SharedPreferences.getInstance().then(
+        (pref) => pref.setBool('setDarkMode', mode),
+      ),
+    );
 
     Rx.concat(<Stream<bool>>[
-      Stream.fromFuture(SharedPreferences.getInstance().then((pref) =>
-          pref.containsKey('setDarkMode')
-              ? pref.getBool('setDarkMode')!
-              : true)),
-      br
-    ])
+          Stream.fromFuture(
+            SharedPreferences.getInstance().then(
+              (pref) => pref.containsKey('setDarkMode')
+                  ? pref.getBool('setDarkMode')!
+                  : true,
+            ),
+          ),
+          br,
+        ])
         .map((m) => m == true ? Brightness.light : Brightness.dark)
         .pipe(_darkMode$);
   }
@@ -356,17 +380,16 @@ class AppBloc extends Bloc {
     final _publishFavorites = (List<String?> _favorites) async {
       final user = await _userController.first;
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set({"favorites": _favorites}, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        "favorites": _favorites,
+      }, SetOptions(merge: true));
     };
 
     _setVisibleDailyDisclosureController.stream.listen((visible) async {
       final user = await _userController.first;
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "setting": {"hideDailyDisclosure": visible}
+        "setting": {"hideDailyDisclosure": visible},
       }, SetOptions(merge: true));
     });
 
@@ -395,14 +418,20 @@ class AppBloc extends Bloc {
 
     _userController
         .share()
-        .switchMap((user) => FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .snapshots()
-            .handleError((dynamic error, StackTrace stack) {
-              debugPrint("User settings stream error: $error");
-              FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
-            }))
+        .switchMap(
+          (user) => FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .snapshots()
+              .handleError((dynamic error, StackTrace stack) {
+                debugPrint("User settings stream error: $error");
+                FirebaseCrashlytics.instance.recordError(
+                  error,
+                  stack,
+                  fatal: false,
+                );
+              }),
+        )
         .map((res) => res.data() ?? {})
         .pipe(_setting$);
 
@@ -411,8 +440,10 @@ class AppBloc extends Bloc {
         .pipe(_favorite$);
 
     _setting$
-        .map<bool>((setting) =>
-            (setting['setting'] ?? {})['hideDailyDisclosure'] ?? false)
+        .map<bool>(
+          (setting) =>
+              (setting['setting'] ?? {})['hideDailyDisclosure'] ?? false,
+        )
         .pipe(_hideDailyDisclosure$);
 
     _favorite$.listen((data) {
@@ -425,14 +456,17 @@ class AppBloc extends Bloc {
       _companies$.stream,
       (_favs, _conps) {
         return _favs.map((_fav) {
-          return _conps.firstWhere((_conp) => _conp.code == _fav,
-              orElse: () => Company(_fav, name: '???'));
+          return _conps.firstWhere(
+            (_conp) => _conp.code == _fav,
+            orElse: () => Company(_fav, name: '???'),
+          );
         }).toList();
       },
     ).pipe(_favoriteWithName$);
 
-    final history = _setting$
-        .map<List<String>>((data) => data['cp_hist']?.cast<String>() ?? []);
+    final history = _setting$.map<List<String>>(
+      (data) => data['cp_hist']?.cast<String>() ?? [],
+    );
 
     Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
       history,
@@ -440,16 +474,20 @@ class AppBloc extends Bloc {
       (_hist, _comps) {
         // print("hist=$_hist, comps=$_comps");
         return _hist
-            .map((_h) => _comps.firstWhere((_c) => _c.code == _h,
-                orElse: () => Company(_h, name: '???')))
+            .map(
+              (_h) => _comps.firstWhere(
+                (_c) => _c.code == _h,
+                orElse: () => Company(_h, name: '???'),
+              ),
+            )
             .toList();
       },
     ).pipe(_companiesHistory$);
 
     Rx.concat(<Stream<List<Company>>>[
-      _companiesHistory$.take(1),
-      _addHistory.stream.map((e) => [e].toList())
-    ])
+          _companiesHistory$.take(1),
+          _addHistory.stream.map((e) => [e].toList()),
+        ])
         .scan<List<Company>>(
           (a, e, i) =>
               (e + a.where((_a) => !e.contains(_a)).toList()).take(20).toList(),
@@ -476,14 +514,14 @@ class AppBloc extends Bloc {
       try {
         if (exists) {
           print('send current file');
-          yield await companyJsonFile
-              .readAsString()
-              .then((str) => jsonDecode(str));
+          yield await companyJsonFile.readAsString().then(
+            (str) => jsonDecode(str),
+          );
         }
         if (!(exists &&
-            companyJsonFile
-                .lastModifiedSync()
-                .isAfter(DateTime.now().subtract(Duration(seconds: 1))))) {
+            companyJsonFile.lastModifiedSync().isAfter(
+              DateTime.now().subtract(Duration(seconds: 1)),
+            ))) {
           print('download file from storage');
 
           final ref = _storage.ref().child('companies.json');
@@ -501,14 +539,18 @@ class AppBloc extends Bloc {
 
     _userController
         .switchMap((user) => _handleOpenFile())
-        .map((data) => data
-            .map((d) => Company(
+        .map(
+          (data) => data
+              .map(
+                (d) => Company(
                   (d['code'] as String).substring(0, 4),
                   name: d['name'],
                   edinetCode: d['edinetCode'],
                   nameKana: d['nameKana'],
-                ))
-            .toList())
+                ),
+              )
+              .toList(),
+        )
         .pipe(_companies$);
 
     Rx.combineLatest2<List<Company>, String, List<Company>>(
@@ -517,13 +559,22 @@ class AppBloc extends Bloc {
       (data, str) {
         if (str.length < 2) return [];
         final lowerStr = str.toLowerCase();
-        return data.where((d) => d.match(lowerStr)).take(100).toList();
+        final searchKana = Company.hiraToKana(lowerStr);
+        return data
+            .where((d) => d.match(lowerStr, kanaText: searchKana))
+            .take(100)
+            .toList();
       },
     ).pipe(_filteredCompanies$);
 
-    _companies$.share().map((companies) {
-      return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode!, c)));
-    }).pipe(_companiesMap$);
+    _companies$
+        .share()
+        .map((companies) {
+          return Map.fromEntries(
+            companies.map((c) => MapEntry(c.edinetCode!, c)),
+          );
+        })
+        .pipe(_companiesMap$);
   }
 
   void _createNotificationStreams() {
@@ -538,10 +589,12 @@ class AppBloc extends Bloc {
         .then((token) {
           print(token);
           return http.post(
-              Uri.parse(
-                  'https://asia-northeast1-disclosure-app.cloudfunctions.net/listTopicsV2'),
-              body: json.encode({'IID_TOKEN': token}),
-              headers: {'Content-Type': 'application/json'});
+            Uri.parse(
+              'https://asia-northeast1-disclosure-app.cloudfunctions.net/listTopicsV2',
+            ),
+            body: json.encode({'IID_TOKEN': token}),
+            headers: {'Content-Type': 'application/json'},
+          );
         })
         .then((res) {
           if (res.body != '') {
@@ -559,19 +612,22 @@ class AppBloc extends Bloc {
         .catchError((err) {
           print(err);
           if (err is SocketException) {
-            _notificationString$
-                .addError(new SocketException("サーバーとの通信に失敗しました"));
+            _notificationString$.addError(
+              new SocketException("サーバーとの通信に失敗しました"),
+            );
           } else {
             _notificationString$.addError(err);
           }
         });
 
-    _notificationString$.map((notifications) {
-      return notifications
-          .where(NotificationTopicHelper.isTagTopic)
-          .map(NotificationTopicHelper.toTag)
-          .toList();
-    }).pipe(_tagsNotifications$);
+    _notificationString$
+        .map((notifications) {
+          return notifications
+              .where(NotificationTopicHelper.isTagTopic)
+              .map(NotificationTopicHelper.toTag)
+              .toList();
+        })
+        .pipe(_tagsNotifications$);
 
     Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
       _notificationString$,
@@ -581,9 +637,12 @@ class AppBloc extends Bloc {
             .where(NotificationTopicHelper.isCodeTopic)
             .map(NotificationTopicHelper.toCode)
             .map((_topic) {
-          return _comps.firstWhere((_conp) => _conp.code == _topic,
-              orElse: () => Company(_topic, name: '???'));
-        }).toList();
+              return _comps.firstWhere(
+                (_conp) => _conp.code == _topic,
+                orElse: () => Company(_topic, name: '???'),
+              );
+            })
+            .toList();
       },
     ).pipe(_notifications$);
 
@@ -680,13 +739,19 @@ class AppBloc extends Bloc {
         .doc(user.uid)
         .collection('disclosures');
     _userController
-        .switchMap((user) => collection(user)
-            .orderBy('add_at', descending: true)
-            .snapshots()
-            .handleError((dynamic error, StackTrace stack) {
-              debugPrint("Saved disclosures stream error: $error");
-              FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
-            }))
+        .switchMap(
+          (user) => collection(user)
+              .orderBy('add_at', descending: true)
+              .snapshots()
+              .handleError((dynamic error, StackTrace stack) {
+                debugPrint("Saved disclosures stream error: $error");
+                FirebaseCrashlytics.instance.recordError(
+                  error,
+                  stack,
+                  fatal: false,
+                );
+              }),
+        )
         .map((snapshot) => snapshot.docs)
         .pipe(_savedDisclosure$);
 
