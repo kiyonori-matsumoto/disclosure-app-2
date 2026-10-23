@@ -20,11 +20,10 @@ void main() {
     });
 
     test('hiraToKana converts hiragana to katakana', () {
-      final company = Company('1234');
-      expect(company.hiraToKana('とうきょう'), 'トウキョウ');
-      expect(company.hiraToKana('あいうえお'), 'アイウエオ');
-      expect(company.hiraToKana('abc漢字123'), 'abc漢字123');
-      expect(company.hiraToKana('ひらがなとカタカナ'), 'ヒラガナトカタカナ');
+      expect(Company.hiraToKana('とうきょう'), 'トウキョウ');
+      expect(Company.hiraToKana('あいうえお'), 'アイウエオ');
+      expect(Company.hiraToKana('abc漢字123'), 'abc漢字123');
+      expect(Company.hiraToKana('ひらがなとカタカナ'), 'ヒラガナトカタカナ');
     });
 
     test('match matches by company name (case-insensitive)', () {
