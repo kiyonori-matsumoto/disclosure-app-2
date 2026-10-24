@@ -14,10 +14,13 @@ class Company {
     this.edinetCode = edinetCode ?? '';
   }
 
-  bool match(String text) {
+  static final _hiraRegExp = RegExp(r'[ぁ-ゔ]');
+
+  bool match(String text, {String? textKana}) {
+    final kana = textKana ?? hiraToKana(text);
     return this.name!.toLowerCase().contains(text) ||
         this.code!.startsWith(text) ||
-        this.nameKana!.contains(hiraToKana((text)));
+        this.nameKana!.contains(kana);
   }
 
   bool operator ==(o) => o is Company && code == o.code;
@@ -28,8 +31,8 @@ class Company {
     return '${code!.length > 4 ? code!.substring(0, 4) : code} $name';
   }
 
-  String hiraToKana(String str) {
-    return str.replaceAllMapped(new RegExp("[ぁ-ゔ]"),
+  static String hiraToKana(String str) {
+    return str.replaceAllMapped(_hiraRegExp,
         (Match m) => String.fromCharCode(m.group(0)!.codeUnitAt(0) + 0x60));
   }
 }
