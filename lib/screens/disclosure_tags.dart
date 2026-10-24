@@ -93,7 +93,8 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
       appBar: AppBar(
         title: Text("${this.tag}の通知履歴"),
       ),
-      body: WithBannerAdWidget(child: _buildBody(context)),
+      body: _buildBody(context),
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 

@@ -92,56 +92,57 @@ class DisclosureStreamScreenState extends State<DisclosureStreamScreen>
   Widget build(BuildContext context) {
     final bloc = BlocProvider.of<AppBloc>(context);
 
-    return WithBannerAdWidget(
-      child: StreamBuilder<DateTime>(
-          stream: bloc.date$,
-          builder: (context, snapshot) {
-            if (snapshot.data == null) return Container();
+    return StreamBuilder<DateTime>(
+      stream: bloc.date$,
+      builder: (context, snapshot) {
+        if (snapshot.data == null) return Container();
 
-            if (snapshot.hasError) {
-              return Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Icon(Icons.event_busy),
-                      Text(snapshot.error.toString()),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Scaffold(
-              body: buildSliverBody(context, bloc: bloc),
-              drawer: AppDrawer(),
-              floatingActionButton: StreamBuilder<int?>(
-                stream: bloc.newDisclosureCount,
-                builder: (context, snapshot) => snapshot.data == 0
-                    ? const SizedBox(
-                        width: 0.0,
-                        height: 0.0,
-                      )
-                    : FloatingActionButton.extended(
-                        onPressed: () {
-                          this.sliverScrollController.animateTo(
-                                0,
-                                duration: Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                              );
-                          this
-                              .bloc
-                              .refreshDisclosures
-                              .add(Random().nextInt(65535));
-                        },
-                        label: Text('${snapshot.data} NEW MESSAGE'),
-                        icon: Icon(Icons.refresh),
-                      ),
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(Icons.event_busy),
+                  Text(snapshot.error.toString()),
+                ],
               ),
-              floatingActionButtonLocation:
-                  FloatingActionButtonLocation.centerFloat,
-            );
-          }),
+            ),
+            bottomNavigationBar: const BannerAdWidget(),
+          );
+        }
+
+        return Scaffold(
+          body: buildSliverBody(context, bloc: bloc),
+          drawer: AppDrawer(),
+          floatingActionButton: StreamBuilder<int?>(
+            stream: bloc.newDisclosureCount,
+            builder: (context, snapshot) => snapshot.data == 0
+                ? const SizedBox(
+                    width: 0.0,
+                    height: 0.0,
+                  )
+                : FloatingActionButton.extended(
+                    onPressed: () {
+                      this.sliverScrollController.animateTo(
+                            0,
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.easeOut,
+                          );
+                      this
+                          .bloc
+                          .refreshDisclosures
+                          .add(Random().nextInt(65535));
+                    },
+                    label: Text('${snapshot.data} NEW MESSAGE'),
+                    icon: Icon(Icons.refresh),
+                  ),
+          ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          bottomNavigationBar: const BannerAdWidget(),
+        );
+      },
     );
   }
 

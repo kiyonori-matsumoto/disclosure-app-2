@@ -1,94 +1,25 @@
-import 'dart:io';
-
 import 'package:disclosure_app_fl/utils/ad_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-class WithBannerAdWidget extends StatefulWidget {
+/// 画面下部にバナー広告を表示するラッパーウィジェット
+class WithBannerAdWidget extends StatelessWidget {
   final Widget child;
 
   const WithBannerAdWidget({Key? key, required this.child}) : super(key: key);
 
   @override
-  State<WithBannerAdWidget> createState() => _WithBannerAdWidgetState();
-}
-
-class _WithBannerAdWidgetState extends State<WithBannerAdWidget> {
-  BannerAd? _bannerAd;
-
-  @override
   Widget build(BuildContext context) {
-    if (_bannerAd == null) {
-      return widget.child;
-    }
-    return Stack(
+    return Column(
       children: [
-        SizedBox(
-            child: widget.child,
-            height: MediaQuery.of(context).size.height -
-                _bannerAd!.size.height.toDouble()),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: SafeArea(
-            child: SizedBox(
-              width: _bannerAd!.size.width.toDouble(),
-              height: _bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            ),
-          ),
-        ),
+        Expanded(child: child),
+        const BannerAdWidget(),
       ],
     );
   }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _loadAd();
-  }
-
-  Future<void> _loadAd() async {
-    final AnchoredAdaptiveBannerAdSize? size =
-        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-            MediaQuery.of(context).size.width.truncate());
-
-    if (size == null) {
-      debugPrint("Unable to get height of anchored banner.");
-      return;
-    }
-
-    _bannerAd = BannerAd(
-      size: size,
-      adUnitId: AdHelper.bannerAdUnitId,
-      listener: BannerAdListener(
-        // 広告が正常にロードされたときに呼ばれます。
-        onAdLoaded: (Ad ad) {
-          debugPrint('バナー広告がロードされました。');
-          setState(() {
-            _bannerAd = ad as BannerAd?;
-          });
-        },
-        // 広告のロードが失敗した際に呼ばれます。
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          debugPrint('バナー広告のロードに失敗しました。: $error');
-        },
-        // 広告が開かれたときに呼ばれます。
-        onAdOpened: (Ad ad) => debugPrint('バナー広告が開かれました。'),
-        // 広告が閉じられたときに呼ばれます。
-        onAdClosed: (Ad ad) => debugPrint('バナー広告が閉じられました。'),
-      ),
-      request: AdRequest(),
-    );
-    _bannerAd!.load();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _bannerAd?.dispose();
-  }
 }
 
+/// 単体でバナー広告の読み込みと表示を行うウィジェット
 class BannerAdWidget extends StatefulWidget {
   const BannerAdWidget({Key? key}) : super(key: key);
 
@@ -98,88 +29,103 @@ class BannerAdWidget extends StatefulWidget {
 
 class _BannerAdWidgetState extends State<BannerAdWidget> {
   BannerAd? _bannerAd;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_bannerAd == null) {
-      return const SizedBox.shrink();
-    }
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: SafeArea(
-        child: SizedBox(
-          width: _bannerAd!.size.width.toDouble(),
-          height: _bannerAd!.size.height.toDouble(),
-          child: AdWidget(ad: _bannerAd!),
-        ),
-      ),
-    );
-  }
+  bool _isLoaded = false;
+  bool _isLoading = false;
+  int? _lastWidth;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadAd();
+    final width = MediaQuery.of(context).size.width.truncate();
+    if (_lastWidth != width) {
+      _lastWidth = width;
+      _loadAd(width);
+    }
   }
 
-  Future<void> _loadAd() async {
-    final AnchoredAdaptiveBannerAdSize? size =
-        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-            MediaQuery.of(context).size.width.truncate());
+  Future<void> _loadAd(int width) async {
+    if (_isLoading) return;
+    _isLoading = true;
 
-    if (size == null) {
-      debugPrint("Unable to get height of anchored banner.");
+    // 既存の広告があれば安全に破棄
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    if (mounted && _isLoaded) {
+      setState(() {
+        _isLoaded = false;
+      });
+    }
+
+    final AnchoredAdaptiveBannerAdSize? size =
+        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+
+    if (!mounted) {
+      _isLoading = false;
       return;
     }
 
-    _bannerAd = BannerAd(
+    if (size == null) {
+      debugPrint("Unable to get height of anchored banner.");
+      _isLoading = false;
+      return;
+    }
+
+    final bannerAd = BannerAd(
       size: size,
       adUnitId: AdHelper.bannerAdUnitId,
       listener: BannerAdListener(
-        // 広告が正常にロードされたときに呼ばれます。
         onAdLoaded: (Ad ad) {
           debugPrint('バナー広告がロードされました。');
+          _isLoading = false;
+          if (!mounted) {
+            ad.dispose();
+            return;
+          }
           setState(() {
-            _bannerAd = ad as BannerAd?;
+            _bannerAd = ad as BannerAd;
+            _isLoaded = true;
           });
         },
-        // 広告のロードが失敗した際に呼ばれます。
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
           debugPrint('バナー広告のロードに失敗しました。: $error');
+          _isLoading = false;
+          ad.dispose();
+          if (mounted) {
+            setState(() {
+              _bannerAd = null;
+              _isLoaded = false;
+            });
+          }
         },
-        // 広告が開かれたときに呼ばれます。
         onAdOpened: (Ad ad) => debugPrint('バナー広告が開かれました。'),
-        // 広告が閉じられたときに呼ばれます。
         onAdClosed: (Ad ad) => debugPrint('バナー広告が閉じられました。'),
       ),
-      request: AdRequest(),
+      request: const AdRequest(),
     );
-    _bannerAd!.load();
+
+    _bannerAd = bannerAd;
+    await bannerAd.load();
   }
 
   @override
   void dispose() {
-    super.dispose();
     _bannerAd?.dispose();
+    _bannerAd = null;
+    super.dispose();
   }
-}
 
-double getSmartBannerHeight(MediaQueryData mediaQuery) {
-  // https://developers.google.com/admob/android/banner#smart_banners
-  if (Platform.isAndroid) {
-    if (mediaQuery.size.height > 720) return 90.0;
-    if (mediaQuery.size.height > 400) return 50.0;
-    return 32.0;
+  @override
+  Widget build(BuildContext context) {
+    if (!_isLoaded || _bannerAd == null) {
+      return const SizedBox.shrink();
+    }
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        width: _bannerAd!.size.width.toDouble(),
+        height: _bannerAd!.size.height.toDouble(),
+        child: AdWidget(ad: _bannerAd!),
+      ),
+    );
   }
-  // https://developers.google.com/admob/ios/banner#smart_banners
-  // Smart Banners on iPhones have a height of 50 points in portrait and 32 points in landscape.
-  // On iPads, height is 90 points in both portrait and landscape.
-  if (Platform.isIOS) {
-    // TODO use https://pub.dartlang.org/packages/device_info to detect iPhone/iPad?
-    // if (iPad) return 90.0;
-    if (mediaQuery.orientation == Orientation.portrait) return 50.0;
-    return 32.0;
-  }
-  // No idea, just return a common value.
-  return 50.0;
 }

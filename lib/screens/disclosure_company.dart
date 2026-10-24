@@ -165,52 +165,51 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
         ? (companyCode.isNotEmpty ? "$companyName ($companyCode)" : companyName)
         : (companyCode.isNotEmpty ? companyCode : '会社詳細');
 
-    return WithBannerAdWidget(
-      child: DefaultTabController(
-        length: tabLength,
-        child: Scaffold(
-          appBar: AppBar(
-            title: Text(title),
-            actions: <Widget>[
-              if (companyCode.isNotEmpty)
-                StreamBuilder<List<Company>>(
-                  stream: appBloc.favoritesWithName$,
-                  builder: (context, snapshot) {
-                    final isFavorite = snapshot.hasData &&
-                        snapshot.data!
-                            .any((fav) => fav.code == companyCode);
-                    return IconButton(
-                      icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-                      tooltip: 'お気に入り',
-                      onPressed: () {
-                        appBloc.switchFavorite.add(companyCode);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(isFavorite
-                              ? 'お気に入りを解除しました'
-                              : 'お気に入りに追加しました'),
-                        ));
-                      },
-                    );
-                  },
-                ),
-            ],
-            bottom: TabBar(tabs: <Widget>[
-              const Tab(
-                text: 'TDNET',
+    return DefaultTabController(
+      length: tabLength,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          actions: <Widget>[
+            if (companyCode.isNotEmpty)
+              StreamBuilder<List<Company>>(
+                stream: appBloc.favoritesWithName$,
+                builder: (context, snapshot) {
+                  final isFavorite = snapshot.hasData &&
+                      snapshot.data!
+                          .any((fav) => fav.code == companyCode);
+                  return IconButton(
+                    icon: Icon(isFavorite ? Icons.star : Icons.star_border),
+                    tooltip: 'お気に入り',
+                    onPressed: () {
+                      appBloc.switchFavorite.add(companyCode);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(isFavorite
+                            ? 'お気に入りを解除しました'
+                            : 'お気に入りに追加しました'),
+                      ));
+                    },
+                  );
+                },
               ),
-              if (hasEdinet)
-                const Tab(
-                  text: 'EDINET',
-                ),
-            ]),
-          ),
-          body: TabBarView(
-            children: <Widget>[
-              _buildBody(context),
-              if (tabLength == 2) _buildEdinetList(context),
-            ],
-          ),
+          ],
+          bottom: TabBar(tabs: <Widget>[
+            const Tab(
+              text: 'TDNET',
+            ),
+            if (hasEdinet)
+              const Tab(
+                text: 'EDINET',
+              ),
+          ]),
         ),
+        body: TabBarView(
+          children: <Widget>[
+            _buildBody(context),
+            if (tabLength == 2) _buildEdinetList(context),
+          ],
+        ),
+        bottomNavigationBar: const BannerAdWidget(),
       ),
     );
   }
