@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
@@ -11,9 +10,7 @@ import 'package:disclosure_app_fl/screens/saved_disclosures.dart';
 import 'package:disclosure_app_fl/screens/search_company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
-import 'package:disclosure_app_fl/utils/ad_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +38,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final List<StreamSubscription> _subscriptions = [];
 
   AppBloc? bloc;
-  late BannerAd _bannerAd;
 
   @override
   void initState() {
@@ -104,13 +100,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
         FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
       }),
     );
-    _bannerAd = BannerAd(
-      size: AdSize.banner,
-      adUnitId: AdHelper.bannerAdUnitId,
-      listener: BannerAdListener(),
-      request: AdRequest(),
-    );
-    _bannerAd.load();
   }
 
   @override
@@ -119,7 +108,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
       sub.cancel();
     }
     _subscriptions.clear();
-    _bannerAd.dispose();
     super.dispose();
   }
 
@@ -163,26 +151,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
         ),
       );
     }
-  }
-
-  double getSmartBannerHeight(MediaQueryData mediaQuery) {
-    // https://developers.google.com/admob/android/banner#smart_banners
-    if (Platform.isAndroid) {
-      if (mediaQuery.size.height > 720) return 90.0;
-      if (mediaQuery.size.height > 400) return 50.0;
-      return 32.0;
-    }
-    // https://developers.google.com/admob/ios/banner#smart_banners
-    // Smart Banners on iPhones have a height of 50 points in portrait and 32 points in landscape.
-    // On iPads, height is 90 points in both portrait and landscape.
-    if (Platform.isIOS) {
-      // TODO use https://pub.dartlang.org/packages/device_info to detect iPhone/iPad?
-      // if (iPad) return 90.0;
-      if (mediaQuery.orientation == Orientation.portrait) return 50.0;
-      return 32.0;
-    }
-    // No idea, just return a common value.
-    return 50.0;
   }
 
   @override
