@@ -87,7 +87,7 @@ class EdinetSliverList extends StatelessWidget {
   }
 }
 
-class EdinetListItem extends StatelessWidget {
+class EdinetListItem extends StatefulWidget {
   const EdinetListItem({
     Key? key,
     required this.edinet,
@@ -98,56 +98,78 @@ class EdinetListItem extends StatelessWidget {
   final bool showDate;
 
   @override
+  _EdinetListItemState createState() => _EdinetListItemState();
+}
+
+class _EdinetListItemState extends State<EdinetListItem> {
+  bool isDownloading = false;
+
+  @override
   Widget build(BuildContext context) {
-    final docId = edinet.docId ?? '';
-    final time = edinet.time ?? 0;
+    final docId = widget.edinet.docId ?? '';
+    final time = widget.edinet.time ?? 0;
     return Stack(
-        key: Key(docId),
-        alignment: Alignment.topRight,
-        children: <Widget>[
-          ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            title: Text(edinet.docDescription ?? ""),
-            subtitle: Text(edinet.relatedCompaniesName),
-            onTap: () async {
-              try {
-                await downloadAndOpenEdinet(edinet.docId);
-              } catch (e, stack) {
-                debugPrint("Failed to download EDINET document: $e");
-                FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('EDINET文書の取得に失敗しました'),
-                      duration: Duration(seconds: 3),
+      alignment: AlignmentDirectional.center,
+      children: <Widget>[
+        Stack(
+            key: Key(docId),
+            alignment: Alignment.topRight,
+            children: <Widget>[
+              ListTile(
+                contentPadding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
+                title: Text(widget.edinet.docDescription ?? ""),
+                subtitle: Text(widget.edinet.relatedCompaniesName),
+                onTap: isDownloading ? null : () async {
+                  try {
+                    setState(() {
+                      isDownloading = true;
+                    });
+                    await downloadAndOpenEdinet(widget.edinet.docId);
+                  } catch (e, stack) {
+                    debugPrint("Failed to download EDINET document: $e");
+                    FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('EDINET文書の取得に失敗しました'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() {
+                        isDownloading = false;
+                      });
+                    }
+                  }
+                },
+                onLongPress: _onLongPress(context, widget.edinet.companies),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      "${widget.edinet.docType} | ",
+                      style: smallGrey,
                     ),
-                  );
-                }
-              }
-            },
-            onLongPress: _onLongPress(context, edinet.companies),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                Text(
-                  "${edinet.docType} | ",
-                  style: smallGrey,
+                    ContentViewCount(
+                      viewCount: widget.edinet.viewCount,
+                    ),
+                    Text(
+                      widget.showDate ? toDate(time) : toTime(time),
+                      style: smallGrey,
+                    )
+                  ],
                 ),
-                ContentViewCount(
-                  viewCount: edinet.viewCount,
-                ),
-                Text(
-                  showDate ? toDate(time) : toTime(time),
-                  style: smallGrey,
-                )
-              ],
-            ),
-          )
-        ]);
+              )
+            ]),
+        isDownloading ? CircularProgressIndicator() : Container(),
+      ],
+    );
   }
 
   _onLongPress(BuildContext context, List<Company?> companies) => () async {
