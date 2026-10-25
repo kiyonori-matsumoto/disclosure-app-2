@@ -48,7 +48,7 @@ class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
             child: ElevatedButton(
               child: StreamBuilder<bool>(
                   stream: bloc2!.disclosure.isLoading$,

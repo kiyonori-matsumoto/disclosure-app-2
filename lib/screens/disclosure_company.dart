@@ -108,7 +108,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
               if (disclosureBloc != null)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
                     child: ElevatedButton(
                       child: StreamBuilder<bool>(
                           stream: disclosureBloc.isLoading$,
@@ -250,7 +250,7 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                 itemBuilder: (context, idx) {
                   return idx == snapshot.data!.length
                       ? Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
                           child: ElevatedButton(
                             child: StreamBuilder<bool>(
                               stream: edinetBloc.isLoading$,
