@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2 # または linux_x2
     environment:
-      flutter: 3.27.4
+      flutter: 3.47.8
       java: 17
       # CodemagicのWebコンソール（Team settings / App settings > Code signing identities > Android keystores）
       # で設定したキーストアのリファレンス名を指定してください（例: android_keystore）。

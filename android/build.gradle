@@ -20,15 +20,15 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
-subprojects {
-    project.evaluationDependsOn(':app')
-}
 
 subprojects {
-    project.plugins.withId("com.android.library") {
-        project.android {
-            if (namespace == null) {
-                namespace project.group ?: "com.example.${project.name}"
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group ?: "com.example.${project.name}"
+                }
+                compileSdkVersion 36
             }
         }
     }
