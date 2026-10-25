@@ -511,9 +511,10 @@ class AppBloc extends Bloc {
             .toList())
         .pipe(_companies$);
 
+    // Bolt Optimization: Debounce search input to prevent expensive list filtering and UI re-renders on every keystroke
     Rx.combineLatest2<List<Company>, String, List<Company>>(
       _companies$.stream,
-      _codeStrController.stream,
+      _codeStrController.stream.debounceTime(const Duration(milliseconds: 300)),
       (data, str) {
         if (str.length < 2) return [];
         final lowerStr = str.toLowerCase();
