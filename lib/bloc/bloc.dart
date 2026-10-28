@@ -83,6 +83,7 @@ class AppBloc extends Bloc {
   final _filteredCompanies$ = BehaviorSubject<List<Company>>();
   final _companies$ = BehaviorSubject<List<Company>>();
   final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
+  final _companiesCodeMap$ = BehaviorSubject<Map<String, Company>>();
   final _codeStrController = BehaviorSubject<String>.seeded('');
   final _storage = FirebaseStorage.instanceFor(bucket: 'gs://disclosure-app-2');
 
@@ -108,6 +109,7 @@ class AppBloc extends Bloc {
   ValueStream<DateTime> get date$ => _dateController.stream;
   ValueStream<List<Company>> get company$ => _companies$.stream;
   ValueStream<Map<String, Company>> get companyMap$ => _companiesMap$.stream;
+  ValueStream<Map<String, Company>> get companyCodeMap$ => _companiesCodeMap$.stream;
   Sink<DateTime> get edinetDate => _edinetDateController.sink;
   ValueStream<DateTime> get edinetDate$ => _edinetDateController.stream;
   Sink<String> get addFilter => _filterChangeController.sink;
@@ -420,13 +422,13 @@ class AppBloc extends Bloc {
       favorites.addAll(data);
     });
 
-    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, Map<String, Company>, List<Company>>(
       _favorite$,
-      _companies$.stream,
+      _companiesCodeMap$.stream,
       (_favs, _conps) {
         return _favs.map((_fav) {
-          return _conps.firstWhere((_conp) => _conp.code == _fav,
-              orElse: () => Company(_fav, name: '???'));
+          // ⚡ Bolt: O(1) map lookup instead of O(N) list search
+          return _conps[_fav] ?? Company(_fav, name: '???');
         }).toList();
       },
     ).pipe(_favoriteWithName$);
@@ -434,14 +436,14 @@ class AppBloc extends Bloc {
     final history = _setting$
         .map<List<String>>((data) => data['cp_hist']?.cast<String>() ?? []);
 
-    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, Map<String, Company>, List<Company>>(
       history,
-      _companies$.stream,
+      _companiesCodeMap$.stream,
       (_hist, _comps) {
         // print("hist=$_hist, comps=$_comps");
         return _hist
-            .map((_h) => _comps.firstWhere((_c) => _c.code == _h,
-                orElse: () => Company(_h, name: '???')))
+            // ⚡ Bolt: O(1) map lookup instead of O(N) list search
+            .map((_h) => _comps[_h] ?? Company(_h, name: '???'))
             .toList();
       },
     ).pipe(_companiesHistory$);
@@ -525,6 +527,14 @@ class AppBloc extends Bloc {
     _companies$.share().map((companies) {
       return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode!, c)));
     }).pipe(_companiesMap$);
+
+    _companies$.share().map((companies) {
+      // ⚡ Bolt: Provide a map for O(1) company lookups by code.
+      // This prevents O(N^2) complexity in stream transformations.
+      return Map.fromEntries(
+        companies.where((c) => c.code != null).map((c) => MapEntry(c.code!, c))
+      );
+    }).pipe(_companiesCodeMap$);
   }
 
   void _createNotificationStreams() {
@@ -574,16 +584,16 @@ class AppBloc extends Bloc {
           .toList();
     }).pipe(_tagsNotifications$);
 
-    Rx.combineLatest2<List<String>, List<Company>, List<Company>>(
+    Rx.combineLatest2<List<String>, Map<String, Company>, List<Company>>(
       _notificationString$,
-      _companies$.stream,
+      _companiesCodeMap$.stream,
       (_topics, _comps) {
         return _topics
             .where(NotificationTopicHelper.isCodeTopic)
             .map(NotificationTopicHelper.toCode)
             .map((_topic) {
-          return _comps.firstWhere((_conp) => _conp.code == _topic,
-              orElse: () => Company(_topic, name: '???'));
+          // ⚡ Bolt: O(1) map lookup instead of O(N) list search
+          return _comps[_topic] ?? Company(_topic, name: '???');
         }).toList();
       },
     ).pipe(_notifications$);
@@ -652,6 +662,7 @@ class AppBloc extends Bloc {
     _filteredCompanies$.close();
     _companies$.close();
     _companiesMap$.close();
+    _companiesCodeMap$.close();
     _codeStrController.close();
     _notifications$.close();
     _tagsNotifications$.close();

@@ -19,9 +19,8 @@ Future<Company> getCompany(AppBloc? bloc,
       final companies = await bloc.companyMap$.first;
       company = companies[edinetCode];
     } else if (code != null) {
-      final companies = await bloc.company$.first;
-      company = companies.firstWhere((e) => e.code == code,
-          orElse: () => Company(code, edinetCode: edinetCode, name: safeName));
+      final companies = await bloc.companyCodeMap$.first;
+      company = companies[code];
     }
   }
 
