@@ -1,3 +1,7 @@
 ## 2023-10-24 - Optimizing List Filtering with Pre-computed Regex and String Conversion
 **Learning:** In the `lib/bloc/bloc.dart` filtering logic, the `Company.match` method was calling `hiraToKana` for every item in a large list during a `where` loop. The `hiraToKana` method was creating a new `RegExp` object on every call. Pre-computing the regex object (making it `static final`) and extracting the `hiraToKana` call out of the loop and passing the pre-converted string to the `match` method reduced the processing time for filtering 4000 items from ~8000ms to ~300ms in isolated benchmarks, representing a ~95% reduction in execution time for large lists.
 **Action:** When filtering lists using search terms, always extract string manipulations (like case conversions or kana conversions) and pre-compile regular expressions outside the loop to prevent redundant, expensive computations per list item.
+
+## 2023-10-28 - Avoid O(N) array lookups in stream mappers
+**Learning:** RxDart streams that combine a list of strings (e.g. favorite codes) with a list of domain objects (e.g. Companies) can lead to O(M*N) performance if linear search (`firstWhere`) is used inside the `map` callback.
+**Action:** When filtering or mapping items based on an ID, pre-compute a dictionary (`Map<String, Model>`) keyed by the ID for O(1) lookups instead of keeping the full domain objects list. Make sure to handle null keys carefully when creating maps.
