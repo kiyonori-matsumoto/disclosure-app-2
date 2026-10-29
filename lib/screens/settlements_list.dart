@@ -73,11 +73,10 @@ class _SettlementsListState extends State<SettlementsList> {
                     return ListTile(
                       title: Text("${data['name']} (${data['quote']})"),
                       onTap: () async {
-                        final companies = await bloc.company$.first;
-                        final company = companies.firstWhere(
-                            (e) => e.code == data['code'],
-                            orElse: () =>
-                                Company(data['code'], name: data['name']));
+                        // ⚡ Bolt: O(1) map lookup instead of O(N) list search
+                        final companiesMap = await bloc.companyCodeMap$.first;
+                        final company = companiesMap[data['code']] ??
+                                Company(data['code'], name: data['name']);
                         Navigator.pushNamed(context, '/company-disclosures',
                             arguments: company);
                       },
