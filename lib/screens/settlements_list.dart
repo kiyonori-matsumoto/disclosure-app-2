@@ -17,9 +17,9 @@ class _SettlementsListState extends State<SettlementsList> {
   final DateTime end;
 
   _SettlementsListState()
-      : today = DateTime.now(),
-        start = DateTime.now().subtract(Duration(days: 30)),
-        end = DateTime.now().add(Duration(days: 30));
+    : today = DateTime.now(),
+      start = DateTime.now().subtract(Duration(days: 30)),
+      end = DateTime.now().add(Duration(days: 30));
 
   @override
   void initState() {
@@ -64,45 +64,48 @@ class _SettlementsListState extends State<SettlementsList> {
           .get(),
       builder: (context, snapshot) => snapshot.data != null
           ? (snapshot.data as QuerySnapshot).docs.length != 0
-              ? ListView.builder(
-                  itemBuilder: (context, idx) {
-                    final data =
-                        (snapshot.data as QuerySnapshot<Map<String, dynamic>>)
-                            .docs[idx]
-                            .data();
-                    return ListTile(
-                      title: Text("${data['name']} (${data['quote']})"),
-                      onTap: () async {
-                        final companies = await bloc.company$.first;
-                        final company = companies.firstWhere(
-                            (e) => e.code == data['code'],
-                            orElse: () =>
-                                Company(data['code'], name: data['name']));
-                        Navigator.pushNamed(context, '/company-disclosures',
-                            arguments: company);
-                      },
-                    );
-                  },
-                  itemCount: (snapshot.data as QuerySnapshot).docs.length,
-                )
-              : SizedBox(
-                  child: Card(
-                    child: Column(
-                      children: <Widget>[
-                        ListTile(
-                          leading: Icon(
-                            Icons.announcement,
-                            color: Theme.of(context).colorScheme.surface,
+                ? ListView.builder(
+                    itemBuilder: (context, idx) {
+                      final data =
+                          (snapshot.data as QuerySnapshot<Map<String, dynamic>>)
+                              .docs[idx]
+                              .data();
+                      return ListTile(
+                        title: Text("${data['name']} (${data['quote']})"),
+                        onTap: () async {
+                          // ⚡ Bolt: O(1) map lookup instead of O(N) list search
+                          final companyMap = await bloc.companyCodeMap$.first;
+                          final company =
+                              companyMap[data['code']] ??
+                              Company(data['code'], name: data['name']);
+                          Navigator.pushNamed(
+                            context,
+                            '/company-disclosures',
+                            arguments: company,
+                          );
+                        },
+                      );
+                    },
+                    itemCount: (snapshot.data as QuerySnapshot).docs.length,
+                  )
+                : SizedBox(
+                    child: Card(
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            leading: Icon(
+                              Icons.announcement,
+                              color: Theme.of(context).colorScheme.surface,
+                            ),
+                            title: Text('指定された日の決算予定はありません'),
                           ),
-                          title: Text('指定された日の決算予定はありません'),
-                        )
-                      ],
+                        ],
+                      ),
+                      shape: RoundedRectangleBorder(),
                     ),
-                    shape: RoundedRectangleBorder(),
-                  ),
-                  width: double.infinity,
-                  height: 80.0,
-                )
+                    width: double.infinity,
+                    height: 80.0,
+                  )
           : LinearProgressIndicator(),
     );
   }
