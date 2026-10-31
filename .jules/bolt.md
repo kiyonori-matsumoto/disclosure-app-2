@@ -5,3 +5,7 @@
 ## 2023-10-28 - Avoid O(N) array lookups in stream mappers
 **Learning:** RxDart streams that combine a list of strings (e.g. favorite codes) with a list of domain objects (e.g. Companies) can lead to O(M*N) performance if linear search (`firstWhere`) is used inside the `map` callback.
 **Action:** When filtering or mapping items based on an ID, pre-compute a dictionary (`Map<String, Model>`) keyed by the ID for O(1) lookups instead of keeping the full domain objects list. Make sure to handle null keys carefully when creating maps.
+
+## 2025-02-18 - Avoid O(N) stream list search when O(1) map is available in BLoC
+**Learning:** In the disclosure app's architecture, when looking up companies (e.g. mapping codes to Company objects inside streams like those in `SettlementsList` and `AppBloc`), iterating over `companies` lists with methods like `firstWhere` (an O(N) operation) creates unnecessary performance bottlenecks, especially when triggered on every stream event. We already have `companyCodeMap$` and `companyMap$` specifically exposed to provide instant access.
+**Action:** When performing stream processing or list transformations that require company lookups, always utilize `companyCodeMap$` or `companyMap$` for O(1) map lookups instead of iterating over the `company$` list.
