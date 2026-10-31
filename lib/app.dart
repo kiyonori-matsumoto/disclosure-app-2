@@ -32,7 +32,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
@@ -49,26 +48,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
     );
 
-    _googleSignIn
-        .signInSilently(suppressErrors: true)
-        .then((GoogleSignInAccount? googleUser) {
-      if (googleUser == null) {
-        return _auth.signInAnonymously();
-      } else {
-        return googleUser.authentication.then(
-          (googleAuth) => _auth.signInWithCredential(
-            GoogleAuthProvider.credential(
-              accessToken: googleAuth.accessToken,
-              idToken: googleAuth.idToken,
-            ),
-          ),
-        );
-      }
-    }).then((user) {
-      debugPrint("Signed in user: $user");
-    }).catchError((dynamic error) {
-      debugPrint("Silent sign in error: $error");
-    });
+    _initAuth();
 
     final appBloc = BlocProvider.of<AppBloc>(context);
     bloc = appBloc;
@@ -150,6 +130,32 @@ class AppRootWidgetState extends State<AppRootWidget> {
           content: Text(message.notification?.body ?? ''),
         ),
       );
+    }
+  }
+
+  Future<void> _initAuth() async {
+    try {
+      final googleUser =
+          await GoogleSignIn.instance.attemptLightweightAuthentication();
+      if (googleUser == null) {
+        final user = await _auth.signInAnonymously();
+        debugPrint("Signed in anonymously: $user");
+      } else {
+        final googleAuth = googleUser.authentication;
+        final user = await _auth.signInWithCredential(
+          GoogleAuthProvider.credential(
+            idToken: googleAuth.idToken,
+          ),
+        );
+        debugPrint("Signed in user: $user");
+      }
+    } catch (error) {
+      debugPrint("Silent sign in error: $error");
+      try {
+        await _auth.signInAnonymously();
+      } catch (e) {
+        debugPrint("Anonymous sign in fallback error: $e");
+      }
     }
   }
 

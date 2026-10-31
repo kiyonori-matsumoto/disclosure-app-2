@@ -16,7 +16,6 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   late AppBloc bloc;
@@ -133,22 +132,21 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<User?> _handleSignIn(BuildContext context) async {
     try {
-      GoogleSignInAccount googleUser = (await _googleSignIn.signIn())!;
-      GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
+      GoogleSignInAuthentication googleAuth = googleUser.authentication;
       final providers =
           await _auth.fetchSignInMethodsForEmail(googleUser.email);
 
       User? user;
       if (providers.contains('google.com')) {
         user = (await _auth.signInWithCredential(GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
             .user;
       } else {
         user = FirebaseAuth.instance.currentUser;
         user = (await user!.linkWithCredential(GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         )))
             .user;

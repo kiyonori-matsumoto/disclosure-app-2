@@ -28,7 +28,7 @@ dependencies:
     sdk: flutter
   flutter_sticky_header: ^0.8.0
   http: ^1.6.0
-  google_sign_in: ^6.3.0
+  google_sign_in: ^7.2.0
   intl: any
   open_filex: ^5.0.0
   package_info_plus: ^10.2.2
