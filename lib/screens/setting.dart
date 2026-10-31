@@ -6,7 +6,7 @@ import 'package:disclosure_app_fl/screens/notification_setting.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import '../utils/auth_helper.dart';
 
 import 'notification_tag_setting.dart';
 
@@ -132,31 +132,10 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<User?> _handleSignIn(BuildContext context) async {
     try {
-      GoogleSignInAccount googleUser =
-          await GoogleSignIn.instance.authenticate();
-      GoogleSignInAuthentication googleAuth = googleUser.authentication;
-      final providers =
-          await _auth.fetchSignInMethodsForEmail(googleUser.email);
+      final user = await AuthHelper().handleGoogleSignIn();
+      if (user == null) return null;
 
-      User? user;
-      if (providers.contains('google.com')) {
-        user = (await _auth.signInWithCredential(GoogleAuthProvider.credential(
-          idToken: googleAuth.idToken,
-        )))
-            .user;
-      } else {
-        user = FirebaseAuth.instance.currentUser;
-        user = (await user!.linkWithCredential(GoogleAuthProvider.credential(
-          idToken: googleAuth.idToken,
-        )))
-            .user;
-      }
-      // print(user.providerId);
-      // Scaffold.of(context).showSnackBar(SnackBar(
-      //   content: Text('Googleアカウントと連携しました'),
-      //   duration: Duration(seconds: 5),
-      // ));
-      user!.reload();
+      if (!mounted) return user;
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -168,7 +147,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   backgroundColor: Theme.of(context).primaryColor,
                 ),
                 onPressed: () async {
-                  final id = user!.uid;
+                  final id = user.uid;
                   final settings = await FirebaseFirestore.instance
                       .collection('users')
                       .doc(id)

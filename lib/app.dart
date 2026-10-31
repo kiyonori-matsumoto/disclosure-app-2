@@ -12,14 +12,13 @@ import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
+import 'utils/auth_helper.dart';
 
 class AppRootWidget extends StatefulWidget {
   @override
@@ -32,7 +31,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
-  final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
 
@@ -134,29 +132,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
   }
 
   Future<void> _initAuth() async {
-    try {
-      final googleUser =
-          await GoogleSignIn.instance.attemptLightweightAuthentication();
-      if (googleUser == null) {
-        final user = await _auth.signInAnonymously();
-        debugPrint("Signed in anonymously: $user");
-      } else {
-        final googleAuth = googleUser.authentication;
-        final user = await _auth.signInWithCredential(
-          GoogleAuthProvider.credential(
-            idToken: googleAuth.idToken,
-          ),
-        );
-        debugPrint("Signed in user: $user");
-      }
-    } catch (error) {
-      debugPrint("Silent sign in error: $error");
-      try {
-        await _auth.signInAnonymously();
-      } catch (e) {
-        debugPrint("Anonymous sign in fallback error: $e");
-      }
-    }
+    await AuthHelper().initializeAuth();
   }
 
   @override
