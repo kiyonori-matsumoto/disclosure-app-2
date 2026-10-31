@@ -106,7 +106,16 @@ class AuthHelper {
       if (hasGoogleProvider(providers)) {
         user = await signInWithCred(credential);
       } else {
-        user = await linkWithCred(credential);
+        try {
+          user = await linkWithCred(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use') {
+            debugPrint("Credential already in use, signing in instead");
+            user = await signInWithCred(credential);
+          } else {
+            rethrow;
+          }
+        }
       }
 
       if (user != null) {

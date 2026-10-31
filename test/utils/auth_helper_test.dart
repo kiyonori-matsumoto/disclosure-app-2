@@ -259,6 +259,34 @@ void main() {
       expect(linkCred, isNotNull);
     });
 
+    test(
+        'falls back to signInWithCredential when linkWithCredential throws credential-already-in-use',
+        () async {
+      fakePlatform.authenticateResult = testAuthResults;
+
+      AuthCredential? signInCred;
+      bool linkAttempted = false;
+
+      final helper = AuthHelper();
+      await helper.handleGoogleSignIn(
+        onFetchSignInMethods: (email) async => [],
+        onLinkWithCredential: (cred) async {
+          linkAttempted = true;
+          throw FirebaseAuthException(
+            code: 'credential-already-in-use',
+            message: 'Account already exists with different credential.',
+          );
+        },
+        onSignInWithCredential: (cred) async {
+          signInCred = cred;
+          return null;
+        },
+      );
+
+      expect(linkAttempted, isTrue);
+      expect(signInCred, isNotNull);
+    });
+
     test('returns null and does not throw when authenticate fails/cancels',
         () async {
       fakePlatform.throwOnAuthenticate = true;

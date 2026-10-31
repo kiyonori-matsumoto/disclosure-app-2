@@ -15,6 +15,38 @@
       },
       "oauth_client": [
         {
+          "client_id": "1069938845824-hbjllbskoa03ekgm1r5aijjhu6g1vont.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.disclosure.android",
+            "certificate_hash": "c5ce0eddcad26cb724c453c40597954b9b72b419"
+          }
+        },
+        {
+          "client_id": "1069938845824-hturtf04k8toiuj54td45gmh8mhb95od.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.disclosure.android",
+            "certificate_hash": "b76a678b0f026f293baec4044647e2702eff1f0e"
+          }
+        },
+        {
+          "client_id": "1069938845824-m4699tkb5325a2uo6t169vg5aflplnfg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.disclosure.android",
+            "certificate_hash": "d87692a2dc24f4b70827f2960055caef83810349"
+          }
+        },
+        {
+          "client_id": "1069938845824-ma263c6h2k4suc28c3jm3vmpmmbo006g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.disclosure.android",
+            "certificate_hash": "e360c3b90f4bc04baf12681457a21ab623f28a22"
+          }
+        },
+        {
           "client_id": "1069938845824-mrv4l1frctjljh9c63dvmj9qe30llb38.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -28,22 +60,6 @@
           "android_info": {
             "package_name": "com.disclosure.android",
             "certificate_hash": "79f028c7d087cc73c360767ae10844b801f5f82f"
-          }
-        },
-        {
-          "client_id": "1069938845824-ma263c6h2k4suc28c3jm3vmpmmbo006g.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.disclosure.android",
-            "certificate_hash": "e360c3b90f4bc04baf12681457a21ab623f28a22"
-          }
-        },
-        {
-          "client_id": "1069938845824-m4699tkb5325a2uo6t169vg5aflplnfg.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.disclosure.android",
-            "certificate_hash": "d87692a2dc24f4b70827f2960055caef83810349"
           }
         },
         {
@@ -65,20 +81,13 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 2,
           "other_platform_oauth_client": [
             {
-              "client_id": "1069938845824-sp6urskq03e06h52lm0sgrq77t0nln28.apps.googleusercontent.com",
+              "client_id": "106507341676894110367",
               "client_type": 3
             }
           ]
-        },
-        "ads_service": {
-          "status": 2
         }
       },
       "admob_app_id": "ca-app-pub-5131663294295156~3067610804"

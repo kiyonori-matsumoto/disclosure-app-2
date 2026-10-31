@@ -16,7 +16,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp();
-  await GoogleSignIn.instance.initialize();
+  await GoogleSignIn.instance.initialize(
+    serverClientId:
+        '1069938845824-sp6urskq03e06h52lm0sgrq77t0nln28.apps.googleusercontent.com',
+  );
   await FirebaseAppCheck.instance.activate(
     androidProvider:
         kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
