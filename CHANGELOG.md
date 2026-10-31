@@ -1,5 +1,20 @@
 # Changelog
 
+## [v2.5.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.4.2...v2.5.0) - 2026-10-31
+
+- Fix UI reaction when downloading EDINET files by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/50
+- fix: バナー広告のライフサイクル管理とレイアウトの安定化 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/52
+- chore(deps): update minor and patch dependencies by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/54
+- chore(deps-dev): bump flutter_launcher_icons from 0.13.1 to 0.14.4 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/55
+- chore: upgrade Flutter SDK to 3.47.8 and update Android build tools by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/57
+- ⚡ Bolt: [performance improvement] Replace O(N) company lookups with O(1) Map lookups by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/58
+- fix: use PublishSubject in FirestoreGetCount to prevent Bad state error on reload by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/61
+- fix: firestore reload error & update dependencies (Phase 1 & 2) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/62
+- feat(deps): upgrade google_sign_in to ^7.2.0 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/63
+- chore(deps): upgrade google_mobile_ads to ^9.2.0 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/64
+- ⚡ Bolt: [performance improvement] optimize company lookup in SettlementsList by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/66
+- ⚡ Bolt: [Performance Improvement] Debounce search input for list filtering by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/53
+
 ## [v2.4.2](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.4.1...v2.4.2) - 2026-10-24
 
 - fix(android): support 16 KB memory page size with Flutter 3.27 and AGP 8.7 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/32
