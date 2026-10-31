@@ -57,6 +57,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     }
 
     final AnchoredAdaptiveBannerAdSize? size =
+        // ignore: deprecated_member_use
         await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
 
     if (!mounted) {

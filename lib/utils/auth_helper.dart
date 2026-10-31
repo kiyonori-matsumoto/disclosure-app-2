@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -6,15 +7,25 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthHelper {
   final GoogleSignIn? _googleSignIn;
   final FirebaseAuth? _firebaseAuth;
+  final User? Function()? _currentUserGetter;
 
   AuthHelper({
     GoogleSignIn? googleSignIn,
     FirebaseAuth? firebaseAuth,
+    User? Function()? currentUserGetter,
   })  : _googleSignIn = googleSignIn,
-        _firebaseAuth = firebaseAuth;
+        _firebaseAuth = firebaseAuth,
+        _currentUserGetter = currentUserGetter;
 
   GoogleSignIn get googleSignIn => _googleSignIn ?? GoogleSignIn.instance;
   FirebaseAuth get firebaseAuth => _firebaseAuth ?? FirebaseAuth.instance;
+  User? get currentUser {
+    if (_currentUserGetter != null) return _currentUserGetter!();
+    final auth = _firebaseAuth;
+    if (auth != null) return auth.currentUser;
+    if (Firebase.apps.isNotEmpty) return FirebaseAuth.instance.currentUser;
+    return null;
+  }
 
   /// Google ID Token から Firebase AuthCredential を生成する
   static AuthCredential createGoogleCredential({required String? idToken}) {
@@ -28,38 +39,28 @@ class AuthHelper {
 
   /// アプリ起動時の認証初期化処理
   ///
-  /// Googleの軽量認証（attemptLightweightAuthentication）を試行し、
-  /// ログイン済みであればその認証情報でサインイン、
-  /// 未ログインまたは失敗時は匿名サインインを実行する。
+  /// すでにログイン中（Firebaseのセッションが保持されている）の場合は何もしない。
+  /// 未ログインの場合のみ匿名サインインを実行する。
+  /// ※ google_sign_in v7 の attemptLightweightAuthentication() は
+  ///   起動時に毎回アカウント選択UIを表示してしまうため、
+  ///   起動時は自動で呼ばず設定画面での明示的な操作のみとする。
   Future<void> initializeAuth({
     Future<void> Function(AuthCredential credential)? onSignInWithCredential,
     Future<void> Function()? onSignInAnonymously,
   }) async {
-    final signInWithCredential = onSignInWithCredential ??
-        (cred) async => await firebaseAuth.signInWithCredential(cred);
+    if (currentUser != null) {
+      debugPrint("User already authenticated: ${currentUser?.uid}");
+      return;
+    }
+
     final signInAnonymously = onSignInAnonymously ??
         () async => await firebaseAuth.signInAnonymously();
 
     try {
-      final googleUser =
-          await googleSignIn.attemptLightweightAuthentication();
-      if (googleUser == null) {
-        await signInAnonymously();
-        debugPrint("Signed in anonymously");
-      } else {
-        final googleAuth = googleUser.authentication;
-        await signInWithCredential(
-          createGoogleCredential(idToken: googleAuth.idToken),
-        );
-        debugPrint("Signed in with Google user");
-      }
-    } catch (error) {
-      debugPrint("Silent sign in error: $error");
-      try {
-        await signInAnonymously();
-      } catch (e) {
-        debugPrint("Anonymous sign in fallback error: $e");
-      }
+      await signInAnonymously();
+      debugPrint("Signed in anonymously");
+    } catch (e) {
+      debugPrint("Anonymous sign in error: $e");
     }
   }
 
