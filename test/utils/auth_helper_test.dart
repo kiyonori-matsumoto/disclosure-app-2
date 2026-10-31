@@ -193,57 +193,14 @@ void main() {
   });
 
   group('AuthHelper.handleGoogleSignIn', () {
-    test(
-        'signs in with credential when provider list contains google.com (existing account)',
-        () async {
+    test('links with credential successfully on first-time link', () async {
       fakePlatform.authenticateResult = testAuthResults;
 
-      String? fetchedEmail;
-      AuthCredential? signInCred;
-      AuthCredential? linkCred;
-      bool reloaded = false;
-
-      final helper = AuthHelper();
-      final result = await helper.handleGoogleSignIn(
-        onFetchSignInMethods: (email) async {
-          fetchedEmail = email;
-          return ['google.com'];
-        },
-        onSignInWithCredential: (cred) async {
-          signInCred = cred;
-          return null;
-        },
-        onLinkWithCredential: (cred) async {
-          linkCred = cred;
-          return null;
-        },
-        onReloadUser: (user) async {
-          reloaded = true;
-        },
-      );
-
-      expect(fetchedEmail, equals('test@example.com'));
-      expect(signInCred, isNotNull);
-      expect(linkCred, isNull);
-      expect(reloaded, isFalse); // null user returned in test callback
-      expect(result, isNull);
-    });
-
-    test(
-        'links with credential when provider list does not contain google.com (new link)',
-        () async {
-      fakePlatform.authenticateResult = testAuthResults;
-
-      String? fetchedEmail;
       AuthCredential? signInCred;
       AuthCredential? linkCred;
 
       final helper = AuthHelper();
       await helper.handleGoogleSignIn(
-        onFetchSignInMethods: (email) async {
-          fetchedEmail = email;
-          return ['password'];
-        },
         onSignInWithCredential: (cred) async {
           signInCred = cred;
           return null;
@@ -254,9 +211,9 @@ void main() {
         },
       );
 
-      expect(fetchedEmail, equals('test@example.com'));
       expect(signInCred, isNull);
       expect(linkCred, isNotNull);
+      expect(linkCred?.signInMethod, equals('google.com'));
     });
 
     test(
@@ -269,7 +226,6 @@ void main() {
 
       final helper = AuthHelper();
       await helper.handleGoogleSignIn(
-        onFetchSignInMethods: (email) async => [],
         onLinkWithCredential: (cred) async {
           linkAttempted = true;
           throw FirebaseAuthException(
@@ -285,6 +241,35 @@ void main() {
 
       expect(linkAttempted, isTrue);
       expect(signInCred, isNotNull);
+      expect(signInCred?.signInMethod, equals('google.com'));
+    });
+
+    test(
+        'falls back to signInWithCredential when linkWithCredential throws provider-already-linked',
+        () async {
+      fakePlatform.authenticateResult = testAuthResults;
+
+      AuthCredential? signInCred;
+      bool linkAttempted = false;
+
+      final helper = AuthHelper();
+      await helper.handleGoogleSignIn(
+        onLinkWithCredential: (cred) async {
+          linkAttempted = true;
+          throw FirebaseAuthException(
+            code: 'provider-already-linked',
+            message: 'User is already linked with this provider.',
+          );
+        },
+        onSignInWithCredential: (cred) async {
+          signInCred = cred;
+          return null;
+        },
+      );
+
+      expect(linkAttempted, isTrue);
+      expect(signInCred, isNotNull);
+      expect(signInCred?.signInMethod, equals('google.com'));
     });
 
     test('returns null and does not throw when authenticate fails/cancels',

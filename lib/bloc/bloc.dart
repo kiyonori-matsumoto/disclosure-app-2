@@ -544,8 +544,8 @@ class AppBloc extends Bloc {
 
     final _notificationString$ = BehaviorSubject<List<String>>();
 
-    messaging
-        .getToken()
+    // ignore: deprecated_member_use
+    messaging.getToken()
         .then((token) {
           print(token);
           return http.post(

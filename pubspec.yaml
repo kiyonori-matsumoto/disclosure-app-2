@@ -15,15 +15,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   bloc_provider: ^1.0.0
   cupertino_icons: ^2.0.0
-  cloud_firestore: ^4.9.3
-  firebase_app_check: ^0.1.5+2
+  cloud_firestore: ^7.1.0
+  firebase_app_check: ^0.5.1
   google_mobile_ads: ^9.2.0
-  firebase_analytics: ^10.5.1
-  firebase_auth: ^4.10.1
-  firebase_core: ^2.17.0
-  firebase_crashlytics: ^3.3.7
-  firebase_messaging: ^14.6.9
-  firebase_storage: ^11.2.8
+  firebase_analytics: ^13.0.1
+  firebase_auth: ^7.0.1
+  firebase_core: ^5.1.0
+  firebase_crashlytics: ^6.0.1
+  firebase_messaging: ^17.0.1
+  firebase_storage: ^14.0.1
   flutter_localizations:
     sdk: flutter
   flutter_sticky_header: ^0.8.0

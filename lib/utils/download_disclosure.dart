@@ -25,8 +25,8 @@ Future<void> downloadAndOpenDisclosure(Disclosure item) async {
   if (!tempFile.existsSync()) {
     await _analytics.logEvent(name: 'select_content', parameters: {
       'content_type': 'disclosure_pdf',
-      'item_id': item.document,
-      'code': item.code
+      'item_id': document,
+      if (item.code != null) 'code': item.code!,
     });
 
     final File downloadingFile = File('${systemTempDir.path}/$pdf.tmp');

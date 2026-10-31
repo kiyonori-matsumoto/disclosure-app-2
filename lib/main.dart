@@ -21,10 +21,10 @@ void main() async {
         '1069938845824-sp6urskq03e06h52lm0sgrq77t0nln28.apps.googleusercontent.com',
   );
   await FirebaseAppCheck.instance.activate(
-    androidProvider:
-        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider:
-        kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+    providerAndroid:
+        kDebugMode ? const AndroidDebugProvider() : const AndroidPlayIntegrityProvider(),
+    providerApple:
+        kDebugMode ? const AppleDebugProvider() : const AppleAppAttestProvider(),
   );
 
   // デバッグ時は Crashlytics へのデータ送信を無効化してノイズを防止

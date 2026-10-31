@@ -65,16 +65,15 @@ class AuthHelper {
 
   /// Google アカウントの連携・サインイン処理
   ///
-  /// Google認証を行い、既存のGoogle連携済みアカウントがあればサインイン、
-  /// なければ現在のユーザーに連携（link）する。
+  /// Google認証を行い、現在のユーザーに連携（link）を試みる。
+  /// すでに別のFirebaseアカウントに紐付いている場合や連携済みの場合は、そのアカウントでサインインする。
   Future<User?> handleGoogleSignIn({
+    @Deprecated('fetchSignInMethodsForEmail is removed in firebase_auth 5+')
     Future<List<String>> Function(String email)? onFetchSignInMethods,
     Future<User?> Function(AuthCredential credential)? onSignInWithCredential,
     Future<User?> Function(AuthCredential credential)? onLinkWithCredential,
     Future<void> Function(User user)? onReloadUser,
   }) async {
-    final fetchMethods = onFetchSignInMethods ??
-        (email) => firebaseAuth.fetchSignInMethodsForEmail(email);
     final signInWithCred = onSignInWithCredential ??
         (cred) async {
           final res = await firebaseAuth.signInWithCredential(cred);
@@ -100,21 +99,17 @@ class AuthHelper {
       final googleUser = await googleSignIn.authenticate();
       final googleAuth = googleUser.authentication;
       final credential = createGoogleCredential(idToken: googleAuth.idToken);
-      final providers = await fetchMethods(googleUser.email);
 
       User? user;
-      if (hasGoogleProvider(providers)) {
-        user = await signInWithCred(credential);
-      } else {
-        try {
-          user = await linkWithCred(credential);
-        } on FirebaseAuthException catch (e) {
-          if (e.code == 'credential-already-in-use') {
-            debugPrint("Credential already in use, signing in instead");
-            user = await signInWithCred(credential);
-          } else {
-            rethrow;
-          }
+      try {
+        user = await linkWithCred(credential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'credential-already-in-use' ||
+            e.code == 'provider-already-linked') {
+          debugPrint("${e.code}, signing in instead");
+          user = await signInWithCred(credential);
+        } else {
+          rethrow;
         }
       }
 
