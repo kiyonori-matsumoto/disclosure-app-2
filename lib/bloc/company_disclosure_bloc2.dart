@@ -16,8 +16,8 @@ class FirestoreGetCount<T> extends Bloc {
   final T Function(DocumentSnapshot) mapper;
   final ValueStream<User> user$;
 
-  final StreamController<void> _reloadController = StreamController();
-  final StreamController<T?> _loadNextController = StreamController();
+  final PublishSubject<void> _reloadController = PublishSubject();
+  final PublishSubject<T?> _loadNextController = PublishSubject();
   final BehaviorSubject<List<T>?> _data$ = BehaviorSubject();
   final BehaviorSubject<bool> _isLoading$ = BehaviorSubject.seeded(true);
 
