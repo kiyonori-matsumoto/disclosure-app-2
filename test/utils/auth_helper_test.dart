@@ -72,6 +72,13 @@ class FakeGoogleSignInPlatform extends GoogleSignInPlatform {
   Future<void> disconnect(DisconnectParams params) async {}
 }
 
+class FakeUser extends Fake implements User {
+  @override
+  final String uid;
+
+  FakeUser({required this.uid});
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -124,71 +131,46 @@ void main() {
   });
 
   group('AuthHelper.initializeAuth', () {
-    test(
-        'calls onSignInWithCredential with correct idToken when lightweight auth succeeds',
-        () async {
-      fakePlatform.lightweightResult = testAuthResults;
-
-      AuthCredential? capturedCredential;
+    test('calls onSignInAnonymously when currentUser is null', () async {
       bool anonymousCalled = false;
 
-      final helper = AuthHelper();
+      final helper = AuthHelper(currentUserGetter: () => null);
       await helper.initializeAuth(
-        onSignInWithCredential: (cred) async {
-          capturedCredential = cred;
+        onSignInAnonymously: () async {
+          anonymousCalled = true;
         },
+      );
+
+      expect(anonymousCalled, isTrue);
+    });
+
+    test('does nothing (skips sign in) when currentUser is already authenticated',
+        () async {
+      bool anonymousCalled = false;
+
+      final helper = AuthHelper(
+        currentUserGetter: () => FakeUser(uid: 'existing_user_123'),
+      );
+      await helper.initializeAuth(
         onSignInAnonymously: () async {
           anonymousCalled = true;
         },
       );
 
       expect(anonymousCalled, isFalse);
-      expect(capturedCredential, isNotNull);
-      expect(capturedCredential?.signInMethod, equals('google.com'));
     });
 
-    test(
-        'calls onSignInAnonymously when lightweight auth returns null (not signed in)',
+    test('catches error when onSignInAnonymously throws without crashing',
         () async {
-      fakePlatform.lightweightResult = null;
-
-      AuthCredential? capturedCredential;
-      bool anonymousCalled = false;
-
-      final helper = AuthHelper();
-      await helper.initializeAuth(
-        onSignInWithCredential: (cred) async {
-          capturedCredential = cred;
-        },
-        onSignInAnonymously: () async {
-          anonymousCalled = true;
-        },
+      final helper = AuthHelper(currentUserGetter: () => null);
+      await expectLater(
+        helper.initializeAuth(
+          onSignInAnonymously: () async {
+            throw Exception('Network error during anonymous sign in');
+          },
+        ),
+        completes,
       );
-
-      expect(anonymousCalled, isTrue);
-      expect(capturedCredential, isNull);
-    });
-
-    test(
-        'catches error and falls back to onSignInAnonymously when lightweight auth throws',
-        () async {
-      fakePlatform.throwOnLightweight = true;
-
-      AuthCredential? capturedCredential;
-      bool anonymousCalled = false;
-
-      final helper = AuthHelper();
-      await helper.initializeAuth(
-        onSignInWithCredential: (cred) async {
-          capturedCredential = cred;
-        },
-        onSignInAnonymously: () async {
-          anonymousCalled = true;
-        },
-      );
-
-      expect(anonymousCalled, isTrue);
-      expect(capturedCredential, isNull);
     });
   });
 
