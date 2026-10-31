@@ -57,7 +57,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     }
 
     final AnchoredAdaptiveBannerAdSize? size =
-        await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(width);
+        await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
 
     if (!mounted) {
       _isLoading = false;
