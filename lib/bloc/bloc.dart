@@ -325,7 +325,7 @@ class AppBloc extends Bloc {
     }).pipe(_disclosure$);
 
     FirebaseAuth.instance
-        .authStateChanges()
+        .userChanges()
         .whereNotNull()
         .pipe(_userController);
 

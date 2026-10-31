@@ -12,14 +12,13 @@ import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
+import 'utils/auth_helper.dart';
 
 class AppRootWidget extends StatefulWidget {
   @override
@@ -32,8 +31,6 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final _auth = FirebaseAuth.instance;
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
 
@@ -49,26 +46,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
     );
 
-    _googleSignIn
-        .signInSilently(suppressErrors: true)
-        .then((GoogleSignInAccount? googleUser) {
-      if (googleUser == null) {
-        return _auth.signInAnonymously();
-      } else {
-        return googleUser.authentication.then(
-          (googleAuth) => _auth.signInWithCredential(
-            GoogleAuthProvider.credential(
-              accessToken: googleAuth.accessToken,
-              idToken: googleAuth.idToken,
-            ),
-          ),
-        );
-      }
-    }).then((user) {
-      debugPrint("Signed in user: $user");
-    }).catchError((dynamic error) {
-      debugPrint("Silent sign in error: $error");
-    });
+    _initAuth();
 
     final appBloc = BlocProvider.of<AppBloc>(context);
     bloc = appBloc;
@@ -151,6 +129,10 @@ class AppRootWidgetState extends State<AppRootWidget> {
         ),
       );
     }
+  }
+
+  Future<void> _initAuth() async {
+    await AuthHelper().initializeAuth();
   }
 
   @override

@@ -22,11 +22,27 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         children: <Widget>[
           StreamBuilder<User>(
-            builder: (context, snapshot) => UserAccountsDrawerHeader(
-              accountEmail: Text(snapshot.data?.email ?? ''),
-              accountName: Text(snapshot.data?.displayName ?? ''),
-              currentAccountPicture: _avator(snapshot.data?.photoURL),
-            ),
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+              final isLinked = user != null &&
+                  user.providerData.any((p) => p.providerId == 'google.com');
+              final googleInfo = isLinked
+                  ? user.providerData
+                      .firstWhere((p) => p.providerId == 'google.com')
+                  : null;
+
+              return UserAccountsDrawerHeader(
+                accountEmail: isLinked
+                    ? Text(googleInfo?.email ?? user.email ?? '')
+                    : null,
+                accountName: Text(isLinked
+                    ? (googleInfo?.displayName ?? user.displayName ?? 'ログイン中')
+                    : 'ゲスト'),
+                currentAccountPicture: isLinked
+                    ? _avator(googleInfo?.photoURL ?? user.photoURL)
+                    : null,
+              );
+            },
             stream: bloc.user$,
           ),
           ListTile(

@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../utils/auth_helper.dart';
 
 import 'notification_tag_setting.dart';
 
@@ -16,7 +17,6 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   late AppBloc bloc;
@@ -133,35 +133,13 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<User?> _handleSignIn(BuildContext context) async {
     try {
-      GoogleSignInAccount googleUser = (await _googleSignIn.signIn())!;
-      GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final providers =
-          await _auth.fetchSignInMethodsForEmail(googleUser.email);
+      final user = await AuthHelper().handleGoogleSignIn();
+      if (user == null) return null;
 
-      User? user;
-      if (providers.contains('google.com')) {
-        user = (await _auth.signInWithCredential(GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        )))
-            .user;
-      } else {
-        user = FirebaseAuth.instance.currentUser;
-        user = (await user!.linkWithCredential(GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        )))
-            .user;
-      }
-      // print(user.providerId);
-      // Scaffold.of(context).showSnackBar(SnackBar(
-      //   content: Text('Googleアカウントと連携しました'),
-      //   duration: Duration(seconds: 5),
-      // ));
-      user!.reload();
+      if (!mounted) return user;
       await showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           content: const Text('お気に入りから通知を復元しますか？'),
           actions: <Widget>[
             ElevatedButton(
@@ -170,22 +148,50 @@ class _SettingScreenState extends State<SettingScreen> {
                   backgroundColor: Theme.of(context).primaryColor,
                 ),
                 onPressed: () async {
-                  final id = user!.uid;
-                  final settings = await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(id)
-                      .get();
-                  final List<String> favs =
-                      settings.data()!['favorites'].cast<String>();
-                  favs.forEach((fav) {
-                    this.bloc.addNotification.add(fav);
-                  });
-                  Navigator.pop(context);
+                  try {
+                    final id = user.uid;
+                    final settings = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(id)
+                        .get();
+                    final data = settings.data();
+                    if (data != null && data['favorites'] != null) {
+                      final List<String> favs =
+                          (data['favorites'] as List).cast<String>();
+                      for (final fav in favs) {
+                        this.bloc.addNotification.add(fav);
+                      }
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('${favs.length}件の通知を復元しました'),
+                        ));
+                      }
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('復元できるお気に入りデータがありませんでした'),
+                        ));
+                      }
+                    }
+                  } catch (e) {
+                    debugPrint('Restore favorites error: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('お気に入りの復元に失敗しました: $e'),
+                      ));
+                    }
+                  } finally {
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext);
+                    }
+                  }
                 }),
             TextButton(
               child: const Text('キャンセル'),
               onPressed: () {
-                Navigator.pop(context);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
               },
             ),
           ],
@@ -193,25 +199,41 @@ class _SettingScreenState extends State<SettingScreen> {
       );
       return user;
     } catch (e) {
-      print('exception');
-      print(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('アカウント連携に失敗しました'),
-        duration: Duration(seconds: 5),
-      ));
+      debugPrint('Sign in exception: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('アカウント連携に失敗しました: $e'),
+          duration: const Duration(seconds: 5),
+        ));
+      }
       return null;
     }
   }
 
-  _handleSignOut(BuildContext context) async {
-    final user = _auth.currentUser!;
-    await user.unlink('google.com');
-    SnackBar snackBar = SnackBar(
-      content: Text('連携を解除しました'),
-      duration: Duration(seconds: 10),
-    );
-    user.reload();
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  Future<void> _handleSignOut(BuildContext context) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await user.unlink('google.com');
+        try {
+          await GoogleSignIn.instance.signOut();
+        } catch (e) {
+          debugPrint('Google sign out error: $e');
+        }
+        await user.reload();
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('連携を解除しました'),
+        duration: Duration(seconds: 5),
+      ));
+    } catch (e) {
+      debugPrint('Unlink error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('連携の解除に失敗しました: $e'),
+      ));
+    }
   }
 }
 
