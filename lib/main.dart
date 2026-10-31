@@ -16,8 +16,10 @@ void main() async {
 
   await Firebase.initializeApp();
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.playIntegrity,
-    appleProvider: AppleProvider.appAttest,
+    androidProvider:
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider:
+        kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
   );
 
   // デバッグ時は Crashlytics へのデータ送信を無効化してノイズを防止
