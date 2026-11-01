@@ -6,6 +6,8 @@ import 'package:disclosure_app_fl/screens/notification_setting.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/auth_helper.dart';
 
@@ -74,17 +76,69 @@ class _SettingScreenState extends State<SettingScreen> {
             );
           },
         ),
-        StreamBuilder<Brightness>(
-            stream: bloc.darkMode$,
-            builder: (context, snapshot) {
-              return CheckboxListTile(
-                value: snapshot.data == Brightness.dark,
-                title: Text('ダークモード'),
-                onChanged: (v) {
-                  bloc.setModeBrightness.add(!v!);
-                },
-              );
-            }),
+        Consumer(
+          builder: (context, ref, child) {
+            final themeMode = ref.watch(themeModeProvider);
+            final String themeTitle;
+            switch (themeMode) {
+              case ThemeMode.system:
+                themeTitle = 'システムの設定に追従';
+                break;
+              case ThemeMode.light:
+                themeTitle = 'ライトモード';
+                break;
+              case ThemeMode.dark:
+                themeTitle = 'ダークモード';
+                break;
+            }
+
+            return ListTile(
+              leading: const Icon(Icons.brightness_medium),
+              title: const Text('テーマ設定'),
+              subtitle: Text(themeTitle),
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) {
+                    return SimpleDialog(
+                      title: const Text('テーマ設定'),
+                      children: [
+                        RadioGroup<ThemeMode>(
+                          groupValue: themeMode,
+                          onChanged: (mode) {
+                            if (mode != null) {
+                              ref
+                                  .read(themeModeProvider.notifier)
+                                  .setThemeMode(mode);
+                            }
+                            Navigator.of(dialogContext).pop();
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              RadioListTile<ThemeMode>(
+                                title: Text('システムの設定に追従'),
+                                value: ThemeMode.system,
+                              ),
+                              RadioListTile<ThemeMode>(
+                                title: Text('ライトモード'),
+                                value: ThemeMode.light,
+                              ),
+                              RadioListTile<ThemeMode>(
+                                title: Text('ダークモード'),
+                                value: ThemeMode.dark,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
         ListTile(
           title: Text('カスタムタグ設定'),
           leading: Icon(Icons.local_offer),
