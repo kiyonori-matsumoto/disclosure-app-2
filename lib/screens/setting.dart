@@ -1,4 +1,5 @@
 import 'package:bloc_provider/bloc_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/notification_setting.dart';
@@ -135,9 +136,29 @@ class _SettingScreenState extends State<SettingScreen> {
       final user = await AuthHelper().handleGoogleSignIn();
       if (user == null) return null;
 
+      String message = 'Google連携が完了しました';
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        final data = doc.data();
+        if (data != null) {
+          final favs = (data['favorites'] as List?)?.cast<String>() ?? [];
+          final tags =
+              (data['notification_tags'] as List?)?.cast<String>() ?? [];
+          final totalCount = favs.length + tags.length;
+          if (totalCount > 0) {
+            message = '$totalCount件の通知を復元しました';
+          }
+        }
+      } catch (e) {
+        debugPrint('Failed to check restored notifications count: $e');
+      }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Google連携が完了しました'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message),
         ));
       }
       return user;
