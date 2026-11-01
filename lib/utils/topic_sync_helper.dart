@@ -98,6 +98,11 @@ class TopicSyncHelper {
     final toSubscribe = desiredTopics.difference(currentTopics);
     final toUnsubscribe = currentTopics.difference(desiredTopics);
 
+    if (toSubscribe.isNotEmpty || toUnsubscribe.isNotEmpty) {
+      debugPrint(
+          "[TopicSync] Start sync: +${toSubscribe.length} to subscribe, -${toUnsubscribe.length} to unsubscribe");
+    }
+
     final subscribed = <String>{};
     final unsubscribed = <String>{};
     final errors = <String, Object>{};
@@ -114,6 +119,7 @@ class TopicSyncHelper {
       try {
         await unsubscribeFn(topic);
         unsubscribed.add(topic);
+        debugPrint("[TopicSync] Unsubscribed from topic: $topic");
       } catch (e) {
         debugPrint("Failed to unsubscribe from topic $topic: $e");
         errors[topic] = e;
@@ -125,6 +131,7 @@ class TopicSyncHelper {
       try {
         await subscribeFn(topic);
         subscribed.add(topic);
+        debugPrint("[TopicSync] Subscribed to topic: $topic");
       } catch (e) {
         debugPrint("Failed to subscribe to topic $topic: $e");
         errors[topic] = e;
@@ -137,6 +144,11 @@ class TopicSyncHelper {
         (currentTopics.difference(unsubscribed))..addAll(subscribed);
     await prefs.setStringList(
         keySubscribedTopics, newLocalTopics.toList()..sort());
+
+    if (subscribed.isNotEmpty || unsubscribed.isNotEmpty) {
+      debugPrint(
+          "[TopicSync] Sync completed: added=${subscribed.toList()}, removed=${unsubscribed.toList()}, totalCurrent=${newLocalTopics.length}");
+    }
 
     return SyncResult(
       added: subscribed,

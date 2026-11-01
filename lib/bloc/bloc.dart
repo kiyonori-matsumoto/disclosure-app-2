@@ -620,6 +620,8 @@ class AppBloc extends Bloc {
         return {...codeTopics, ...tagTopics};
       },
     ).distinct((prev, curr) => setEquals(prev, curr)).listen((desiredTopics) {
+      debugPrint(
+          "[TopicSync] Desired topics updated: ${desiredTopics.length} topics (favorites: ${_favorite$.valueOrNull?.length ?? 0}, tags: ${_tagsNotifications$.valueOrNull?.length ?? 0})");
       _topicSyncHelper.syncTopics(desiredTopics: desiredTopics);
     });
 
