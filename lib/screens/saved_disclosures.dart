@@ -1,96 +1,100 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:collection/collection.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/utils/time.dart';
+import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
-import 'package:rxdart/rxdart.dart';
 
-class SavedDisclosuresScreen extends StatefulWidget {
-  @override
-  _SavedDisclosuresScreenState createState() => _SavedDisclosuresScreenState();
-}
-
-class _SavedDisclosuresScreenState extends State<SavedDisclosuresScreen> {
-  CollectionReference _collection(User user) {
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('disclosures');
-  }
+class SavedDisclosuresScreen extends ConsumerWidget {
+  const SavedDisclosuresScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("保存したドキュメント"),
+        title: const Text("保存したドキュメント"),
       ),
-      body: _buildBody(context),
-      // drawer: AppDrawer(),
+      body: _buildBody(context, ref),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    final appBloc = BlocProvider.of<AppBloc>(context);
-    return StreamBuilder<Map<String, List<DocumentSnapshot>>>(
-      stream: appBloc.user$
-          .switchMap((user) =>
-              _collection(user).orderBy('add_at', descending: true).snapshots())
-          .map(
-              (snapshot) => groupBy(snapshot.docs, (e) => toDate(e['add_at']))),
-      builder: (context, snapshot) => snapshot.hasData
-          ? CustomScrollView(
-              slivers: snapshot.data!.entries
-                  .map((entry) => SliverStickyHeader(
-                        header: Container(
-                          height: 50.0,
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          alignment: Alignment.centerLeft,
-                          padding: EdgeInsets.only(left: 10.0),
-                          child: Text(
-                            '追加日: ${entry.key}',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) => Dismissible(
-                              key: Key((entry.value[i].data()
-                                  as Map<String, dynamic>)['document']),
-                              child: DisclosureListItem(
-                                item: entry.value[i],
-                                showDate: true,
-                              ),
-                              onDismissed: ((direction) {
-                                final entryBack = entry.value[i].data();
-                                final entryRef = entry.value[i].reference;
-                                entry.value[i].reference.delete();
-                                final revert = () {
-                                  entryRef.set(entryBack);
-                                };
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(
-                                  content: Text('削除しました'),
+  Widget _buildBody(BuildContext context, WidgetRef ref) {
+    final streamAsync = ref.watch(savedDisclosuresStreamProvider);
+
+    return streamAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, _) => Center(
+        child: Text('エラーが発生しました: $error'),
+      ),
+      data: (docs) {
+        if (docs.isEmpty) {
+          return const Center(
+            child: Text(
+              '保存されたドキュメントはありません',
+              style: TextStyle(color: Colors.grey),
+            ),
+          );
+        }
+
+        final grouped = ref.watch(groupedSavedDisclosuresProvider);
+
+        return CustomScrollView(
+          slivers: grouped.entries
+              .map((entry) => SliverStickyHeader(
+                    header: Container(
+                      height: 50.0,
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 10.0),
+                      child: Text(
+                        '追加日: ${entry.key}',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final item = entry.value[i];
+                          final data = item.data();
+                          return Dismissible(
+                            key: Key(data['document'] as String? ?? item.id),
+                            child: DisclosureListItem(
+                              item: item,
+                              showDate: true,
+                            ),
+                            onDismissed: (direction) {
+                              final entryBack = item.data();
+                              final entryRef = item.reference;
+                              ref
+                                  .read(savedDisclosuresActionProvider.notifier)
+                                  .delete(entryRef);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('削除しました'),
                                   action: SnackBarAction(
-                                    onPressed: revert,
+                                    onPressed: () {
+                                      ref
+                                          .read(savedDisclosuresActionProvider
+                                              .notifier)
+                                          .restore(entryRef, entryBack);
+                                    },
                                     label: "取り消す",
                                   ),
-                                ));
-                              }),
-                              background: Container(
-                                color: Colors.green,
-                              ),
+                                ),
+                              );
+                            },
+                            background: Container(
+                              color: Colors.green,
                             ),
-                            childCount: entry.value.length,
-                          ),
-                        ),
-                      ))
-                  .toList(),
-            )
-          : LinearProgressIndicator(),
+                          );
+                        },
+                        childCount: entry.value.length,
+                      ),
+                    ),
+                  ))
+              .toList(),
+        );
+      },
     );
   }
 }
