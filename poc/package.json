@@ -1,0 +1,33 @@
+{
+  "name": "disclosure-diff-poc",
+  "version": "0.1.0",
+  "description": "EDINET iXBRL Qualitative Risk Diff & Jev Forensic Analyzer PoC",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "test:jev": "tsx src/test_jev.ts",
+    "test:detectors": "tsx src/test_detectors.ts",
+    "test:literal": "tsx src/test_literal_schemas.ts",
+    "test:metrics": "tsx src/test_financial_metrics.ts",
+    "evaluate:axelmark": "tsx src/evaluate_axelmark.ts",
+    "compare:numbers": "tsx src/compare_with_numbers.ts",
+    "verify:toyota": "tsx src/verify_toyota_tags.ts",
+    "analyze": "tsx src/index.ts",
+    "search": "tsx src/search_edinet.ts",
+    "analyze:docid": "tsx src/analyze_by_docid.ts"
+  },
+  "dependencies": {
+    "@typesafe-ai/sdk": "^0.7.0",
+    "adm-zip": "^0.6.1",
+    "cheerio": "^1.0.0",
+    "diff": "^7.0.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/diff": "^7.0.0",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
