@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
