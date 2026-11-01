@@ -4,6 +4,7 @@ import 'package:disclosure_app_fl/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'app.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -85,7 +86,9 @@ void main() async {
     debugPrint('User declined or has not accepted permission');
   }
 
-  runApp(AppProvider(
-    child: AppRootWidget(),
+  runApp(ProviderScope(
+    child: AppProvider(
+      child: AppRootWidget(),
+    ),
   ));
 }

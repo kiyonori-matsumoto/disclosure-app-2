@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
 import 'utils/auth_helper.dart';
@@ -139,11 +141,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
   Widget build(BuildContext context) {
     FirebaseAnalytics analytics = FirebaseAnalytics.instance;
     final routeObserver = MyRouteObserver();
-    final bloc = BlocProvider.of<AppBloc>(context);
 
-    return StreamBuilder<Brightness>(
-      stream: bloc.darkMode$,
-      builder: (context, snapshot) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final themeMode = ref.watch(themeModeProvider);
+
         return MaterialApp(
           navigatorKey: navigatorKey,
           title: '適時開示(TDNet/Edinet) Notifier',
@@ -156,9 +158,15 @@ class AppRootWidgetState extends State<AppRootWidget> {
           supportedLocales: [Locale('ja', '')],
           theme: ThemeData(
             primarySwatch: Colors.deepPurple,
-            brightness: snapshot.data,
+            brightness: Brightness.light,
             useMaterial3: false,
           ),
+          darkTheme: ThemeData(
+            primarySwatch: Colors.deepPurple,
+            brightness: Brightness.dark,
+            useMaterial3: false,
+          ),
+          themeMode: themeMode,
           routes: {
             '/': (context) => DisclosureStreamScreen(),
             '/companies': (context) => SearchCompanyScreen(),
