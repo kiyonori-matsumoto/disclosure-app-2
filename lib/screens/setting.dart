@@ -1,5 +1,4 @@
 import 'package:bloc_provider/bloc_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/notification_setting.dart';
@@ -136,67 +135,11 @@ class _SettingScreenState extends State<SettingScreen> {
       final user = await AuthHelper().handleGoogleSignIn();
       if (user == null) return null;
 
-      if (!mounted) return user;
-      await showDialog(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          content: const Text('お気に入りから通知を復元しますか？'),
-          actions: <Widget>[
-            ElevatedButton(
-                child: const Text('復元する'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                ),
-                onPressed: () async {
-                  try {
-                    final id = user.uid;
-                    final settings = await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(id)
-                        .get();
-                    final data = settings.data();
-                    if (data != null && data['favorites'] != null) {
-                      final List<String> favs =
-                          (data['favorites'] as List).cast<String>();
-                      for (final fav in favs) {
-                        this.bloc.addNotification.add(fav);
-                      }
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('${favs.length}件の通知を復元しました'),
-                        ));
-                      }
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('復元できるお気に入りデータがありませんでした'),
-                        ));
-                      }
-                    }
-                  } catch (e) {
-                    debugPrint('Restore favorites error: $e');
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('お気に入りの復元に失敗しました: $e'),
-                      ));
-                    }
-                  } finally {
-                    if (dialogContext.mounted) {
-                      Navigator.pop(dialogContext);
-                    }
-                  }
-                }),
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () {
-                if (dialogContext.mounted) {
-                  Navigator.pop(dialogContext);
-                }
-              },
-            ),
-          ],
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Google連携が完了しました'),
+        ));
+      }
       return user;
     } catch (e) {
       debugPrint('Sign in exception: $e');
