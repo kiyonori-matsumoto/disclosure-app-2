@@ -37,8 +37,15 @@ class TopicSyncHelper {
   static const String keySubscribedTopics = 'fcm_local_subscribed_topics';
   static const String keyLastSyncedToken = 'fcm_last_synced_token';
 
+  /// FCM の 1 クライアントあたりの最大トピック購読数（Firebase 公式仕様）
+  static const int maxTopicsPerDevice = 2000;
+
+  /// 大量購読時の同時並行リクエスト数（FCM レート制限 3,000 QPS への配慮と高速化）
+  static const int defaultBatchSize = 10;
+
   final FirebaseMessaging? _messaging;
   final SharedPreferences? _prefs;
+  final int _batchSize;
 
   final Future<void> Function(String topic)? _onSubscribe;
   final Future<void> Function(String topic)? _onUnsubscribe;
@@ -46,10 +53,12 @@ class TopicSyncHelper {
   TopicSyncHelper({
     FirebaseMessaging? messaging,
     SharedPreferences? prefs,
+    int batchSize = defaultBatchSize,
     Future<void> Function(String topic)? onSubscribe,
     Future<void> Function(String topic)? onUnsubscribe,
   })  : _messaging = messaging,
         _prefs = prefs,
+        _batchSize = batchSize > 0 ? batchSize : defaultBatchSize,
         _onSubscribe = onSubscribe,
         _onUnsubscribe = onUnsubscribe;
 
@@ -83,8 +92,34 @@ class TopicSyncHelper {
     return false;
   }
 
+  /// チャンク分割して並行処理を行うヘルパー
+  Future<void> _processInBatches(
+    Iterable<String> topics,
+    Future<void> Function(String topic) action,
+    void Function(String topic) onSuccess,
+    void Function(String topic, Object error) onError,
+  ) async {
+    final list = topics.toList();
+    for (var i = 0; i < list.length; i += _batchSize) {
+      final end = (i + _batchSize < list.length) ? i + _batchSize : list.length;
+      final chunk = list.sublist(i, end);
+      await Future.wait(
+        chunk.map((topic) async {
+          try {
+            await action(topic);
+            onSuccess(topic);
+          } catch (e) {
+            onError(topic, e);
+          }
+        }),
+      );
+    }
+  }
+
   /// 理想のトピック一覧（desiredTopics）に合わせて端末のFCM購読を差分同期する
   ///
+  /// - FCM の最大2,000トピック制限セーフガード
+  /// - 10件ずつのチャンク並行処理（FCM レートリミット回避と高速化）
   /// - 追加分 (desired - current): subscribeToTopic()
   /// - 削除分 (current - desired): unsubscribeFromTopic()
   /// - 個別の購読/解除が成功したトピックのみローカルに反映し、失敗したものは次回リトライ
@@ -95,13 +130,31 @@ class TopicSyncHelper {
     final currentTopics =
         (prefs.getStringList(keySubscribedTopics) ?? []).toSet();
 
-    final toSubscribe = desiredTopics.difference(currentTopics);
-    final toUnsubscribe = currentTopics.difference(desiredTopics);
-
-    if (toSubscribe.isNotEmpty || toUnsubscribe.isNotEmpty) {
+    // 1. FCM 最大トピック数（2,000件）セーフガード
+    Set<String> effectiveDesired = desiredTopics;
+    if (desiredTopics.length > maxTopicsPerDevice) {
       debugPrint(
-          "[TopicSync] Start sync: +${toSubscribe.length} to subscribe, -${toUnsubscribe.length} to unsubscribe");
+          "[TopicSync] Warning: desired topics (${desiredTopics.length}) exceeds FCM limit ($maxTopicsPerDevice). Clipping to $maxTopicsPerDevice.");
+      effectiveDesired = desiredTopics.take(maxTopicsPerDevice).toSet();
     }
+
+    final toSubscribe = effectiveDesired.difference(currentTopics);
+    final toUnsubscribe = currentTopics.difference(effectiveDesired);
+
+    // 差分ゼロの場合は早期リターン（無駄な通信を完全スキップ）
+    if (toSubscribe.isEmpty && toUnsubscribe.isEmpty) {
+      debugPrint(
+          "[TopicSync] Up to date (all ${currentTopics.length} topics already synced)");
+      return SyncResult(
+        added: {},
+        removed: {},
+        errors: {},
+        currentLocalTopics: currentTopics,
+      );
+    }
+
+    debugPrint(
+        "[TopicSync] Start sync: +${toSubscribe.length} to subscribe, -${toUnsubscribe.length} to unsubscribe (batch size: $_batchSize)");
 
     final subscribed = <String>{};
     final unsubscribed = <String>{};
@@ -114,31 +167,35 @@ class TopicSyncHelper {
         (topic) async =>
             await (_messaging ?? FirebaseMessaging.instance).unsubscribeFromTopic(topic);
 
-    // 1. 削除トピックの解除（Current - Desired）
-    for (final topic in toUnsubscribe) {
-      try {
-        await unsubscribeFn(topic);
+    // 2. 削除トピックの解除（Current - Desired）: チャンク並行実行
+    await _processInBatches(
+      toUnsubscribe,
+      unsubscribeFn,
+      (topic) {
         unsubscribed.add(topic);
         debugPrint("[TopicSync] Unsubscribed from topic: $topic");
-      } catch (e) {
+      },
+      (topic, e) {
         debugPrint("Failed to unsubscribe from topic $topic: $e");
         errors[topic] = e;
-      }
-    }
+      },
+    );
 
-    // 2. 追加トピックの購読（Desired - Current）
-    for (final topic in toSubscribe) {
-      try {
-        await subscribeFn(topic);
+    // 3. 追加トピックの購読（Desired - Current）: チャンク並行実行
+    await _processInBatches(
+      toSubscribe,
+      subscribeFn,
+      (topic) {
         subscribed.add(topic);
         debugPrint("[TopicSync] Subscribed to topic: $topic");
-      } catch (e) {
+      },
+      (topic, e) {
         debugPrint("Failed to subscribe to topic $topic: $e");
         errors[topic] = e;
-      }
-    }
+      },
+    );
 
-    // 3. 最新のローカル状態を計算:
+    // 4. 最新のローカル状態を計算:
     // (元のcurrent - 成功したunsubscribe) + 成功したsubscribe
     final newLocalTopics =
         (currentTopics.difference(unsubscribed))..addAll(subscribed);

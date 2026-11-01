@@ -173,6 +173,63 @@ void main() {
       expect(retryResult.added, equals({'code_new_fail'}));
       expect(retryResult.currentLocalTopics, equals(desired));
     });
+    test('差分がない場合は早期リターンし、購読・解除関数を呼ばない', () async {
+      SharedPreferences.setMockInitialValues({
+        TopicSyncHelper.keySubscribedTopics: ['code_7203', 'code_6758'],
+      });
+
+      var subscribeCalled = false;
+      var unsubscribeCalled = false;
+
+      final helper = TopicSyncHelper(
+        onSubscribe: (topic) async => subscribeCalled = true,
+        onUnsubscribe: (topic) async => unsubscribeCalled = true,
+      );
+
+      final result = await helper.syncTopics(
+        desiredTopics: {'code_7203', 'code_6758'},
+      );
+
+      expect(subscribeCalled, isFalse);
+      expect(unsubscribeCalled, isFalse);
+      expect(result.added, isEmpty);
+      expect(result.removed, isEmpty);
+      expect(result.currentLocalTopics, equals({'code_7203', 'code_6758'}));
+    });
+
+    test('大量件数のトピックをチャンク（バッチ）並行処理で安全に購読できる', () async {
+      final subscribed = <String>[];
+      final helper = TopicSyncHelper(
+        batchSize: 5,
+        onSubscribe: (topic) async => subscribed.add(topic),
+      );
+
+      // 23件のトピック（5件ずつ5バッチで処理される）
+      final desired = List.generate(23, (i) => 'code_${1000 + i}').toSet();
+      final result = await helper.syncTopics(desiredTopics: desired);
+
+      expect(subscribed.length, equals(23));
+      expect(subscribed, containsAll(desired));
+      expect(result.added.length, equals(23));
+      expect(result.currentLocalTopics, equals(desired));
+    });
+
+    test('FCMの上限2,000トピックを超えた場合、2,000件以内でクリップして安全に処理する', () async {
+      final subscribed = <String>[];
+      final helper = TopicSyncHelper(
+        batchSize: 100,
+        onSubscribe: (topic) async => subscribed.add(topic),
+      );
+
+      // 2,050件のトピック
+      final desired = List.generate(2050, (i) => 'code_$i').toSet();
+      final result = await helper.syncTopics(desiredTopics: desired);
+
+      expect(subscribed.length, equals(TopicSyncHelper.maxTopicsPerDevice));
+      expect(result.added.length, equals(TopicSyncHelper.maxTopicsPerDevice));
+      expect(result.currentLocalTopics.length,
+          equals(TopicSyncHelper.maxTopicsPerDevice));
+    });
   });
 
   group('TopicSyncHelper.handleTokenChange (再インストール・データ消去ガード)', () {
