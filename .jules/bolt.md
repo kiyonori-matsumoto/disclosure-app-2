@@ -9,3 +9,7 @@
 ## 2025-02-18 - Avoid O(N) stream list search when O(1) map is available in BLoC
 **Learning:** In the disclosure app's architecture, when looking up companies (e.g. mapping codes to Company objects inside streams like those in `SettlementsList` and `AppBloc`), iterating over `companies` lists with methods like `firstWhere` (an O(N) operation) creates unnecessary performance bottlenecks, especially when triggered on every stream event. We already have `companyCodeMap$` and `companyMap$` specifically exposed to provide instant access.
 **Action:** When performing stream processing or list transformations that require company lookups, always utilize `companyCodeMap$` or `companyMap$` for O(1) map lookups instead of iterating over the `company$` list.
+
+## 2025-02-18 - Optimize stream filtering with pre-computed Sets and `any`
+**Learning:** In RxDart stream combinations (`Rx.combineLatest`), when applying filters inside `.where` clauses on long lists, recreating Sets for intersection logic (e.g., `Set.of(A).intersection(Set.of(B))`) for every single item generates massive GC thrashing and redundant computations resulting in `O(N * (A + B))` time complexity.
+**Action:** When filtering lists using inclusion/intersection criteria, always pre-compute the target `Set` *once* outside the loop closure. Then use `.any((item) => preComputedSet.contains(item))` inside the loop for fast O(1) membership checks, reducing the complexity to `O(N * B)` with `O(A)` pre-computation.

@@ -24,68 +24,93 @@ class EdinetBloc extends Bloc {
   // Sink<String> get filterController => _filter$.sink;
 
   Stream<List<Edinet>?> edinetStream(AppBloc bloc) {
-    final _edinets =
-        bloc.user$.switchMap((_) => bloc.edinetDate$).switchMap((date) {
-      print("***date*** $date");
-      final start = dateFormatter.format(date);
-      final end = dateFormatter.format(date.add(Duration(days: 1)));
-      return FirebaseFirestore.instance
-          .collection(path)
-          .where('seq', isGreaterThanOrEqualTo: start)
-          .where('seq', isLessThan: end)
-          .orderBy('seq', descending: true)
-          .snapshots()
-          .handleError((dynamic error, StackTrace stack) {
-            debugPrint("Edinets stream error: $error");
-            FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
-          })
-          .cast<QuerySnapshot<Map<String, dynamic>>?>()
-          .startWith(null);
-    }).map((doc) {
-      return doc?.docs;
-    });
+    final _edinets = bloc.user$
+        .switchMap((_) => bloc.edinetDate$)
+        .switchMap((date) {
+          print("***date*** $date");
+          final start = dateFormatter.format(date);
+          final end = dateFormatter.format(date.add(Duration(days: 1)));
+          return FirebaseFirestore.instance
+              .collection(path)
+              .where('seq', isGreaterThanOrEqualTo: start)
+              .where('seq', isLessThan: end)
+              .orderBy('seq', descending: true)
+              .snapshots()
+              .handleError((dynamic error, StackTrace stack) {
+                debugPrint("Edinets stream error: $error");
+                FirebaseCrashlytics.instance.recordError(
+                  error,
+                  stack,
+                  fatal: false,
+                );
+              })
+              .cast<QuerySnapshot<Map<String, dynamic>>?>()
+              .startWith(null);
+        })
+        .map((doc) {
+          return doc?.docs;
+        });
 
-    final _mappedEdinets = Rx.combineLatest2<
-        List<DocumentSnapshot>?,
-        Map<String, Company>,
-        Iterable<Edinet>?>(_edinets, bloc.companyMap$, (edinets, companies) {
-      if (edinets == null) {
-        return null;
-      }
-      return edinets.map((snapshot) {
-        final edinet = Edinet.fromDocumentSnapshot(snapshot);
-        edinet.fillCompanyName(companies);
-        return edinet;
-      });
-    });
+    final _mappedEdinets =
+        Rx.combineLatest2<
+          List<DocumentSnapshot>?,
+          Map<String, Company>,
+          Iterable<Edinet>?
+        >(_edinets, bloc.companyMap$, (edinets, companies) {
+          if (edinets == null) {
+            return null;
+          }
+          return edinets.map((snapshot) {
+            final edinet = Edinet.fromDocumentSnapshot(snapshot);
+            edinet.fillCompanyName(companies);
+            return edinet;
+          });
+        });
 
     final _favorite$ = Rx.combineLatest2<List<Company>, bool, List<Company>>(
-        bloc.favoritesWithName$, bloc.edinetShowOnlyFavorite$,
-        (_favorites, _favoriteOnly) {
-      if (_favoriteOnly == false) {
-        return [];
-      }
-      return _favorites;
-    });
+      bloc.favoritesWithName$,
+      bloc.edinetShowOnlyFavorite$,
+      (_favorites, _favoriteOnly) {
+        if (_favoriteOnly == false) {
+          return [];
+        }
+        return _favorites;
+      },
+    );
 
-    return Rx.combineLatest3<Iterable<Edinet>?, String, List<Company>,
-            List<Edinet>?>(_mappedEdinets, bloc.edinetFilter$, _favorite$,
-        (edinets, filter, favorites) {
+    return Rx.combineLatest3<
+      Iterable<Edinet>?,
+      String,
+      List<Company>,
+      List<Edinet>?
+    >(_mappedEdinets, bloc.edinetFilter$, _favorite$, (
+      edinets,
+      filter,
+      favorites,
+    ) {
       if (edinets == null) {
         return null;
       }
-      return edinets.where((edinet) {
-        if (filter == '') {
-          return true;
-        }
-        return edinet.docType == filter;
-      }).where((edinet) {
-        if (favorites.length == 0) {
-          return true;
-        }
-        return Set.of(favorites).intersection(Set.of(edinet.companies)).length >
-            0;
-      }).toList();
+      // ⚡ Bolt: Pre-compute the favorites set outside the loop for O(1) lookups
+      // instead of creating two new Sets and intersecting them for every single edinet
+      final favoritesSet = Set.of(favorites);
+
+      return edinets
+          .where((edinet) {
+            if (filter == '') {
+              return true;
+            }
+            return edinet.docType == filter;
+          })
+          .where((edinet) {
+            if (favoritesSet.isEmpty) {
+              return true;
+            }
+            return edinet.companies.any(
+              (company) => favoritesSet.contains(company),
+            );
+          })
+          .toList();
     });
   }
 
