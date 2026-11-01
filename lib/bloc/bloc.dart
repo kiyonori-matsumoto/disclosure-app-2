@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
@@ -12,9 +13,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:disclosure_app_fl/utils/disclosure_filter_helper.dart';
 import 'package:disclosure_app_fl/utils/notification_topic_helper.dart';
+import 'package:disclosure_app_fl/utils/tag_migration_helper.dart';
+import 'package:disclosure_app_fl/utils/topic_sync_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
@@ -175,7 +177,14 @@ class AppBloc extends Bloc {
   };
   final _change = PublishSubject<String>();
 
-  AppBloc() {
+  final TopicSyncHelper _topicSyncHelper;
+  final TagMigrationHelper _tagMigrationHelper;
+
+  AppBloc({
+    TopicSyncHelper? topicSyncHelper,
+    TagMigrationHelper? tagMigrationHelper,
+  })  : _topicSyncHelper = topicSyncHelper ?? TopicSyncHelper(),
+        _tagMigrationHelper = tagMigrationHelper ?? TagMigrationHelper() {
     final store = FirebaseFirestore.instance;
     store.settings = Settings(persistenceEnabled: false);
     final initialFilters = filterStrings.map((str) => Filter(str)).toList();
@@ -373,24 +382,27 @@ class AppBloc extends Bloc {
     });
 
     _addFavoriteController.stream.listen((code) {
-      favorites.add(code);
-      _addNotificationController.add(code);
-      _publishFavorites(favorites.toList());
+      if (code == null) return;
+      if (!favorites.contains(code)) {
+        favorites.add(code);
+        _publishFavorites(favorites.toList());
+      }
     });
 
     _removeFavoriteController.stream.listen((code) {
-      favorites.remove(code);
-      _removeNotificationController.add(code);
-      _publishFavorites(favorites.toList());
+      if (code == null) return;
+      if (favorites.contains(code)) {
+        favorites.remove(code);
+        _publishFavorites(favorites.toList());
+      }
     });
 
     _switchFavoriteController.stream.listen((code) {
+      if (code == null) return;
       if (favorites.contains(code)) {
         favorites.remove(code);
-        _removeNotificationController.add(code);
       } else {
         favorites.add(code);
-        _addNotificationController.add(code);
       }
       _publishFavorites(favorites.toList());
     });
@@ -413,6 +425,11 @@ class AppBloc extends Bloc {
         .pipe(_favorite$);
 
     _setting$
+        .map<List<String>>(
+            (data) => data["notification_tags"]?.cast<String>() ?? [])
+        .pipe(_tagsNotifications$);
+
+    _setting$
         .map<bool>((setting) =>
             (setting['setting'] ?? {})['hideDailyDisclosure'] ?? false)
         .pipe(_hideDailyDisclosure$);
@@ -432,6 +449,8 @@ class AppBloc extends Bloc {
         }).toList();
       },
     ).pipe(_favoriteWithName$);
+
+    _favoriteWithName$.pipe(_notifications$);
 
     final history = _setting$
         .map<List<String>>((data) => data['cp_hist']?.cast<String>() ?? []);
@@ -541,103 +560,108 @@ class AppBloc extends Bloc {
   void _createNotificationStreams() {
     final messaging = FirebaseMessaging.instance;
 
-    Set<String> notifications = Set();
+    // 1. 初回タグ通知マイグレーション（未移行ユーザーがアプリを起動したときに1度だけ実行）
+    Rx.combineLatest2<User, Map<String, dynamic>, void>(
+      _userController.stream,
+      _setting$.stream,
+      (user, setting) {
+        if (!setting.containsKey('notification_tags')) {
+          // ignore: deprecated_member_use
+          messaging.getToken().then((token) {
+            _tagMigrationHelper.ensureTagsMigrated(
+              uid: user.uid,
+              fcmToken: token,
+              userDocData: setting,
+            );
+          }).catchError((dynamic e) {
+            debugPrint("getToken for tag migration failed: $e");
+          });
+        }
+      },
+    ).listen((_) {});
 
-    final _notificationString$ = BehaviorSubject<List<String>>();
+    // 2. トークン変更（再インストール、端末データ消去、リフレッシュ）検知と同期
+    void triggerTopicSync() {
+      final favs = _favorite$.hasValue ? _favorite$.value : <String>[];
+      final tags =
+          _tagsNotifications$.hasValue ? _tagsNotifications$.value : <String>[];
+      final desiredTopics = {
+        ...favs.map(NotificationTopicHelper.toTopic),
+        ...tags.map(NotificationTopicHelper.fromTag),
+      };
+      _topicSyncHelper.syncTopics(desiredTopics: desiredTopics);
+    }
 
     // ignore: deprecated_member_use
-    messaging.getToken()
-        .then((token) {
-          print(token);
-          return http.post(
-              Uri.parse(
-                  'https://asia-northeast1-disclosure-app.cloudfunctions.net/listTopicsV2'),
-              body: json.encode({'IID_TOKEN': token}),
-              headers: {'Content-Type': 'application/json'});
-        })
-        .then((res) {
-          if (res.body != '') {
-            final data = json.decode(res.body);
-            final List<String> topics =
-                (data['topics'] as Map<String, dynamic>?)?.keys.toList() ?? [];
-            notifications = topics.toSet();
-            print('notifications = $notifications');
-            return topics;
-          } else {
-            return [].cast<String>();
-          }
-        })
-        .then((topics) => _notificationString$.add(topics))
-        .catchError((err) {
-          print(err);
-          if (err is SocketException) {
-            _notificationString$
-                .addError(new SocketException("サーバーとの通信に失敗しました"));
-          } else {
-            _notificationString$.addError(err);
-          }
-        });
+    messaging.onTokenRefresh.listen((newToken) async {
+      final changed = await _topicSyncHelper.handleTokenChange(newToken);
+      if (changed) {
+        triggerTopicSync();
+      }
+    });
 
-    _notificationString$.map((notifications) {
-      return notifications
-          .where(NotificationTopicHelper.isTagTopic)
-          .map(NotificationTopicHelper.toTag)
-          .toList();
-    }).pipe(_tagsNotifications$);
+    // ignore: deprecated_member_use
+    messaging.getToken().then((token) async {
+      final changed = await _topicSyncHelper.handleTokenChange(token);
+      if (changed) {
+        triggerTopicSync();
+      }
+    }).catchError((dynamic e) {
+      debugPrint("Initial getToken check failed: $e");
+    });
 
-    Rx.combineLatest2<List<String>, Map<String, Company>, List<Company>>(
-      _notificationString$,
-      _companiesCodeMap$.stream,
-      (_topics, _comps) {
-        return _topics
-            .where(NotificationTopicHelper.isCodeTopic)
-            .map(NotificationTopicHelper.toCode)
-            .map((_topic) {
-          // ⚡ Bolt: O(1) map lookup instead of O(N) list search
-          return _comps[_topic] ?? Company(_topic, name: '???');
-        }).toList();
+    // 3. Firestore (favorites / notification_tags) の変化に応じたトピック差分同期
+    Rx.combineLatest2<List<String>, List<String>, Set<String>>(
+      _favorite$,
+      _tagsNotifications$,
+      (favs, tags) {
+        final codeTopics = favs.map(NotificationTopicHelper.toTopic);
+        final tagTopics = tags.map(NotificationTopicHelper.fromTag);
+        return {...codeTopics, ...tagTopics};
       },
-    ).pipe(_notifications$);
-
-    this._addNotificationController.stream.listen((_code) {
-      if (_code == null) return;
-      final code = NotificationTopicHelper.toTopic(_code);
-      print('add notification $code');
-      messaging.subscribeToTopic(code);
-      notifications.add(code);
-      _notificationString$.add(notifications.toList());
+    ).distinct((prev, curr) => setEquals(prev, curr)).listen((desiredTopics) {
+      _topicSyncHelper.syncTopics(desiredTopics: desiredTopics);
     });
 
-    this._removeNotificationController.stream.listen((_code) {
-      if (_code == null) return;
-      final code = NotificationTopicHelper.toTopic(_code);
-      print('remove notification $code');
-      messaging.unsubscribeFromTopic(code);
-      notifications.remove(code);
-      _notificationString$.add(notifications.toList());
+    // 4. 通知追加/削除/切替コントローラー（お気に入りと同期）
+    _addNotificationController.stream.listen((code) {
+      if (code != null) addFavorite.add(code);
     });
 
-    this._addTagsNotificationController.stream.listen((_tag) {
-      final topic = NotificationTopicHelper.fromTag(_tag);
-      print('add notification $topic');
-      messaging.subscribeToTopic(topic);
-      notifications.add(topic);
-      _notificationString$.add(notifications.toList());
+    _removeNotificationController.stream.listen((code) {
+      if (code != null) removeFavorite.add(code);
     });
 
-    this._removeTagsNotificationController.stream.listen((_code) {
-      final topic = NotificationTopicHelper.fromTag(_code);
-      print('remove notification $topic');
-      messaging.unsubscribeFromTopic(topic);
-      notifications.remove(topic);
-      _notificationString$.add(notifications.toList());
+    _switchNotificationController.stream.listen((code) {
+      switchFavorite.add(code);
     });
 
-    this._switchNotificationController.stream.listen((code) {
-      if (notifications.contains(NotificationTopicHelper.toCode(code))) {
-        this._removeNotificationController.add(code);
-      } else {
-        this._addNotificationController.add(code);
+    // 5. タグ通知コントローラー（Firestore の notification_tags を更新）
+    _addTagsNotificationController.stream.listen((tag) async {
+      try {
+        final user = await _userController.first;
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          {
+            'notification_tags': FieldValue.arrayUnion([tag])
+          },
+          SetOptions(merge: true),
+        );
+      } catch (e) {
+        debugPrint("Failed to add tag notification: $e");
+      }
+    });
+
+    _removeTagsNotificationController.stream.listen((tag) async {
+      try {
+        final user = await _userController.first;
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          {
+            'notification_tags': FieldValue.arrayRemove([tag])
+          },
+          SetOptions(merge: true),
+        );
+      } catch (e) {
+        debugPrint("Failed to remove tag notification: $e");
       }
     });
   }
