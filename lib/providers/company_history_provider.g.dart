@@ -138,7 +138,7 @@ final class CompanyHistoryActionProvider
 }
 
 String _$companyHistoryActionHash() =>
-    r'09ea5b1f05a07bf9ad06fb68a0e20e9b55158aa9';
+    r'cbb2abe949845061a1a2b9250d692d5e9a528d0b';
 
 /// 検索履歴の追加操作を担当するアクションクラス
 

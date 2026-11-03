@@ -2,9 +2,6 @@ import 'dart:async';
 
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/models/company_settlement.dart';
-import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -70,95 +67,3 @@ class FirestoreGetCount<T> extends Bloc {
   }
 }
 
-class CompanyDisclosureBloc2 extends Bloc {
-  final Company company;
-
-  final FirestoreGetCount<Edinet>? edinet;
-  final FirestoreGetCount<DocumentSnapshot>? disclosure;
-
-  final ValueStream<Map<String, Company>> companies;
-  final ValueStream<User> user$;
-
-  final BehaviorSubject<CompanySettlement?> _companySettlement$ =
-      BehaviorSubject();
-
-  ValueStream<CompanySettlement?> get companySettlement$ =>
-      _companySettlement$.stream;
-
-  CompanyDisclosureBloc2._(
-    this.company, {
-    required this.companies,
-    required this.user$,
-    required this.edinet,
-    required this.disclosure,
-  }) {
-    _settlementControllerHandler(this.company.code);
-  }
-
-  factory CompanyDisclosureBloc2(Company company,
-      {required ValueStream<Map<String, Company>> companies,
-      required ValueStream<User> user$}) {
-    final edinet = (company.edinetCode != null && company.edinetCode != "")
-        ? FirestoreGetCount<Edinet>(
-            user$: user$,
-            query: FirebaseFirestore.instance
-                .collection('edinets')
-                .where('map.${company.edinetCode}', isGreaterThan: 0)
-                .orderBy('map.${company.edinetCode}', descending: true),
-            mapper: (doc) {
-              final edinet = Edinet.fromDocumentSnapshot(doc);
-              return edinet;
-            },
-            getFn: (edinet) => edinet.lastEvaluate,
-          )
-        : null;
-    final disclosure = (company.code != null && company.code != "")
-        ? FirestoreGetCount<DocumentSnapshot<Map<String, dynamic>>>(
-            user$: user$,
-            query: FirebaseFirestore.instance
-                .collection('disclosures')
-                .where('code', isEqualTo: company.code)
-                .orderBy('time', descending: true),
-            mapper: (doc) => doc as DocumentSnapshot<Map<String, dynamic>>,
-            getFn: (doc) => doc.data()?['time'],
-          )
-        : null;
-
-    return CompanyDisclosureBloc2._(company,
-        companies: companies,
-        user$: user$,
-        edinet: edinet,
-        disclosure: disclosure);
-  }
-
-  void _settlementControllerHandler(String? code) {
-    if (code == null || code.isEmpty) {
-      _companySettlement$.add(null);
-      return;
-    }
-    user$.first.then((user) {
-      return FirebaseFirestore.instance
-          .collection('settlements')
-          .doc(code)
-          .get();
-    }).then((doc) {
-      if (doc.exists) {
-        _companySettlement$
-            .add(CompanySettlement.fromDocumentSnapshot(doc));
-      } else {
-        _companySettlement$.add(null);
-      }
-    }).catchError((dynamic error, StackTrace stackTrace) {
-      debugPrint("Failed to fetch settlement for $code: $error");
-      FirebaseCrashlytics.instance.recordError(error, stackTrace, fatal: false);
-      _companySettlement$.add(null);
-    });
-  }
-
-  @override
-  void dispose() {
-    this.edinet?.dispose();
-    this.disclosure?.dispose();
-    _companySettlement$.close();
-  }
-}
