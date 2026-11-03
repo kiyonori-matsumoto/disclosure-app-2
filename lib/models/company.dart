@@ -7,8 +7,9 @@ class Company {
   String? nameKana;
   Key? key;
 
-  Company(this.code,
+  Company(String? code,
       {String name = '', String? edinetCode = '', this.nameKana = ''}) {
+    this.code = code?.trim().toUpperCase();
     this.name = name.trim();
     this.key = this.code != null ? Key(this.code!) : null;
     this.edinetCode = edinetCode ?? '';
@@ -19,7 +20,8 @@ class Company {
   bool match(String text, {String? textKana}) {
     final kana = textKana ?? hiraToKana(text);
     return this.name!.toLowerCase().contains(text) ||
-        this.code!.startsWith(text) ||
+        (this.code != null &&
+            this.code!.toLowerCase().startsWith(text.toLowerCase())) ||
         this.nameKana!.contains(kana);
   }
 

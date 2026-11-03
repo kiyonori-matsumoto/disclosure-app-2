@@ -8,12 +8,20 @@ void main() {
         expect(NotificationTopicHelper.toTopic('7203'), 'code_7203');
       });
 
-      test('toCode extracts company code from topic', () {
-        expect(NotificationTopicHelper.toCode('code_7203'), '7203');
+      test('toTopic normalizes alphanumeric code to uppercase and trims', () {
+        expect(NotificationTopicHelper.toTopic('130a'), 'code_130A');
+        expect(NotificationTopicHelper.toTopic('  130A  '), 'code_130A');
       });
 
-      test('toCode handles topic without prefix gracefully', () {
+      test('toCode extracts company code from topic', () {
+        expect(NotificationTopicHelper.toCode('code_7203'), '7203');
+        expect(NotificationTopicHelper.toCode('code_130A'), '130A');
+        expect(NotificationTopicHelper.toCode('code_130a'), '130A');
+      });
+
+      test('toCode handles topic without prefix gracefully and normalizes', () {
         expect(NotificationTopicHelper.toCode('7203'), '7203');
+        expect(NotificationTopicHelper.toCode('130a'), '130A');
       });
 
       test('isCodeTopic identifies code topics correctly', () {
