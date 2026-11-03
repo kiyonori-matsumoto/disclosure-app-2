@@ -68,15 +68,10 @@ class AppBloc extends Bloc {
       StreamController();
 
   // companyList
-  final _filteredCompanies$ = BehaviorSubject<List<Company>>();
   final _companies$ = BehaviorSubject<List<Company>>();
   final _companiesMap$ = BehaviorSubject<Map<String, Company>>();
   final _companiesCodeMap$ = BehaviorSubject<Map<String, Company>>();
-  final _codeStrController = BehaviorSubject<String>.seeded('');
   final _storage = FirebaseStorage.instanceFor(bucket: 'gs://disclosure-app-2');
-
-  final _companiesHistory$ = BehaviorSubject<List<Company>>();
-  final _addHistory = StreamController<Company>();
 
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
@@ -120,15 +115,9 @@ class AppBloc extends Bloc {
   ValueStream<List<Company>> get favoritesWithName$ =>
       _favoriteWithName$.stream;
 
-  ValueStream<List<Company>> get filteredCompany$ => _filteredCompanies$.stream;
-  Sink<String> get changeFilter => _codeStrController.sink;
-
   ValueStream<List<Company>> get notifications$ => _notifications$.stream;
   ValueStream<List<String>> get tagsNotifications$ =>
       _tagsNotifications$.stream;
-
-  ValueStream<List<Company>> get companyHistory$ => _companiesHistory$.stream;
-  Sink<Company> get addHistory => _addHistory.sink;
 
   ValueStream<String?> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
   Sink<String?> get setDisclosureOrder => _setDisclosureOrder$.sink;
@@ -370,42 +359,6 @@ class AppBloc extends Bloc {
     ).pipe(_favoriteWithName$);
 
     _favoriteWithName$.pipe(_notifications$);
-
-    final history = _setting$
-        .map<List<String>>((data) => data['cp_hist']?.cast<String>() ?? []);
-
-    Rx.combineLatest2<List<String>, Map<String, Company>, List<Company>>(
-      history,
-      _companiesCodeMap$.stream,
-      (_hist, _comps) {
-        // print("hist=$_hist, comps=$_comps");
-        return _hist
-            // ⚡ Bolt: O(1) map lookup instead of O(N) list search
-            .map((_h) => _comps[_h] ?? Company(_h, name: '???'))
-            .toList();
-      },
-    ).pipe(_companiesHistory$);
-
-    Rx.concat(<Stream<List<Company>>>[
-      _companiesHistory$.take(1),
-      _addHistory.stream.map((e) => [e].toList())
-    ])
-        .scan<List<Company>>(
-          (a, e, i) =>
-              (e + a.where((_a) => !e.contains(_a)).toList()).take(20).toList(),
-          [],
-        )
-        .doOnData((data) => print("******$data*******"))
-        .skip(1)
-        .map((e) => e.map((_e) => _e.code).toList())
-        .forEach((comps) async {
-          final user = await _userController.first;
-
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .set({"cp_hist": comps}, SetOptions(merge: true));
-        });
   }
 
   void _createCompanyListStreams() {
@@ -452,18 +405,6 @@ class AppBloc extends Bloc {
                 ))
             .toList())
         .pipe(_companies$);
-
-    // Bolt Optimization: Debounce search input to prevent expensive list filtering and UI re-renders on every keystroke
-    Rx.combineLatest2<List<Company>, String, List<Company>>(
-      _companies$.stream,
-      _codeStrController.stream.debounceTime(const Duration(milliseconds: 300)),
-      (data, str) {
-        if (str.length < 2) return [];
-        final lowerStr = str.toLowerCase();
-        final kanaStr = Company.hiraToKana(lowerStr);
-        return data.where((d) => d.match(lowerStr, textKana: kanaStr)).take(100).toList();
-      },
-    ).pipe(_filteredCompanies$);
 
     _companies$.share().map((companies) {
       return Map.fromEntries(companies.map((c) => MapEntry(c.edinetCode!, c)));
@@ -562,11 +503,9 @@ class AppBloc extends Bloc {
     _hideDailyDisclosure$.close();
     _favorite$.close();
     _favoriteWithName$.close();
-    _filteredCompanies$.close();
     _companies$.close();
     _companiesMap$.close();
     _companiesCodeMap$.close();
-    _codeStrController.close();
     _notifications$.close();
     _tagsNotifications$.close();
     _customFilter$.close();
@@ -574,8 +513,6 @@ class AppBloc extends Bloc {
     _edinetShowOnlyFavoriteController.close();
     _edinetDateController.close();
     _setDisclosureOrder$.close();
-    _companiesHistory$.close();
-    _addHistory.close();
     _refreshDisclosuresController.close();
     _change.close();
   }

@@ -186,3 +186,94 @@ final class CompanyEdinetMapProvider extends $FunctionalProvider<
 }
 
 String _$companyEdinetMapHash() => r'83613f65454c0d843619086bb470d4b1fa27f2aa';
+
+/// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+
+@ProviderFor(searchCompanies)
+final searchCompaniesProvider = SearchCompaniesFamily._();
+
+/// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+
+final class SearchCompaniesProvider
+    extends $FunctionalProvider<List<Company>, List<Company>, List<Company>>
+    with $Provider<List<Company>> {
+  /// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+  SearchCompaniesProvider._(
+      {required SearchCompaniesFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'searchCompaniesProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$searchCompaniesHash();
+
+  @override
+  String toString() {
+    return r'searchCompaniesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Company>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Company> create(Ref ref) {
+    final argument = this.argument as String;
+    return searchCompanies(
+      ref,
+      argument,
+    );
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Company> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Company>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SearchCompaniesProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$searchCompaniesHash() => r'dc69096b2826b91c36b93561a2b5205879c3e169';
+
+/// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+
+final class SearchCompaniesFamily extends $Family
+    with $FunctionalFamilyOverride<List<Company>, String> {
+  SearchCompaniesFamily._()
+      : super(
+          retry: null,
+          name: r'searchCompaniesProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  /// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+
+  SearchCompaniesProvider call(
+    String query,
+  ) =>
+      SearchCompaniesProvider._(argument: query, from: this);
+
+  @override
+  String toString() => r'searchCompaniesProvider';
+}
