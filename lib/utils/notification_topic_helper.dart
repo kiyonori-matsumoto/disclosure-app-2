@@ -7,15 +7,15 @@ class NotificationTopicHelper {
   static const String codePrefix = 'code_';
   static const String tagPrefix = 'tags_';
 
-  /// Converts a company code to a topic name (e.g., '7203' -> 'code_7203').
-  static String toTopic(String code) => '$codePrefix$code';
+  /// Converts a company code to a topic name (e.g., '7203' -> 'code_7203', '130a' -> 'code_130A').
+  static String toTopic(String code) => '$codePrefix${code.trim().toUpperCase()}';
 
-  /// Extracts the company code from a topic name (e.g., 'code_7203' -> '7203').
+  /// Extracts the company code from a topic name (e.g., 'code_7203' -> '7203', 'code_130a' -> '130A').
   static String toCode(String topic) {
     if (topic.startsWith(codePrefix)) {
-      return topic.substring(codePrefix.length);
+      return topic.substring(codePrefix.length).trim().toUpperCase();
     }
-    return topic;
+    return topic.trim().toUpperCase();
   }
 
   /// Encodes a tag string into a base64url topic name (e.g., '株主優待' -> 'tags_...').

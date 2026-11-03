@@ -41,7 +41,7 @@ class _SearchCompanyScreenState extends ConsumerState<SearchCompanyScreen> {
             });
           },
           onSubmitted: (code) {
-            final trimmed = code.trim();
+            final trimmed = code.trim().toUpperCase();
             if (trimmed.isEmpty) return;
 
             final uid = ref.read(currentUserProvider)?.uid;
