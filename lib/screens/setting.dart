@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
+import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/auth_helper.dart';
 
@@ -63,16 +64,19 @@ class _SettingScreenState extends State<SettingScreen> {
         ),
         Divider(),
         ListHeader(title: '表示設定'),
-        StreamBuilder<bool>(
-          stream: bloc.hideDailyDisclosure$,
-          builder: (context, snapshot) {
-            final value = snapshot.data ?? false;
+        Consumer(
+          builder: (context, ref, child) {
+            final hideDaily = ref.watch(hideDailyDisclosureProvider);
             return CheckboxListTile(
-              value: value,
+              value: hideDaily,
               onChanged: (v) {
-                bloc.setVisibleDailyDisclosure.add(v);
+                if (v != null) {
+                  ref
+                      .read(userSettingsActionProvider.notifier)
+                      .setHideDailyDisclosure(v);
+                }
               },
-              title: Text('日々の開示情報を表示しない'),
+              title: const Text('日々の開示情報を表示しない'),
             );
           },
         ),

@@ -61,8 +61,6 @@ class AppBloc extends Bloc {
   // settings
   final BehaviorSubject<Map<String, dynamic>> _setting$ = BehaviorSubject();
   final BehaviorSubject<bool> _hideDailyDisclosure$ = BehaviorSubject();
-  final StreamController<bool?> _setVisibleDailyDisclosureController =
-      StreamController();
 
   // favorites
   final BehaviorSubject<List<String>> _favorite$ = BehaviorSubject();
@@ -126,9 +124,6 @@ class AppBloc extends Bloc {
       _edinetShowOnlyFavoriteController.sink;
 
   ValueStream<Map<String, dynamic>> get settings$ => _setting$.stream;
-  Stream<bool> get hideDailyDisclosure$ => _hideDailyDisclosure$.stream;
-  Sink<bool?> get setVisibleDailyDisclosure =>
-      _setVisibleDailyDisclosureController.sink;
 
   Sink<String?> get addFavorite => _addFavoriteController.sink;
   Sink<String?> get removeFavorite => _removeFavoriteController.sink;
@@ -341,14 +336,6 @@ class AppBloc extends Bloc {
           .doc(user.uid)
           .set({"favorites": _favorites}, SetOptions(merge: true));
     };
-
-    _setVisibleDailyDisclosureController.stream.listen((visible) async {
-      final user = await _userController.first;
-
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "setting": {"hideDailyDisclosure": visible}
-      }, SetOptions(merge: true));
-    });
 
     _addFavoriteController.stream.listen((code) {
       if (code == null) return;
@@ -654,7 +641,6 @@ class AppBloc extends Bloc {
     _switchFavoriteController.close();
     _setting$.close();
     _hideDailyDisclosure$.close();
-    _setVisibleDailyDisclosureController.close();
     _favorite$.close();
     _favoriteWithName$.close();
     _filteredCompanies$.close();
