@@ -145,7 +145,7 @@ final class SavedDisclosuresActionProvider
 }
 
 String _$savedDisclosuresActionHash() =>
-    r'b36245ddbff3c78b2ba6d764e6b641b04702ca49';
+    r'4079facb228b4cf70783ccb534e9fb20bb49304a';
 
 /// 保存済み開示情報の操作（保存・削除・復元）を担当するクラス
 
