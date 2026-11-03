@@ -12,7 +12,7 @@ part 'saved_disclosures_provider.g.dart';
 Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> savedDisclosuresStream(
   Ref ref,
 ) {
-  final authUser = ref.watch(authStateProvider).value;
+  final authUser = ref.watch(currentUserProvider);
   if (authUser == null) {
     return Stream.value([]);
   }
@@ -44,7 +44,7 @@ class SavedDisclosuresAction extends _$SavedDisclosuresAction {
 
   /// 開示情報を保存する
   Future<void> save(Disclosure disclosure) async {
-    final user = ref.read(authStateProvider).value;
+    final user = ref.read(currentUserProvider);
     if (user == null) {
       throw StateError('User is not authenticated');
     }

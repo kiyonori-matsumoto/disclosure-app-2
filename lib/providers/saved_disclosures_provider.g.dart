@@ -50,7 +50,7 @@ final class SavedDisclosuresStreamProvider extends $FunctionalProvider<
 }
 
 String _$savedDisclosuresStreamHash() =>
-    r'b710cc2d346c603892fb648eeb38594200f0fe7d';
+    r'af7eefc552b16ee37e5e1a1e2a0ba65f229e2fc7';
 
 /// 保存済み開示情報を追加日（日付文字列）ごとにグループ化した Provider
 
@@ -145,7 +145,7 @@ final class SavedDisclosuresActionProvider
 }
 
 String _$savedDisclosuresActionHash() =>
-    r'dc0187a3a6efa48e9a3117716cb79b7e06478db1';
+    r'b36245ddbff3c78b2ba6d764e6b641b04702ca49';
 
 /// 保存済み開示情報の操作（保存・削除・復元）を担当するクラス
 

@@ -1,8 +1,10 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
+import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 
@@ -15,7 +17,7 @@ final smallGrey = TextStyle(
   fontSize: 10,
 );
 
-class DisclosureListItem extends StatefulWidget {
+class DisclosureListItem extends ConsumerStatefulWidget {
   const DisclosureListItem({
     Key? key,
     this.showDate = false,
@@ -27,11 +29,11 @@ class DisclosureListItem extends StatefulWidget {
 
   @override
   DisclosureListItemState createState() {
-    return new DisclosureListItemState();
+    return DisclosureListItemState();
   }
 }
 
-class DisclosureListItemState extends State<DisclosureListItem> {
+class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
   bool isDownloading = false;
 
   @override
@@ -123,7 +125,9 @@ class DisclosureListItemState extends State<DisclosureListItem> {
               ],
             );
             if (choice == 0) {
-              bloc.saveDisclosure.add(disclosure);
+              ref
+                  .read(savedDisclosuresActionProvider.notifier)
+                  .save(disclosure);
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('保存しました'),
                 duration: Duration(seconds: 3),

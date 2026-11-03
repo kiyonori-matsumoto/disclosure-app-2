@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -20,7 +19,6 @@ import 'package:disclosure_app_fl/utils/topic_sync_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final filterStrings = DisclosureFilterHelper.defaultFilterStrings;
 
@@ -43,12 +41,6 @@ class AppBloc extends Bloc {
   final _edinetFilter$ = BehaviorSubject<String>.seeded('');
   final _showOnlyFavorites$ = BehaviorSubject<bool>.seeded(false);
   final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
-  final _savedDisclosure$ =
-      BehaviorSubject<List<QueryDocumentSnapshot<Map<String, dynamic>>>>();
-  final _darkMode$ = BehaviorSubject<Brightness>.seeded(Brightness.light);
-  final _setModeBrightness = StreamController<bool>();
-  final StreamController<Disclosure> _saveDisclosureController =
-      StreamController();
   final _setDisclosureOrder$ = BehaviorSubject<String?>.seeded("最新");
 
   final StreamController<String> _addCustomFilterController =
@@ -158,15 +150,8 @@ class AppBloc extends Bloc {
   Sink<String> get removeTagsNotification =>
       _removeTagsNotificationController.sink;
 
-  ValueStream<List<DocumentSnapshot>> get savedDisclosure$ =>
-      _savedDisclosure$.stream;
-  Sink<Disclosure> get saveDisclosure => _saveDisclosureController.sink;
-
   ValueStream<List<Company>> get companyHistory$ => _companiesHistory$.stream;
   Sink<Company> get addHistory => _addHistory.sink;
-
-  ValueStream<Brightness> get darkMode$ => _darkMode$.stream;
-  Sink<bool> get setModeBrightness => _setModeBrightness.sink;
 
   ValueStream<String?> get setDisclosureOrder$ => _setDisclosureOrder$.stream;
   Sink<String?> get setDisclosureOrder => _setDisclosureOrder$.sink;
@@ -343,22 +328,6 @@ class AppBloc extends Bloc {
     _createCompanyListStreams();
 
     _createNotificationStreams();
-
-    _createSavedDisclosureStreams();
-
-    final Stream<bool> br = _setModeBrightness.stream.doOnData((mode) =>
-        SharedPreferences.getInstance()
-            .then((pref) => pref.setBool('setDarkMode', mode)));
-
-    Rx.concat(<Stream<bool>>[
-      Stream.fromFuture(SharedPreferences.getInstance().then((pref) =>
-          pref.containsKey('setDarkMode')
-              ? pref.getBool('setDarkMode')!
-              : true)),
-      br
-    ])
-        .map((m) => m == true ? Brightness.light : Brightness.dark)
-        .pipe(_darkMode$);
   }
 
   void _createSettingStream() {
@@ -699,41 +668,13 @@ class AppBloc extends Bloc {
     _addTagsNotificationController.close();
     _removeTagsNotificationController.close();
     _customFilter$.close();
-    _savedDisclosure$.close();
-    _saveDisclosureController.close();
     _showOnlyFavorites$.close();
     _edinetShowOnlyFavoriteController.close();
     _edinetDateController.close();
-    _darkMode$.close();
-    _setModeBrightness.close();
     _setDisclosureOrder$.close();
     _companiesHistory$.close();
     _addHistory.close();
     _refreshDisclosuresController.close();
     _change.close();
-  }
-
-  void _createSavedDisclosureStreams() {
-    final collection = (User user) => FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('disclosures');
-    _userController
-        .switchMap((user) => collection(user)
-            .orderBy('add_at', descending: true)
-            .snapshots()
-            .handleError((dynamic error, StackTrace stack) {
-              debugPrint("Saved disclosures stream error: $error");
-              FirebaseCrashlytics.instance.recordError(error, stack, fatal: false);
-            }))
-        .map((snapshot) => snapshot.docs)
-        .pipe(_savedDisclosure$);
-
-    _saveDisclosureController.stream.listen((disclosure) async {
-      final user = await _userController.first;
-      final obj = disclosure.toObject();
-      obj['add_at'] = DateTime.now().millisecondsSinceEpoch;
-      await collection(user).doc(disclosure.document).set(obj);
-    });
   }
 }
