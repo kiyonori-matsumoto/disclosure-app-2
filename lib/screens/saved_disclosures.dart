@@ -64,19 +64,17 @@ class SavedDisclosuresScreen extends ConsumerWidget {
                             onDismissed: (direction) {
                               final entryBack = item.data();
                               final entryRef = item.reference;
-                              ref
-                                  .read(savedDisclosuresActionProvider.notifier)
-                                  .delete(entryRef);
+                              final action = ref.read(
+                                savedDisclosuresActionProvider.notifier,
+                              );
+                              action.delete(entryRef);
 
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: const Text('削除しました'),
                                   action: SnackBarAction(
                                     onPressed: () {
-                                      ref
-                                          .read(savedDisclosuresActionProvider
-                                              .notifier)
-                                          .restore(entryRef, entryBack);
+                                      action.restore(entryRef, entryBack);
                                     },
                                     label: "取り消す",
                                   ),
