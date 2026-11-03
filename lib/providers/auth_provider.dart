@@ -4,20 +4,19 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
 
-/// Firebase Authentication の認証状態（ログインユーザー）を監視する Provider
-/// アプリ全体で共有するため常駐（keepAlive: true）とする
+/// Firebase Authentication のストリームを監視する内部用 Provider
 @Riverpod(keepAlive: true)
-Stream<User?> authState(Ref ref) {
+Stream<User?> _authState(Ref ref) {
   if (Firebase.apps.isEmpty) {
     return Stream.value(null);
   }
   return FirebaseAuth.instance.userChanges();
 }
 
-/// 現在ログイン中のユーザーを同期的に取得・監視できる Provider
+/// 現在ログイン中のユーザーを同期的に取得・監視できる公開 Provider
 @Riverpod(keepAlive: true)
 User? currentUser(Ref ref) {
-  final authUser = ref.watch(authStateProvider).value;
+  final authUser = ref.watch(_authStateProvider).value;
   if (authUser != null) return authUser;
   if (Firebase.apps.isNotEmpty) {
     return FirebaseAuth.instance.currentUser;

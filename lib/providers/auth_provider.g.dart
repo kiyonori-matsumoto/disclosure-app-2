@@ -8,33 +8,30 @@ part of 'auth_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Firebase Authentication の認証状態（ログインユーザー）を監視する Provider
-/// アプリ全体で共有するため常駐（keepAlive: true）とする
+/// Firebase Authentication のストリームを監視する内部用 Provider
 
-@ProviderFor(authState)
-final authStateProvider = AuthStateProvider._();
+@ProviderFor(_authState)
+final _authStateProvider = _AuthStateProvider._();
 
-/// Firebase Authentication の認証状態（ログインユーザー）を監視する Provider
-/// アプリ全体で共有するため常駐（keepAlive: true）とする
+/// Firebase Authentication のストリームを監視する内部用 Provider
 
-final class AuthStateProvider
+final class _AuthStateProvider
     extends $FunctionalProvider<AsyncValue<User?>, User?, Stream<User?>>
     with $FutureModifier<User?>, $StreamProvider<User?> {
-  /// Firebase Authentication の認証状態（ログインユーザー）を監視する Provider
-  /// アプリ全体で共有するため常駐（keepAlive: true）とする
-  AuthStateProvider._()
+  /// Firebase Authentication のストリームを監視する内部用 Provider
+  _AuthStateProvider._()
       : super(
           from: null,
           argument: null,
           retry: null,
-          name: r'authStateProvider',
+          name: r'_authStateProvider',
           isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
 
   @override
-  String debugGetCreateSourceHash() => _$authStateHash();
+  String debugGetCreateSourceHash() => _$_authStateHash();
 
   @$internal
   @override
@@ -43,22 +40,22 @@ final class AuthStateProvider
 
   @override
   Stream<User?> create(Ref ref) {
-    return authState(ref);
+    return _authState(ref);
   }
 }
 
-String _$authStateHash() => r'4d015e46839f5a642a975de024dfc4299389759d';
+String _$_authStateHash() => r'98096949d684afb57320818371b07ebd8c8dc86d';
 
-/// 現在ログイン中のユーザーを同期的に取得・監視できる Provider
+/// 現在ログイン中のユーザーを同期的に取得・監視できる公開 Provider
 
 @ProviderFor(currentUser)
 final currentUserProvider = CurrentUserProvider._();
 
-/// 現在ログイン中のユーザーを同期的に取得・監視できる Provider
+/// 現在ログイン中のユーザーを同期的に取得・監視できる公開 Provider
 
 final class CurrentUserProvider extends $FunctionalProvider<User?, User?, User?>
     with $Provider<User?> {
-  /// 現在ログイン中のユーザーを同期的に取得・監視できる Provider
+  /// 現在ログイン中のユーザーを同期的に取得・監視できる公開 Provider
   CurrentUserProvider._()
       : super(
           from: null,
@@ -92,4 +89,4 @@ final class CurrentUserProvider extends $FunctionalProvider<User?, User?, User?>
   }
 }
 
-String _$currentUserHash() => r'1dffce24ba9336888e45038f2f5abd4eea53a067';
+String _$currentUserHash() => r'cbc129f6232ddefb9f59f2f8b97d1f01e6776652';

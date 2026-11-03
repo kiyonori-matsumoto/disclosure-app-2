@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
@@ -17,7 +16,7 @@ void main() {
   test('未ログイン時は savedDisclosuresStreamProvider は空リストを返す', () async {
     final container = ProviderContainer(
       overrides: [
-        authStateProvider.overrideWith((ref) => Stream.value(null)),
+        currentUserProvider.overrideWith((ref) => null),
       ],
     );
     addTearDown(container.dispose);
@@ -32,12 +31,11 @@ void main() {
   test('未ログイン時は groupedSavedDisclosuresProvider は空マップを返す', () async {
     final container = ProviderContainer(
       overrides: [
-        authStateProvider.overrideWith((ref) => Stream.value(null)),
+        currentUserProvider.overrideWith((ref) => null),
       ],
     );
     addTearDown(container.dispose);
 
-    // 初期値または購読後の値を確認
     final map = container.read(groupedSavedDisclosuresProvider);
     expect(map, isEmpty);
   });
@@ -45,7 +43,7 @@ void main() {
   test('未ログイン状態で SavedDisclosuresAction.save を呼ぶと StateError がスローされる', () async {
     final container = ProviderContainer(
       overrides: [
-        authStateProvider.overrideWith((ref) => Stream.value(null)),
+        currentUserProvider.overrideWith((ref) => null),
       ],
     );
     addTearDown(container.dispose);
