@@ -59,7 +59,7 @@ void main() {
     );
 
     expect(
-      () => action.save(disclosure),
+      action.save(disclosure),
       throwsA(isA<StateError>()),
     );
   });
