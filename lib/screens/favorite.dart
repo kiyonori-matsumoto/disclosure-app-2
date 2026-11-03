@@ -1,95 +1,93 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/favorites_provider.dart';
+import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FavoriteScreen extends StatefulWidget {
-  @override
-  _FavoriteScreenState createState() => _FavoriteScreenState();
-}
+class FavoriteScreen extends ConsumerWidget {
+  const FavoriteScreen({super.key});
 
-class _FavoriteScreenState extends State<FavoriteScreen> {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-        appBar: AppBar(title: Text("お気に入り")),
-        // drawer: AppDrawer(),
-        body: _buildBody(context));
-  }
-
-  _buildBody(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
-    return StreamBuilder<List<Company>>(
-      stream: bloc.favoritesWithName$,
-      builder: (context, snapshot) => _builder(context, snapshot, bloc),
+      appBar: AppBar(title: const Text("お気に入り")),
+      body: _buildBody(context, ref),
     );
   }
 
-  Widget _builder(BuildContext context, AsyncSnapshot<List<Company>> snapshot,
-      AppBloc bloc) {
-    if (snapshot.hasError) {
-      return Center(
+  Widget _buildBody(BuildContext context, WidgetRef ref) {
+    final userDocAsync = ref.watch(userDocStreamProvider);
+
+    return userDocAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
+          children: const <Widget>[
             Icon(Icons.error_outline, color: Colors.grey, size: 48),
             SizedBox(height: 16),
             Text('お気に入りの読み込みに失敗しました'),
           ],
         ),
-      );
-    }
-    return (!snapshot.hasData || snapshot.data == null)
-        ? LinearProgressIndicator()
-        : SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: snapshot.data!.length > 0
-                      ? ListView(
-                          children: snapshot.data!.map((fav) {
+      ),
+      data: (_) {
+        final favorites = ref.watch(favoritesWithCompanyProvider);
+        return SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: favorites.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: favorites.length,
+                        itemBuilder: (context, index) {
+                          final fav = favorites[index];
                           return Dismissible(
+                            key: fav.key ?? ValueKey(fav.code ?? index),
                             background: Container(
                               color: Colors.red,
                             ),
-                            child: new FadedListTile(
+                            child: FadedListTile(
                               fav: fav,
                               key: fav.key,
                             ),
-                            key: fav.key!,
                             onDismissed: (direction) {
-                              final revert = () {
-                                bloc.addFavorite.add(fav.code);
-                              };
-                              bloc.removeFavorite.add(fav.code);
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                content: Text("削除しました"),
-                                action: SnackBarAction(
-                                  label: "取り消す",
-                                  onPressed: revert,
-                                ),
-                              ));
+                              final action =
+                                  ref.read(favoritesActionProvider.notifier);
+                              final code = fav.code;
+                              if (code != null) {
+                                action.remove(code);
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(
+                                  content: const Text("削除しました"),
+                                  action: SnackBarAction(
+                                    label: "取り消す",
+                                    onPressed: () {
+                                      action.add(code);
+                                    },
+                                  ),
+                                ));
+                              }
                             },
                           );
-                        }).toList())
-                      : Container(
-                          alignment: AlignmentDirectional.center,
-                          child: Text('お気に入りはありません'),
-                        ),
-                ),
-                Divider(
-                  height: 8.0,
-                ),
-                ElevatedButton(
-                  child: Text('検索して追加'),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/companies');
-                  },
-                )
-              ],
-            ),
-          );
+                        },
+                      )
+                    : Container(
+                        alignment: AlignmentDirectional.center,
+                        child: const Text('お気に入りはありません'),
+                      ),
+              ),
+              const Divider(height: 8.0),
+              ElevatedButton(
+                child: const Text('検索して追加'),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/companies');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -111,9 +109,11 @@ class _FadedListTileState extends State<FadedListTile> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 100)).then((_) {
-      this.setState(() {
-        opacity = 1.0;
-      });
+      if (mounted) {
+        setState(() {
+          opacity = 1.0;
+        });
+      }
     });
   }
 

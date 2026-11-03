@@ -9,7 +9,9 @@ import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 
 class DisclosureCompanyScreen extends StatefulWidget {
   final Company? company;
@@ -156,7 +158,6 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appBloc = BlocProvider.of<AppBloc>(context);
     final company = _company;
     final companyName = company?.name ?? '';
     final companyCode = company?.code ?? '';
@@ -172,17 +173,16 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
           title: Text(title),
           actions: <Widget>[
             if (companyCode.isNotEmpty)
-              StreamBuilder<List<Company>>(
-                stream: appBloc.favoritesWithName$,
-                builder: (context, snapshot) {
-                  final isFavorite = snapshot.hasData &&
-                      snapshot.data!
-                          .any((fav) => fav.code == companyCode);
+              Consumer(
+                builder: (context, ref, child) {
+                  final isFavorite = ref.watch(isFavoriteProvider(companyCode));
                   return IconButton(
                     icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                     tooltip: 'お気に入り',
                     onPressed: () {
-                      appBloc.switchFavorite.add(companyCode);
+                      ref
+                          .read(favoritesActionProvider.notifier)
+                          .toggle(companyCode);
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text(isFavorite
                             ? 'お気に入りを解除しました'
