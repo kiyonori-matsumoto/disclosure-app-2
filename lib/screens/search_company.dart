@@ -1,7 +1,10 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
+import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SearchCompanyScreen extends StatefulWidget {
   @override
@@ -124,23 +127,33 @@ class CompanyListView extends StatelessWidget {
               arguments: company,
             );
           },
-          trailing: PopupMenuButton(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                child: Text('お気に入りに追加'),
-                value: 'add_favorite',
-              )
-            ],
-            onSelected: (dynamic value) {
-              switch (value) {
-                case "add_favorite":
-                  bloc.addFavorite.add(company.code);
-                  ScaffoldMessenger.of(context).showSnackBar((SnackBar(
-                    content: Text('${company.name}をお気に入りに追加しました'),
-                  )));
-                  break;
-                default:
-              }
+          trailing: Consumer(
+            builder: (context, ref, child) {
+              return PopupMenuButton(
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    child: Text('お気に入りに追加'),
+                    value: 'add_favorite',
+                  )
+                ],
+                onSelected: (dynamic value) {
+                  switch (value) {
+                    case "add_favorite":
+                      final uid = ref.read(currentUserProvider)?.uid;
+                      final code = company.code;
+                      if (uid != null && code != null) {
+                        ref
+                            .read(favoritesActionProvider.notifier)
+                            .add(uid, code);
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar((SnackBar(
+                        content: Text('${company.name}をお気に入りに追加しました'),
+                      )));
+                      break;
+                    default:
+                  }
+                },
+              );
             },
           ),
         );
