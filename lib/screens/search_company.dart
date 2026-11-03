@@ -35,7 +35,7 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
           },
           onSubmitted: (code) {
             _controller.clear();
-            final company = Company(code);
+            final company = Company(code.trim().toUpperCase());
             Navigator.pushNamed(context, '/company-disclosures',
                 arguments: company);
           },

@@ -13,6 +13,15 @@ void main() {
       expect(company.key, equals(const Key('7203')));
     });
 
+    test('normalizes code to uppercase and trims whitespace', () {
+      final company1 = Company('130a');
+      expect(company1.code, '130A');
+      expect(company1.key, equals(const Key('130A')));
+
+      final company2 = Company('  130a  ');
+      expect(company2.code, '130A');
+    });
+
     test('handles null code', () {
       final company = Company(null);
       expect(company.code, isNull);
@@ -39,6 +48,21 @@ void main() {
       expect(company.match('72'), isTrue);
       expect(company.match('7203'), isTrue);
       expect(company.match('20'), isFalse);
+    });
+
+    test('match matches alphanumeric code case-insensitively', () {
+      final company = Company('130A', name: 'テスト企業');
+      expect(company.match('130a'), isTrue);
+      expect(company.match('130A'), isTrue);
+      expect(company.match('130'), isTrue);
+      expect(company.match('130b'), isFalse);
+      expect(company.match('130B'), isFalse);
+    });
+
+    test('match handles null code gracefully', () {
+      final company = Company(null, name: 'コードなし企業');
+      expect(company.match('7203'), isFalse);
+      expect(company.match('コード'), isTrue);
     });
 
     test('match matches by kana name with hiragana input', () {
