@@ -32,6 +32,18 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
     // 状態を持たないアクション用クラス
   }
 
+  /// 既存の履歴リストに新規コードを先頭追加し、重複を排除して最大20件にトリミングする
+  static List<String> computeUpdatedHistory(List<dynamic> current, String newCode) {
+    final trimmed = newCode.trim().toUpperCase();
+    final currentStrings = current.map((e) => e.toString()).toList();
+    if (trimmed.isEmpty) return currentStrings;
+
+    return [
+      trimmed,
+      ...currentStrings.where((c) => c != trimmed),
+    ].take(20).toList();
+  }
+
   /// 検索履歴に企業コードを追加する（最新を先頭に追加、重複排除、最大20件）
   Future<void> add(String uid, String code) async {
     final trimmed = code.trim().toUpperCase();
@@ -42,15 +54,8 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(userDocRef);
-      final current = (snapshot.data()?['cp_hist'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-
-      final updated = [
-        trimmed,
-        ...current.where((c) => c != trimmed),
-      ].take(20).toList();
+      final current = (snapshot.data()?['cp_hist'] as List?) ?? [];
+      final updated = computeUpdatedHistory(current, trimmed);
 
       transaction.set(
         userDocRef,

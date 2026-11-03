@@ -106,6 +106,76 @@ void main() {
     expect(find.byIcon(Icons.history), findsNothing);
   });
 
+  testWidgets('検索欄に文字入力後、クリアボタンを押すと履歴一覧が消去されずに復元される',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          companiesStreamProvider.overrideWith((ref) => Stream.value(testCompanies)),
+          companyHistoryProvider.overrideWithValue([testCompanies.first]),
+        ],
+        child: const MaterialApp(
+          home: SearchCompanyScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // 初期状態は履歴
+    expect(find.text('トヨタ自動車'), findsOneWidget);
+    expect(find.byIcon(Icons.history), findsOneWidget);
+
+    // 検索窓に入力
+    await tester.enterText(find.byType(TextField), 'ソニー');
+    await tester.pumpAndSettle();
+    expect(find.text('ソニーグループ'), findsOneWidget);
+    expect(find.text('トヨタ自動車'), findsNothing);
+
+    // クリアボタンをタップ
+    await tester.tap(find.byIcon(Icons.clear));
+    await tester.pumpAndSettle();
+
+    // 履歴が消去されずに再表示される
+    expect(find.text('トヨタ自動車'), findsOneWidget);
+    expect(find.byIcon(Icons.history), findsOneWidget);
+  });
+
+  testWidgets('検索結果から企業をタップした際も履歴追加アクションが呼ばれる',
+      (WidgetTester tester) async {
+    final mockHistoryAction = MockCompanyHistoryAction();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => MockUser()),
+          companiesStreamProvider.overrideWith((ref) => Stream.value(testCompanies)),
+          companyHistoryProvider.overrideWithValue([testCompanies.first]),
+          companyHistoryActionProvider.overrideWith(() => mockHistoryAction),
+        ],
+        child: MaterialApp(
+          routes: {
+            '/company-disclosures': (context) => const Scaffold(body: Text('個別企業画面')),
+          },
+          home: const SearchCompanyScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // 検索を実行
+    await tester.enterText(find.byType(TextField), 'ソニー');
+    await tester.pumpAndSettle();
+
+    // 検索結果の企業をタップ
+    await tester.tap(find.text('ソニーグループ'));
+    await tester.pumpAndSettle();
+
+    expect(mockHistoryAction.added, [('test_uid_search', '6758')]);
+    expect(find.text('個別企業画面'), findsOneWidget);
+  });
+
   testWidgets('企業をタップすると履歴に追加される',
       (WidgetTester tester) async {
     final mockHistoryAction = MockCompanyHistoryAction();

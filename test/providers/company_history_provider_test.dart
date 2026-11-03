@@ -83,6 +83,10 @@ void main() {
   });
 
   group('companyHistoryCodesProvider', () {
+    test('画面アンマウントで破棄されないよう keepAlive: true に設定されている', () {
+      expect(companyHistoryCodesProvider.isAutoDispose, isFalse);
+    });
+
     test('未設定時は空リストを返す', () {
       final container = ProviderContainer(
         overrides: [
@@ -112,9 +116,31 @@ void main() {
       final result = container.read(companyHistoryCodesProvider);
       expect(result, ['7203', '6758']);
     });
+
+    test('cp_hist に数値型が混在している場合でも安全に文字列リストとして取得できる', () async {
+      final container = ProviderContainer(
+        overrides: [
+          userDocStreamProvider.overrideWith((ref) => Stream.value({
+                'cp_hist': [7203, '6758'],
+              })),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(userDocStreamProvider, (_, __) {});
+      addTearDown(sub.close);
+
+      await container.read(userDocStreamProvider.future);
+      final result = container.read(companyHistoryCodesProvider);
+      expect(result, ['7203', '6758']);
+    });
   });
 
   group('companyHistoryProvider', () {
+    test('画面アンマウントで破棄されないよう keepAlive: true に設定されている', () {
+      expect(companyHistoryProvider.isAutoDispose, isFalse);
+    });
+
     test('companyHistoryCodes と companyCodeMap を結合して Company リストを生成する', () {
       final toyota = Company('7203', name: 'トヨタ自動車');
       final sony = Company('6758', name: 'ソニーグループ');
@@ -140,6 +166,55 @@ void main() {
   group('CompanyHistoryAction', () {
     test('CompanyHistoryAction はデフォルトで autoDispose される', () {
       expect(companyHistoryActionProvider.isAutoDispose, isTrue);
+    });
+
+    group('computeUpdatedHistory', () {
+      test('新規コードを追加すると先頭に追加され、既存の履歴がすべて維持される（履歴が消去されない）', () {
+        final current = ['7203', '6758'];
+        final updated = CompanyHistoryAction.computeUpdatedHistory(current, '9984');
+
+        expect(updated, ['9984', '7203', '6758']);
+      });
+
+      test('既存コードを追加すると先頭に移動し、重複せず残りの履歴も維持される', () {
+        final current = ['7203', '6758', '9984'];
+        final updated = CompanyHistoryAction.computeUpdatedHistory(current, '6758');
+
+        expect(updated, ['6758', '7203', '9984']);
+      });
+
+      test('英数字コードは小文字で入力されても大文字に正規化される', () {
+        final current = ['7203'];
+        final updated = CompanyHistoryAction.computeUpdatedHistory(current, '130a');
+
+        expect(updated, ['130A', '7203']);
+      });
+
+      test('20件を超える場合は最大20件にトリミングされる', () {
+        final current = List.generate(20, (i) => 'CODE_$i');
+        final updated = CompanyHistoryAction.computeUpdatedHistory(current, 'NEW_CODE');
+
+        expect(updated.length, 20);
+        expect(updated.first, 'NEW_CODE');
+        expect(updated[1], 'CODE_0');
+        expect(updated.contains('CODE_19'), isFalse);
+      });
+
+      test('空文字または空白文字列を追加しても元の履歴が破壊されずそのまま返される', () {
+        final current = ['7203', '6758'];
+        final updated1 = CompanyHistoryAction.computeUpdatedHistory(current, '');
+        final updated2 = CompanyHistoryAction.computeUpdatedHistory(current, '   ');
+
+        expect(updated1, ['7203', '6758']);
+        expect(updated2, ['7203', '6758']);
+      });
+
+      test('数値型が混在しているリストでも安全に文字列として正規化される', () {
+        final current = [7203, '6758'];
+        final updated = CompanyHistoryAction.computeUpdatedHistory(current, '9984');
+
+        expect(updated, ['9984', '7203', '6758']);
+      });
     });
   });
 }
