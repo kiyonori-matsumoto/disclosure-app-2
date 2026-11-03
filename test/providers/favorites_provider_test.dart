@@ -79,6 +79,10 @@ void main() {
   });
 
   group('FavoritesAction', () {
+    test('FavoritesAction は keepAlive されており autoDispose されない', () {
+      expect(favoritesActionProvider.isAutoDispose, isFalse);
+    });
+
     test('未ログイン状態で add を呼ぶと StateError がスローされる', () {
       final container = ProviderContainer(
         overrides: [

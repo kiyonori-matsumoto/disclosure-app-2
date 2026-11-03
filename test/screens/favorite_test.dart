@@ -53,4 +53,62 @@ void main() {
     expect(find.text('7203 トヨタ自動車'), findsOneWidget);
     expect(find.text('6758 ソニーグループ'), findsOneWidget);
   });
+
+  testWidgets('アイテムをスワイプ削除後、SnackBarの「取り消す」をタップして復元できる',
+      (WidgetTester tester) async {
+    final testCompanies = [
+      Company('7203', name: 'トヨタ自動車'),
+    ];
+
+    final mockAction = MockFavoritesAction();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          userDocStreamProvider.overrideWith((ref) => Stream.value({
+                'favorites': ['7203'],
+              })),
+          favoritesWithCompanyProvider.overrideWithValue(testCompanies),
+          favoritesActionProvider.overrideWith(() => mockAction),
+        ],
+        child: const MaterialApp(
+          home: FavoriteScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // スワイプして削除
+    await tester.drag(find.text('7203 トヨタ自動車'), const Offset(-500.0, 0.0));
+    await tester.pumpAndSettle();
+
+    expect(mockAction.removed, ['7203']);
+    expect(find.text('削除しました'), findsOneWidget);
+    expect(find.text('取り消す'), findsOneWidget);
+
+    // 「取り消す」をタップ
+    await tester.tap(find.text('取り消す'));
+    await tester.pumpAndSettle();
+
+    expect(mockAction.added, ['7203']);
+  });
+}
+
+class MockFavoritesAction extends FavoritesAction {
+  final List<String> added = [];
+  final List<String> removed = [];
+
+  @override
+  void build() {}
+
+  @override
+  Future<void> add(String code) async {
+    added.add(code);
+  }
+
+  @override
+  Future<void> remove(String code) async {
+    removed.add(code);
+  }
 }

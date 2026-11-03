@@ -33,7 +33,7 @@ bool isFavorite(Ref ref, String code) {
 }
 
 /// お気に入りの追加・削除・トグル操作を担当するアクションクラス
-@riverpod
+@Riverpod(keepAlive: true)
 class FavoritesAction extends _$FavoritesAction {
   @override
   void build() {
