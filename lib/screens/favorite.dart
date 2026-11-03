@@ -27,6 +27,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   Widget _builder(BuildContext context, AsyncSnapshot<List<Company>> snapshot,
       AppBloc bloc) {
+    if (snapshot.hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(Icons.error_outline, color: Colors.grey, size: 48),
+            SizedBox(height: 16),
+            Text('お気に入りの読み込みに失敗しました'),
+          ],
+        ),
+      );
+    }
     return (!snapshot.hasData || snapshot.data == null)
         ? LinearProgressIndicator()
         : SafeArea(
