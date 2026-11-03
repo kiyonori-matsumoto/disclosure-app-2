@@ -169,7 +169,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
           themeMode: themeMode,
           routes: {
             '/': (context) => DisclosureStreamScreen(),
-            '/companies': (context) => SearchCompanyScreen(),
+            '/companies': (context) => const SearchCompanyScreen(),
             '/favorites': (context) => FavoriteScreen(),
             '/settings': (context) => SettingScreen(),
             '/savedDisclosures': (context) => SavedDisclosuresScreen(),

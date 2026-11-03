@@ -73,3 +73,18 @@ Map<String, Company> companyEdinetMap(Ref ref) {
         .map((c) => MapEntry(c.edinetCode!, c)),
   );
 }
+
+/// 検索クエリに基づき企業マスタから絞り込み検索を行う Provider
+@riverpod
+List<Company> searchCompanies(Ref ref, String query) {
+  final trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+  final companies = ref.watch(companiesStreamProvider).value ?? [];
+  final lowerStr = trimmed.toLowerCase();
+  final kanaStr = Company.hiraToKana(lowerStr);
+  return companies
+      .where((d) => d.match(lowerStr, textKana: kanaStr))
+      .take(100)
+      .toList();
+}
+
