@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show setEquals;
@@ -12,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:disclosure_app_fl/utils/company_cache_manager.dart';
 import 'package:disclosure_app_fl/utils/disclosure_filter_helper.dart';
 import 'package:disclosure_app_fl/utils/notification_topic_helper.dart';
 import 'package:disclosure_app_fl/utils/tag_migration_helper.dart';
@@ -460,37 +460,39 @@ class AppBloc extends Bloc {
 
   void _createCompanyListStreams() {
     Stream<List<dynamic>> _handleOpenFile() async* {
-      final _appDir = await getApplicationDocumentsDirectory();
-      final companyJsonFile = File(_appDir.path + "/companies.json");
-      final exists = companyJsonFile.existsSync();
-      try {
-        if (exists) {
-          print('send current file');
-          yield await companyJsonFile
-              .readAsString()
-              .then((str) => jsonDecode(str));
-        }
-        if (!(exists &&
-            companyJsonFile
-                .lastModifiedSync()
-                .isAfter(DateTime.now().subtract(Duration(seconds: 1))))) {
-          print('download file from storage');
+      final appDir = await getApplicationDocumentsDirectory();
+      final companyJsonFile = File('${appDir.path}/companies.json');
+      final ref = _storage.ref().child('companies.json');
 
-          final ref = _storage.ref().child('companies.json');
-          final task = ref.writeToFile(companyJsonFile);
-          yield await task
-              .then((snapshot) => companyJsonFile.readAsString())
-              .then((str) => jsonDecode(str));
-        }
-      } catch (e) {
-        // エラー発生時はファイルを削除する
-        companyJsonFile.deleteSync();
-        throw (e);
-      }
+      final cacheManager = CompanyCacheManager(
+        file: companyJsonFile,
+        downloadFunction: (destFile) => ref.writeToFile(destFile),
+      );
+
+      yield* cacheManager.getCompaniesStream(
+        onErrorFallback: (error, stack) {
+          debugPrint("Failed to download companies.json: $error");
+          FirebaseCrashlytics.instance.recordError(
+            error,
+            stack,
+            reason: 'Failed to download companies.json in background',
+            fatal: false,
+          );
+        },
+      );
     }
 
     _userController
         .switchMap((user) => _handleOpenFile())
+        .handleError((dynamic error, StackTrace stack) {
+          debugPrint("Companies stream error: $error");
+          FirebaseCrashlytics.instance.recordError(
+            error,
+            stack,
+            reason: 'Unhandled error in company list stream',
+            fatal: false,
+          );
+        })
         .map((data) => data
             .map((d) => Company(
                   (d['code'] as String).substring(0, 4),

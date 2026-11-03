@@ -58,18 +58,33 @@ class _SearchCompanyScreenState extends State<SearchCompanyScreen> {
     return this.text.length >= 2
         ? StreamBuilder<List<Company>>(
             stream: _bloc.filteredCompany$,
-            builder: (context, snapshot) =>
-                (!snapshot.hasData || snapshot.data == null)
-                    ? Container(
-                        alignment: AlignmentDirectional.center,
-                        child: Column(
-                          children: <Widget>[
-                            CircularProgressIndicator(),
-                            Text('会社情報をダウンロード中です…')
-                          ],
-                        ),
-                      )
-                    : CompanyListView(snapshot.data),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.error_outline, color: Colors.grey, size: 48),
+                      SizedBox(height: 16),
+                      Text('会社情報の取得に失敗しました'),
+                    ],
+                  ),
+                );
+              }
+              return (!snapshot.hasData || snapshot.data == null)
+                  ? Container(
+                      alignment: AlignmentDirectional.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('会社情報をダウンロード中です…'),
+                        ],
+                      ),
+                    )
+                  : CompanyListView(snapshot.data);
+            },
           )
         : StreamBuilder<List<Company>>(
             stream: _bloc.companyHistory$,
