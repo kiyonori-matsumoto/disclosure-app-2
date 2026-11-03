@@ -1,4 +1,5 @@
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:flutter/material.dart';
@@ -53,16 +54,17 @@ class FavoriteScreen extends ConsumerWidget {
                             onDismissed: (direction) {
                               final action =
                                   ref.read(favoritesActionProvider.notifier);
+                              final uid = ref.read(currentUserProvider)?.uid;
                               final code = fav.code;
-                              if (code != null) {
-                                action.remove(code);
+                              if (uid != null && code != null) {
+                                action.remove(uid, code);
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(SnackBar(
                                   content: const Text("削除しました"),
                                   action: SnackBarAction(
                                     label: "取り消す",
                                     onPressed: () {
-                                      action.add(code);
+                                      action.add(uid, code);
                                     },
                                   ),
                                 ));

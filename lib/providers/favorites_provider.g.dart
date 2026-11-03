@@ -205,7 +205,7 @@ final class FavoritesActionProvider
           argument: null,
           retry: null,
           name: r'favoritesActionProvider',
-          isAutoDispose: false,
+          isAutoDispose: true,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -226,7 +226,7 @@ final class FavoritesActionProvider
   }
 }
 
-String _$favoritesActionHash() => r'986499b599bc79e259284346ec78b1d8b2c2c147';
+String _$favoritesActionHash() => r'59f5fb09259a2946ecebd7805e2a027afad27d60';
 
 /// お気に入りの追加・削除・トグル操作を担当するアクションクラス
 

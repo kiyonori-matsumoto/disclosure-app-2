@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -33,7 +32,7 @@ bool isFavorite(Ref ref, String code) {
 }
 
 /// お気に入りの追加・削除・トグル操作を担当するアクションクラス
-@Riverpod(keepAlive: true)
+@riverpod
 class FavoritesAction extends _$FavoritesAction {
   @override
   void build() {
@@ -41,42 +40,31 @@ class FavoritesAction extends _$FavoritesAction {
   }
 
   /// お気に入りに企業コードを追加する
-  Future<void> add(String code) async {
-    final user = ref.read(currentUserProvider);
-    if (user == null) {
-      throw StateError('User is not authenticated');
-    }
-
+  Future<void> add(String uid, String code) async {
     await FirebaseFirestore.instance
         .collection('users')
-        .doc(user.uid)
+        .doc(uid)
         .set({
           'favorites': FieldValue.arrayUnion([code])
         }, SetOptions(merge: true));
   }
 
   /// お気に入りから企業コードを削除する
-  Future<void> remove(String code) async {
-    final user = ref.read(currentUserProvider);
-    if (user == null) {
-      throw StateError('User is not authenticated');
-    }
-
+  Future<void> remove(String uid, String code) async {
     await FirebaseFirestore.instance
         .collection('users')
-        .doc(user.uid)
+        .doc(uid)
         .set({
           'favorites': FieldValue.arrayRemove([code])
         }, SetOptions(merge: true));
   }
 
   /// お気に入りの登録・解除を切り替える
-  Future<void> toggle(String code) async {
-    final favs = ref.read(favoritesProvider);
-    if (favs.contains(code)) {
-      await remove(code);
+  Future<void> toggle(String uid, String code, {required bool isFavorite}) async {
+    if (isFavorite) {
+      await remove(uid, code);
     } else {
-      await add(code);
+      await add(uid, code);
     }
   }
 }

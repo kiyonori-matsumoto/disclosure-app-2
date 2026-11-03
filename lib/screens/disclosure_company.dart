@@ -11,6 +11,7 @@ import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 
 class DisclosureCompanyScreen extends StatefulWidget {
@@ -180,14 +181,17 @@ class _DisclosureCompanyScreenState extends State<DisclosureCompanyScreen> {
                     icon: Icon(isFavorite ? Icons.star : Icons.star_border),
                     tooltip: 'お気に入り',
                     onPressed: () {
-                      ref
-                          .read(favoritesActionProvider.notifier)
-                          .toggle(companyCode);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(isFavorite
-                            ? 'お気に入りを解除しました'
-                            : 'お気に入りに追加しました'),
-                      ));
+                      final uid = ref.read(currentUserProvider)?.uid;
+                      if (uid != null) {
+                        ref
+                            .read(favoritesActionProvider.notifier)
+                            .toggle(uid, companyCode, isFavorite: isFavorite);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(isFavorite
+                              ? 'お気に入りを解除しました'
+                              : 'お気に入りに追加しました'),
+                        ));
+                      }
                     },
                   );
                 },

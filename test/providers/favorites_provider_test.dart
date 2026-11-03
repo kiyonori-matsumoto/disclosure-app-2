@@ -1,5 +1,4 @@
 import 'package:disclosure_app_fl/models/company.dart';
-import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
@@ -79,44 +78,8 @@ void main() {
   });
 
   group('FavoritesAction', () {
-    test('FavoritesAction は keepAlive されており autoDispose されない', () {
-      expect(favoritesActionProvider.isAutoDispose, isFalse);
-    });
-
-    test('未ログイン状態で add を呼ぶと StateError がスローされる', () {
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith((ref) => null),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final action = container.read(favoritesActionProvider.notifier);
-      expect(action.add('7203'), throwsA(isA<StateError>()));
-    });
-
-    test('未ログイン状態で remove を呼ぶと StateError がスローされる', () {
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith((ref) => null),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final action = container.read(favoritesActionProvider.notifier);
-      expect(action.remove('7203'), throwsA(isA<StateError>()));
-    });
-
-    test('未ログイン状態で toggle を呼ぶと StateError がスローされる', () {
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith((ref) => null),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final action = container.read(favoritesActionProvider.notifier);
-      expect(action.toggle('7203'), throwsA(isA<StateError>()));
+    test('FavoritesAction はデフォルトで autoDispose される', () {
+      expect(favoritesActionProvider.isAutoDispose, isTrue);
     });
   });
 }

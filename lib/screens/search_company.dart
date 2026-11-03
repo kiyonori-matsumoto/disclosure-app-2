@@ -1,6 +1,7 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -138,9 +139,12 @@ class CompanyListView extends StatelessWidget {
                 onSelected: (dynamic value) {
                   switch (value) {
                     case "add_favorite":
+                      final uid = ref.read(currentUserProvider)?.uid;
                       final code = company.code;
-                      if (code != null) {
-                        ref.read(favoritesActionProvider.notifier).add(code);
+                      if (uid != null && code != null) {
+                        ref
+                            .read(favoritesActionProvider.notifier)
+                            .add(uid, code);
                       }
                       ScaffoldMessenger.of(context).showSnackBar((SnackBar(
                         content: Text('${company.name}をお気に入りに追加しました'),
