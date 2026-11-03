@@ -1,6 +1,5 @@
 import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
-import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/notification_tags_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/screens/notification_tag_setting.dart';
@@ -39,7 +38,6 @@ void main() {
                 'notification_tags': [defaultFilterStrings.first],
               })),
           notificationTagsProvider.overrideWithValue([defaultFilterStrings.first]),
-          favoritesProvider.overrideWithValue([]),
           notificationTagsActionProvider.overrideWith(() => mockAction),
         ],
         child: const MaterialApp(

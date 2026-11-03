@@ -10,9 +10,6 @@ class NotificationTagSettingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // テスト・デバッグ用: 現在の通知一覧（お気に入り企業 + 通知タグ）をログ出力
-    ref.watch(logCurrentNotificationsProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text("タグで通知")),
       body: _buildBody(context, ref),

@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notification_tags_provider.g.dart';
@@ -15,16 +13,6 @@ List<String> notificationTags(Ref ref) {
   return tags;
 }
 
-/// テスト・デバッグ用: 現在の全通知（お気に入り企業 + 通知タグ）をコンソールログに出力する Provider
-@riverpod
-void logCurrentNotifications(Ref ref) {
-  final favs = ref.watch(favoritesProvider);
-  final tags = ref.watch(notificationTagsProvider);
-  debugPrint('🔔 [Notification Status] 🔔');
-  debugPrint('  - Favorite Companies (${favs.length}): $favs');
-  debugPrint('  - Notification Tags (${tags.length}): $tags');
-}
-
 /// タグ通知の追加・削除・トグル操作を担当するアクションクラス
 @riverpod
 class NotificationTagsAction extends _$NotificationTagsAction {
@@ -35,7 +23,6 @@ class NotificationTagsAction extends _$NotificationTagsAction {
 
   /// 通知タグを追加する
   Future<void> add(String uid, String tag) async {
-    debugPrint('[NotificationTags] Adding tag: "$tag" for user: $uid');
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
@@ -46,7 +33,6 @@ class NotificationTagsAction extends _$NotificationTagsAction {
 
   /// 通知タグを削除する
   Future<void> remove(String uid, String tag) async {
-    debugPrint('[NotificationTags] Removing tag: "$tag" for user: $uid');
     await FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
