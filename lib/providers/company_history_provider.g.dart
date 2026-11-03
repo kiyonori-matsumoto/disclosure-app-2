@@ -25,7 +25,7 @@ final class CompanyHistoryCodesProvider
           argument: null,
           retry: null,
           name: r'companyHistoryCodesProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -53,7 +53,7 @@ final class CompanyHistoryCodesProvider
 }
 
 String _$companyHistoryCodesHash() =>
-    r'a8540a20db1f58c8694d7dea85efa83934957f8b';
+    r'91202f7c3d2d06d65af4db2d7d89b81da8a4a429';
 
 /// 企業情報付きの検索履歴リストを提供する Provider
 
@@ -72,7 +72,7 @@ final class CompanyHistoryProvider
           argument: null,
           retry: null,
           name: r'companyHistoryProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -99,7 +99,7 @@ final class CompanyHistoryProvider
   }
 }
 
-String _$companyHistoryHash() => r'4e248b095755227013884e8f649818b78789e40a';
+String _$companyHistoryHash() => r'1953da43bf5778ddd63872fccf32d298eae24a59';
 
 /// 検索履歴の追加操作を担当するアクションクラス
 
@@ -138,7 +138,7 @@ final class CompanyHistoryActionProvider
 }
 
 String _$companyHistoryActionHash() =>
-    r'2cf7728255ca1e23da688ddcb906cc6c6d057e3d';
+    r'09ea5b1f05a07bf9ad06fb68a0e20e9b55158aa9';
 
 /// 検索履歴の追加操作を担当するアクションクラス
 

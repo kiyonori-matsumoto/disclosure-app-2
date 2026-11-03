@@ -21,11 +21,7 @@ class MockCompanyHistoryAction extends CompanyHistoryAction {
   void build() {}
 
   @override
-  Future<void> add(
-    String uid,
-    String code, {
-    List<String>? currentHistory,
-  }) async {
+  Future<void> add(String uid, String code) async {
     added.add((uid, code));
   }
 }

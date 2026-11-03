@@ -46,10 +46,7 @@ class _SearchCompanyScreenState extends ConsumerState<SearchCompanyScreen> {
 
             final uid = ref.read(currentUserProvider)?.uid;
             if (uid != null) {
-              final current = ref.read(companyHistoryCodesProvider);
-              ref
-                  .read(companyHistoryActionProvider.notifier)
-                  .add(uid, trimmed, currentHistory: current);
+              ref.read(companyHistoryActionProvider.notifier).add(uid, trimmed);
             }
 
             _controller.clear();
@@ -141,10 +138,7 @@ class CompanyListView extends ConsumerWidget {
             final uid = ref.read(currentUserProvider)?.uid;
             final code = company.code;
             if (uid != null && code != null) {
-              final current = ref.read(companyHistoryCodesProvider);
-              ref
-                  .read(companyHistoryActionProvider.notifier)
-                  .add(uid, code, currentHistory: current);
+              ref.read(companyHistoryActionProvider.notifier).add(uid, code);
             }
             Navigator.pushNamed(
               context,

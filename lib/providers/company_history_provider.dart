@@ -7,15 +7,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'company_history_provider.g.dart';
 
 /// ログインユーザーの検索履歴（証券コード一覧）を提供する Provider
-@riverpod
+@Riverpod(keepAlive: true)
 List<String> companyHistoryCodes(Ref ref) {
   final userDoc = ref.watch(userDocStreamProvider).value;
   if (userDoc == null) return [];
-  return (userDoc['cp_hist'] as List?)?.cast<String>() ?? [];
+  return (userDoc['cp_hist'] as List?)?.map((e) => e.toString()).toList() ?? [];
 }
 
 /// 企業情報付きの検索履歴リストを提供する Provider
-@riverpod
+@Riverpod(keepAlive: true)
 List<Company> companyHistory(Ref ref) {
   final histCodes = ref.watch(companyHistoryCodesProvider);
   final codeMap = ref.watch(companyCodeMapProvider);
@@ -33,31 +33,30 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
   }
 
   /// 検索履歴に企業コードを追加する（最新を先頭に追加、重複排除、最大20件）
-  Future<void> add(
-    String uid,
-    String code, {
-    List<String>? currentHistory,
-  }) async {
-    final trimmed = code.trim();
+  Future<void> add(String uid, String code) async {
+    final trimmed = code.trim().toUpperCase();
     if (trimmed.isEmpty) return;
 
-    List<String> current = currentHistory ?? [];
-    if (currentHistory == null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      current = (doc.data()?['cp_hist'] as List?)?.cast<String>() ?? [];
-    }
+    final userDocRef =
+        FirebaseFirestore.instance.collection('users').doc(uid);
 
-    final updated = [
-      trimmed,
-      ...current.where((c) => c != trimmed),
-    ].take(20).toList();
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snapshot = await transaction.get(userDocRef);
+      final current = (snapshot.data()?['cp_hist'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({'cp_hist': updated}, SetOptions(merge: true));
+      final updated = [
+        trimmed,
+        ...current.where((c) => c != trimmed),
+      ].take(20).toList();
+
+      transaction.set(
+        userDocRef,
+        {'cp_hist': updated},
+        SetOptions(merge: true),
+      );
+    });
   }
 }
