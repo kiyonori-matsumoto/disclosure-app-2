@@ -148,7 +148,7 @@ class _SettingScreenState extends State<SettingScreen> {
           leading: Icon(Icons.local_offer),
           onTap: () {
             Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => CustomTagScreen()));
+                MaterialPageRoute(builder: (context) => const CustomTagScreen()));
           },
         ),
         Divider(),
