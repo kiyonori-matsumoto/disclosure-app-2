@@ -85,11 +85,6 @@ class AppBloc extends Bloc {
   // notifications
   final _notifications$ = BehaviorSubject<List<Company>>();
   final _tagsNotifications$ = BehaviorSubject<List<String>>();
-  final _addNotificationController = StreamController<String?>();
-  final _removeNotificationController = StreamController<String?>();
-  final _switchNotificationController = StreamController<String>();
-  final _addTagsNotificationController = StreamController<String>();
-  final _removeTagsNotificationController = StreamController<String>();
 
   ValueStream<List<DocumentSnapshot>> get disclosure$ => _disclosure$.stream;
 
@@ -138,12 +133,6 @@ class AppBloc extends Bloc {
   ValueStream<List<Company>> get notifications$ => _notifications$.stream;
   ValueStream<List<String>> get tagsNotifications$ =>
       _tagsNotifications$.stream;
-  Sink<String?> get addNotification => _addNotificationController.sink;
-  Sink<String?> get removeNotification => _removeNotificationController.sink;
-  Sink<String> get switchNotification => _switchNotificationController.sink;
-  Sink<String> get addTagsNotification => _addTagsNotificationController.sink;
-  Sink<String> get removeTagsNotification =>
-      _removeTagsNotificationController.sink;
 
   ValueStream<List<Company>> get companyHistory$ => _companiesHistory$.stream;
   Sink<Company> get addHistory => _addHistory.sink;
@@ -582,48 +571,6 @@ class AppBloc extends Bloc {
           "[TopicSync] Desired topics updated: ${desiredTopics.length} topics (favorites: ${_favorite$.valueOrNull?.length ?? 0}, tags: ${_tagsNotifications$.valueOrNull?.length ?? 0})");
       _topicSyncHelper.syncTopics(desiredTopics: desiredTopics);
     });
-
-    // 4. 通知追加/削除/切替コントローラー（お気に入りと同期）
-    _addNotificationController.stream.listen((code) {
-      if (code != null) addFavorite.add(code);
-    });
-
-    _removeNotificationController.stream.listen((code) {
-      if (code != null) removeFavorite.add(code);
-    });
-
-    _switchNotificationController.stream.listen((code) {
-      switchFavorite.add(code);
-    });
-
-    // 5. タグ通知コントローラー（Firestore の notification_tags を更新）
-    _addTagsNotificationController.stream.listen((tag) async {
-      try {
-        final user = await _userController.first;
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-          {
-            'notification_tags': FieldValue.arrayUnion([tag])
-          },
-          SetOptions(merge: true),
-        );
-      } catch (e) {
-        debugPrint("Failed to add tag notification: $e");
-      }
-    });
-
-    _removeTagsNotificationController.stream.listen((tag) async {
-      try {
-        final user = await _userController.first;
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-          {
-            'notification_tags': FieldValue.arrayRemove([tag])
-          },
-          SetOptions(merge: true),
-        );
-      } catch (e) {
-        debugPrint("Failed to remove tag notification: $e");
-      }
-    });
   }
 
   @override
@@ -650,11 +597,6 @@ class AppBloc extends Bloc {
     _codeStrController.close();
     _notifications$.close();
     _tagsNotifications$.close();
-    _addNotificationController.close();
-    _removeNotificationController.close();
-    _switchNotificationController.close();
-    _addTagsNotificationController.close();
-    _removeTagsNotificationController.close();
     _customFilter$.close();
     _showOnlyFavorites$.close();
     _edinetShowOnlyFavoriteController.close();
