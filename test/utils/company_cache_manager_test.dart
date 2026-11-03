@@ -116,7 +116,33 @@ void main() {
       });
     });
 
-    group('isCacheFresh (有効期限判定)', () {
+    group('getLatestWeeklyBatchTime (日曜25時/月曜01:00 の算出)', () {
+      test('火曜日の場合は今週月曜 01:00 を返す', () {
+        final tuesday = DateTime(2026, 11, 3, 10, 0); // 火曜 10:00
+        final batch = CompanyCacheManager.getLatestWeeklyBatchTime(tuesday);
+        expect(batch, DateTime(2026, 11, 2, 1, 0)); // 11/2 月曜 01:00
+      });
+
+      test('日曜日の夜（23:59）は先週月曜 01:00 を返す（まだ今週のバッチ前）', () {
+        final sundayNight = DateTime(2026, 11, 8, 23, 59); // 日曜 23:59
+        final batch = CompanyCacheManager.getLatestWeeklyBatchTime(sundayNight);
+        expect(batch, DateTime(2026, 11, 2, 1, 0));
+      });
+
+      test('月曜日の 00:30（日曜24時半）は先週月曜 01:00 を返す（まだバッチ前）', () {
+        final mondayEarly = DateTime(2026, 11, 9, 0, 30); // 月曜 00:30
+        final batch = CompanyCacheManager.getLatestWeeklyBatchTime(mondayEarly);
+        expect(batch, DateTime(2026, 11, 2, 1, 0));
+      });
+
+      test('月曜日の 01:00（日曜25時ジャスト）以降は今週月曜 01:00 を返す（バッチ実行直後）', () {
+        final mondayPostBatch = DateTime(2026, 11, 9, 1, 0); // 月曜 01:00
+        final batch = CompanyCacheManager.getLatestWeeklyBatchTime(mondayPostBatch);
+        expect(batch, DateTime(2026, 11, 9, 1, 0));
+      });
+    });
+
+    group('isCacheFresh (有効期限判定: 基本24時間 ＋ 日曜25時またぎ)', () {
       test('ファイルが存在しない場合は false を返す', () {
         final manager = CompanyCacheManager(
           file: targetFile,
@@ -126,7 +152,7 @@ void main() {
         expect(manager.isCacheFresh(), isFalse);
       });
 
-      test('キャッシュ期間内の場合は true を返す', () async {
+      test('キャッシュ期間内（24時間以内）かつバッチまたぎなしの場合は true を返す', () async {
         await targetFile.writeAsString(jsonEncode(sampleData));
         final manager = CompanyCacheManager(
           file: targetFile,
@@ -135,10 +161,11 @@ void main() {
           downloadFunction: (_) async {},
         );
 
+        // ファイル作成直後（またぎなし）
         expect(manager.isCacheFresh(), isTrue);
       });
 
-      test('キャッシュ期間を経過している場合は false を返す', () async {
+      test('基本ルール: キャッシュ期間（24時間）を経過している場合は false を返す', () async {
         await targetFile.writeAsString(jsonEncode(sampleData));
         final manager = CompanyCacheManager(
           file: targetFile,
@@ -147,9 +174,64 @@ void main() {
           downloadFunction: (_) async {},
         );
 
-        // 25時間後の日時で判定
+        // 25時間後
         final futureTime = DateTime.now().add(const Duration(hours: 25));
         expect(manager.isCacheFresh(futureTime), isFalse);
+      });
+
+      test('特別ルール: 24時間以内であっても、日曜25時（月曜01:00）をまたいだ場合は false（期限切れ）を返す', () async {
+        await targetFile.writeAsString(jsonEncode(sampleData));
+        final manager = CompanyCacheManager(
+          file: targetFile,
+          tempFile: tempFile,
+          cacheDuration: const Duration(hours: 24),
+          downloadFunction: (_) async {},
+        );
+
+        // 日曜 23:00 にファイル保存
+        final sunday2300 = DateTime(2026, 11, 8, 23, 0);
+        targetFile.setLastModifiedSync(sunday2300);
+
+        // 3時間後の月曜 02:00（日曜26:00 = バッチ更新通過後）
+        final monday0200 = DateTime(2026, 11, 9, 2, 0);
+        // 24時間以内（3時間経過）だが、月曜 01:00 のバッチをまたいでいるため stale
+        expect(manager.isCacheFresh(monday0200), isFalse);
+      });
+
+      test('特別ルール: 日曜25時（月曜01:00）のバッチ直後に取得した場合は 24時間有効（true）', () async {
+        await targetFile.writeAsString(jsonEncode(sampleData));
+        final manager = CompanyCacheManager(
+          file: targetFile,
+          tempFile: tempFile,
+          cacheDuration: const Duration(hours: 24),
+          downloadFunction: (_) async {},
+        );
+
+        // 月曜 02:00 に取得
+        final monday0200 = DateTime(2026, 11, 9, 2, 0);
+        targetFile.setLastModifiedSync(monday0200);
+
+        // 同日月曜の 20:00（18時間後）
+        final monday2000 = DateTime(2026, 11, 9, 20, 0);
+        expect(manager.isCacheFresh(monday2000), isTrue);
+      });
+
+      test('日曜夜のバッチ前（日曜23:00）に、同日日曜昼（12:00）取得のキャッシュをチェックした場合は true（まだバッチ前）', () async {
+        await targetFile.writeAsString(jsonEncode(sampleData));
+        final manager = CompanyCacheManager(
+          file: targetFile,
+          tempFile: tempFile,
+          cacheDuration: const Duration(hours: 24),
+          downloadFunction: (_) async {},
+        );
+
+        // 日曜 12:00 に取得
+        final sunday1200 = DateTime(2026, 11, 8, 12, 0);
+        targetFile.setLastModifiedSync(sunday1200);
+
+        // 日曜 23:30（11.5時間後。まだ月曜01:00バッチ前）
+        final sunday2330 = DateTime(2026, 11, 8, 23, 30);
+        expect(manager.isCacheFresh(sunday2330), isTrue);
       });
     });
 

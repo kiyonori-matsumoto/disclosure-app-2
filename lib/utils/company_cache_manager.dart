@@ -28,13 +28,52 @@ class CompanyCacheManager {
   /// ローカルキャッシュが存在するかどうか
   bool get hasLocalCache => file.existsSync();
 
-  /// キャッシュが有効期限内（fresh）であるか判定
+  /// 直近に通過した週次バッチ時刻（日曜25時 = 月曜 午前1時）を取得する
+  static DateTime getLatestWeeklyBatchTime([DateTime? now]) {
+    final current = now ?? DateTime.now();
+    final daysSinceMonday = current.weekday - DateTime.monday; // 月:0, 火:1, ..., 日:6
+    final thisMonday1AM = DateTime(
+      current.year,
+      current.month,
+      current.day - daysSinceMonday,
+      1,
+      0,
+      0,
+    );
+
+    if (current.isBefore(thisMonday1AM)) {
+      // 月曜日の 00:00〜00:59 の場合、直近のバッチは7日前の月曜 01:00
+      return thisMonday1AM.subtract(const Duration(days: 7));
+    } else {
+      // 月曜 01:00 以降、または火〜日の場合、直近のバッチは今週月曜 01:00
+      return thisMonday1AM;
+    }
+  }
+
+  /// キャッシュが有効期限内（fresh）であるか判定。
+  ///
+  /// ルール:
+  /// 1. 基本は [cacheDuration]（24時間）以内のキャッシュを有効とする。
+  /// 2. ただし、保存日時から現在までの間に「日曜25時（月曜 01:00）」の週次更新を
+  ///    またいでいる場合は、24時間以内であっても期限切れ (stale) と判定して最新化する。
   bool isCacheFresh([DateTime? now]) {
     if (!hasLocalCache) return false;
     try {
       final lastModified = file.lastModifiedSync();
       final currentTime = now ?? DateTime.now();
-      return lastModified.isAfter(currentTime.subtract(cacheDuration));
+
+      // 基本ルール: 24時間を超過している場合は期限切れ
+      if (lastModified.isBefore(currentTime.subtract(cacheDuration))) {
+        return false;
+      }
+
+      // 特別ルール: 週次更新バッチ（日曜25時 = 月曜 01:00）をまたいでいる場合は期限切れ
+      final latestBatchTime = getLatestWeeklyBatchTime(currentTime);
+      if (lastModified.isBefore(latestBatchTime)) {
+        return false;
+      }
+
+      return true;
     } catch (e) {
       debugPrint('Failed to check cache freshness: $e');
       return false;
