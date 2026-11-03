@@ -43,10 +43,6 @@ class AppBloc extends Bloc {
   final _customFilter$ = BehaviorSubject<List<Filter>>.seeded([]);
   final _setDisclosureOrder$ = BehaviorSubject<String?>.seeded("最新");
 
-  final StreamController<String> _addCustomFilterController =
-      StreamController();
-  final StreamController<Filter> _removeCustomFilterController =
-      StreamController();
   final _edinetShowOnlyFavoriteController = BehaviorSubject<bool>.seeded(false);
 
   final StreamController<String> _filterChangeController = StreamController();
@@ -106,9 +102,6 @@ class AppBloc extends Bloc {
   Sink<String> get edinetFilterController => _edinetFilter$.sink;
   Stream<int> get filterCount$ =>
       _filter$.map((f) => f.where((_f) => _f.isSelected).length);
-  ValueStream<List<Filter>> get customFilters$ => _customFilter$.stream;
-  Sink<String> get addCustomFilter => _addCustomFilterController.sink;
-  Sink<Filter> get removeCustomFilter => _removeCustomFilterController.sink;
 
   Sink<bool> get setShowOnlyFavorites => _showOnlyFavorites$.sink;
   ValueStream<bool> get showOnlyFavorites$ => _showOnlyFavorites$.stream;
@@ -180,25 +173,6 @@ class AppBloc extends Bloc {
 
     // _customFilter$.add([]);
 
-    _addCustomFilterController.stream.listen((name) async {
-      final user = await _userController.first;
-      final customTag = await this._customFilter$.first;
-      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "tags": customTag.map((t) => t.title).toList() + [name]
-      }, SetOptions(merge: true));
-    });
-
-    _removeCustomFilterController.stream.listen((filter) async {
-      print('removing custom filter $filter');
-      final user = await _userController.first;
-      final customTag = await this._customFilter$.first;
-      FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        "tags": customTag
-            .where((f) => f.title != filter.title)
-            .map((t) => t.title)
-            .toList()
-      }, SetOptions(merge: true));
-    });
 
     final showingFavorite = _showOnlyFavorites$.switchMap((val) {
       if (val) {
@@ -579,8 +553,6 @@ class AppBloc extends Bloc {
     _disclosure$.close();
     _userController.close();
     _filterChangeController.close();
-    _addCustomFilterController.close();
-    _removeCustomFilterController.close();
     _filter$.close();
     _edinetFilter$.close();
     _addFavoriteController.close();
