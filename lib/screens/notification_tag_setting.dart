@@ -1,52 +1,61 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/models/filter.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
+import 'package:disclosure_app_fl/providers/notification_tags_provider.dart';
+import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class NotificationTagSettingScreen extends StatefulWidget {
-  @override
-  _NotificationTagSettingScreenState createState() =>
-      _NotificationTagSettingScreenState();
-}
+class NotificationTagSettingScreen extends ConsumerWidget {
+  const NotificationTagSettingScreen({super.key});
 
-class _NotificationTagSettingScreenState
-    extends State<NotificationTagSettingScreen> {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // テスト・デバッグ用: 現在の通知一覧（お気に入り企業 + 通知タグ）をログ出力
+    ref.watch(logCurrentNotificationsProvider);
+
     return Scaffold(
-      appBar: AppBar(title: Text("タグで通知")),
-      body: _buildBody(context),
+      appBar: AppBar(title: const Text("タグで通知")),
+      body: _buildBody(context, ref),
     );
   }
 
-  _buildBody(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
-    return StreamBuilder<List<String>>(
-      stream: bloc.tagsNotifications$,
-      builder: (context, snapshot) => _builder(context, snapshot, bloc),
-    );
-  }
+  Widget _buildBody(BuildContext context, WidgetRef ref) {
+    final userDocAsync = ref.watch(userDocStreamProvider);
 
-  Widget _builder(BuildContext context, AsyncSnapshot<List<String>> snapshot,
-      AppBloc bloc) {
-    return (!snapshot.hasData || snapshot.data == null)
-        ? LinearProgressIndicator()
-        : SafeArea(
-            child: ListView(
-              children: filterStrings.map((s) {
-                final value = snapshot.data!.contains(s);
-                return SwitchListTile(
-                  title: Text(s),
-                  value: value,
-                  onChanged: (v) {
-                    if (!v) {
-                      bloc.removeTagsNotification.add(s);
-                    } else {
-                      bloc.addTagsNotification.add(s);
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-          );
+    return userDocAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const <Widget>[
+            Icon(Icons.error_outline, color: Colors.grey, size: 48),
+            SizedBox(height: 16),
+            Text('設定の読み込みに失敗しました'),
+          ],
+        ),
+      ),
+      data: (_) {
+        final currentTags = ref.watch(notificationTagsProvider);
+        return SafeArea(
+          child: ListView(
+            children: defaultFilterStrings.map((tag) {
+              final isSelected = currentTags.contains(tag);
+              return SwitchListTile(
+                title: Text(tag),
+                value: isSelected,
+                onChanged: (v) {
+                  final uid = ref.read(currentUserProvider)?.uid;
+                  if (uid != null) {
+                    ref
+                        .read(notificationTagsActionProvider.notifier)
+                        .toggle(uid, tag, isSelected: isSelected);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
   }
 }

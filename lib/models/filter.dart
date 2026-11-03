@@ -1,4 +1,7 @@
+import 'package:disclosure_app_fl/utils/disclosure_filter_helper.dart';
 import 'package:flutter/material.dart';
+
+const defaultFilterStrings = DisclosureFilterHelper.defaultFilterStrings;
 
 class Filter {
   bool isSelected;

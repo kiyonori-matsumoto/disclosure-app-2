@@ -2,7 +2,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
-import 'package:disclosure_app_fl/screens/notification_setting.dart';
+import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +51,7 @@ class _SettingScreenState extends State<SettingScreen> {
           title: Text('証券コードで通知'),
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => NotificationSettingScreen()));
+                builder: (context) => const FavoriteScreen()));
           },
         ),
         ListTile(
