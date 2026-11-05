@@ -4,6 +4,7 @@ import 'package:disclosure_app_fl/providers/custom_tags_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/utils/disclosure_filter_helper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'disclosures_provider.g.dart';
@@ -168,40 +169,57 @@ class DisclosuresFeed extends _$DisclosuresFeed {
     final rawAsync = ref.watch(disclosuresRawStreamProvider(date));
     final rawDocs = rawAsync.value ?? const [];
 
-    final prev = _previousState;
     final dateChanged = _lastDate != date;
     _lastDate = date;
 
-    DisclosuresFeedState newState;
+    if (dateChanged) {
+      _previousState = null;
+    }
 
-    if (prev == null || dateChanged || prev.isAtTop) {
+    final newState = _processNewDocs(
+      rawDocs,
+      isLoading: rawAsync.isLoading,
+      hasError: rawAsync.hasError,
+      error: rawAsync.error,
+    );
+
+    _previousState = newState;
+    return newState;
+  }
+
+  DisclosuresFeedState _processNewDocs(
+    List<DocumentSnapshot<Map<String, dynamic>>> newDocs, {
+    required bool isLoading,
+    required bool hasError,
+    required Object? error,
+  }) {
+    final prev = _previousState;
+
+    if (prev == null || prev.isAtTop) {
       // 初回、日付変更、または最上部にいる場合は即座に最新を画面へ反映
-      newState = DisclosuresFeedState(
-        displayedDocs: rawDocs,
-        latestDocs: rawDocs,
+      return DisclosuresFeedState(
+        displayedDocs: newDocs,
+        latestDocs: newDocs,
         newCount: 0,
         isAtTop: prev?.isAtTop ?? true,
-        isLoading: rawAsync.isLoading && rawDocs.isEmpty,
-        hasError: rawAsync.hasError,
-        error: rawAsync.error,
+        isLoading: isLoading && newDocs.isEmpty,
+        hasError: hasError,
+        error: error,
       );
     } else {
       // スクロール中の場合は読書中のズレを防ぐため、画面表示は維持し新着件数を加算
       final currentDisplayedIds = prev.displayedDocs.map((d) => d.id).toSet();
       final newItemsCount =
-          rawDocs.where((d) => !currentDisplayedIds.contains(d.id)).length;
+          newDocs.where((d) => !currentDisplayedIds.contains(d.id)).length;
 
-      newState = prev.copyWith(
-        latestDocs: rawDocs,
+      return prev.copyWith(
+        latestDocs: newDocs,
         newCount: newItemsCount,
-        isLoading: rawAsync.isLoading && prev.displayedDocs.isEmpty,
-        hasError: rawAsync.hasError,
-        error: rawAsync.error,
+        isLoading: isLoading && prev.displayedDocs.isEmpty,
+        hasError: hasError,
+        error: error,
       );
     }
-
-    _previousState = newState;
-    return newState;
   }
 
   /// スクロール位置（最上部かどうか）の更新
@@ -232,6 +250,37 @@ class DisclosuresFeed extends _$DisclosuresFeed {
     );
     _previousState = updated;
     state = updated;
+  }
+
+  /// 【デバッグ用】仮想の新着開示ドキュメントを1件注入する（kDebugMode限定）
+  void injectDebugNewDisclosure({
+    String? title,
+    String? company,
+    String? code,
+  }) {
+    if (!kDebugMode) return;
+    final now = DateTime.now();
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+    final dummyId = 'debug_${now.millisecondsSinceEpoch}';
+    final dummyDoc = DebugDummyDocumentSnapshot(dummyId, {
+      'title': title ?? '【新着テスト】業績予想の修正に関するお知らせ ($timeStr)',
+      'company': company ?? 'テスト株式会社',
+      'code': code ?? '9999',
+      'time': now.millisecondsSinceEpoch,
+      'view_count': 1,
+      'tags': {'決算': true, '業績予想': true},
+    });
+
+    final currentDocs = state.latestDocs;
+    final newState = _processNewDocs(
+      [dummyDoc, ...currentDocs],
+      isLoading: state.isLoading,
+      hasError: state.hasError,
+      error: state.error,
+    );
+    _previousState = newState;
+    state = newState;
   }
 }
 
@@ -286,4 +335,28 @@ AsyncValue<List<DocumentSnapshot<Map<String, dynamic>>>> filteredDisclosures(
   }
 
   return AsyncData(filtered);
+}
+
+// ignore: subtype_of_sealed_class
+class DebugDummyDocumentSnapshot
+    implements DocumentSnapshot<Map<String, dynamic>> {
+  final String _id;
+  final Map<String, dynamic> _data;
+
+  DebugDummyDocumentSnapshot(this._id, this._data);
+
+  @override
+  String get id => _id;
+
+  @override
+  Map<String, dynamic> data() => _data;
+
+  @override
+  dynamic operator [](Object? key) => _data[key];
+
+  @override
+  bool get exists => true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

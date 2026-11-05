@@ -322,6 +322,52 @@ void main() {
       expect(feed.newCount, 0);
     });
 
+    test('injectDebugNewDisclosure: 最上部なら即座に追加され、スクロール中なら newCount が加算される', () async {
+      final targetDate = DateTime(2026, 11, 5);
+
+      final container = ProviderContainer(
+        overrides: [
+          selectedDateProvider.overrideWith(() => _TestSelectedDate(targetDate)),
+          disclosuresRawStreamProvider(targetDate)
+              .overrideWith((ref) => Stream.value([])),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription =
+          container.listen(disclosuresFeedProvider, (_, __) {});
+      addTearDown(subscription.close);
+
+      await Future<void>.delayed(Duration.zero);
+
+      // 1. 最上部にいる状態で注入 -> displayedDocs に即座に追加
+      container.read(disclosuresFeedProvider.notifier).injectDebugNewDisclosure(
+            title: 'デバッグ開示1',
+          );
+      var feed = container.read(disclosuresFeedProvider);
+      expect(feed.displayedDocs.length, 1);
+      expect(feed.displayedDocs.first['title'], contains('デバッグ開示1'));
+      expect(feed.newCount, 0);
+
+      // 2. スクロール中に注入 -> displayedDocs は維持され newCount が加算
+      container
+          .read(disclosuresFeedProvider.notifier)
+          .updateScrollPosition(isAtTop: false);
+
+      container.read(disclosuresFeedProvider.notifier).injectDebugNewDisclosure(
+            title: 'デバッグ開示2',
+          );
+      feed = container.read(disclosuresFeedProvider);
+      expect(feed.displayedDocs.length, 1);
+      expect(feed.newCount, 1);
+
+      // 3. refreshToLatest() で反映
+      container.read(disclosuresFeedProvider.notifier).refreshToLatest();
+      feed = container.read(disclosuresFeedProvider);
+      expect(feed.displayedDocs.length, 2);
+      expect(feed.newCount, 0);
+    });
+
     test('filteredDisclosuresProvider: 日々の開示非表示、お気に入り絞り込み、タグフィルタ、ソートが正しく適用される', () async {
       final targetDate = DateTime(2026, 11, 5);
 

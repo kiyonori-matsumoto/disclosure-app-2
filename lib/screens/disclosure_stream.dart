@@ -10,6 +10,7 @@ import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -130,6 +131,22 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
       floating: true,
       snap: true,
       actions: <Widget>[
+        if (kDebugMode && displayTarget == 'tdnet')
+          IconButton(
+            icon: const Icon(Icons.add_alert, color: Colors.amber),
+            tooltip: '【Debug】新着開示を注入',
+            onPressed: () {
+              ref
+                  .read(disclosuresFeedProvider.notifier)
+                  .injectDebugNewDisclosure();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('【Debug】ダミー新着開示を受信しました'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
         IconButton(
           icon: const Icon(Icons.new_releases),
           onPressed: () {
