@@ -34,6 +34,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey(
+    debugLabel: "Main ScaffoldMessenger",
+  );
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
 
@@ -150,27 +153,37 @@ class AppRootWidgetState extends State<AppRootWidget> {
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
-    debugPrint("###notificationMsg handler ###: ${message.messageId}");
-    final dialogContext = navigatorKey.currentState?.overlay?.context;
-    if (dialogContext != null && message.notification != null) {
-      await showDialog<dynamic>(
-        context: dialogContext,
-        builder: (context) => AlertDialog(
-          title: Text(message.notification?.title ?? ''),
-          content: Text(message.notification?.body ?? ''),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('閉じる'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _handleNotification(message);
-              },
-              child: const Text('開く'),
-            ),
-          ],
+    debugPrint(
+        "### notificationMsg handler (foreground) ###: ${message.messageId}");
+    final notification = message.notification;
+    if (notification == null) return;
+
+    final title = notification.title ?? '';
+    final body = notification.body ?? '';
+    final messageText = title.isNotEmpty
+        ? (body.isNotEmpty ? "$title: $body" : title)
+        : body;
+
+    if (messageText.isEmpty) return;
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            messageText,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: '開く',
+            onPressed: () {
+              _handleNotification(message);
+            },
+          ),
         ),
       );
     }
@@ -191,6 +204,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
         return MaterialApp(
           navigatorKey: navigatorKey,
+          scaffoldMessengerKey: scaffoldMessengerKey,
           title: '適時開示(TDNet/Edinet) Notifier',
           locale: Locale('ja', 'JP'),
           localizationsDelegates: [
