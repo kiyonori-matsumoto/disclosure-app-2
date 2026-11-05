@@ -1,145 +1,103 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
+import 'package:disclosure_app_fl/providers/settlements_provider.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SettlementsList extends StatefulWidget {
-  @override
-  _SettlementsListState createState() => _SettlementsListState();
-}
-
-class _SettlementsListState extends State<SettlementsList> {
-  late DateTime current;
-  final DateTime today;
-  final DateTime start;
-  final DateTime end;
-
-  _SettlementsListState()
-      : today = DateTime.now(),
-        start = DateTime.now().subtract(Duration(days: 30)),
-        end = DateTime.now().add(Duration(days: 30));
+class SettlementsList extends ConsumerWidget {
+  const SettlementsList({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    current = DateTime.now();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(settlementsSelectedDateProvider);
+    final settlementsAsync = ref.watch(currentSettlementsListProvider);
 
-  @override
-  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(days: 30));
+    final end = now.add(const Duration(days: 30));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(toDate(current.millisecondsSinceEpoch) + "の決算予定"),
+        title: Text('${toDate(current.millisecondsSinceEpoch)}の決算予定'),
       ),
-      body: _buildBody(context),
+      body: settlementsAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 8),
+              Text(error.toString()),
+            ],
+          ),
+        ),
+        data: (settlements) {
+          if (settlements.isEmpty) {
+            return SizedBox(
+              width: double.infinity,
+              height: 80.0,
+              child: Card(
+                shape: const RoundedRectangleBorder(),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    ListTile(
+                      leading: Icon(
+                        Icons.announcement,
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                      title: const Text('指定された日の決算予定はありません'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: settlements.length,
+            itemBuilder: (context, idx) {
+              final settlement = settlements[idx];
+              final quoteText = (settlement.quote != null &&
+                      settlement.quote!.isNotEmpty)
+                  ? ' (${settlement.quote})'
+                  : '';
+
+              return ListTile(
+                title: Text('${settlement.name ?? ''}$quoteText'),
+                onTap: () {
+                  final companyCodeMap = ref.read(companyCodeMapProvider);
+                  final code = settlement.code ?? '';
+                  final company = companyCodeMap[code] ??
+                      Company(code, name: settlement.name ?? '');
+
+                  Navigator.pushNamed(
+                    context,
+                    '/company-disclosures',
+                    arguments: company,
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.calendar_today),
-        onPressed: () {
-          showDatePicker(
+        child: const Icon(Icons.calendar_today),
+        onPressed: () async {
+          final picked = await showDatePicker(
             context: context,
             initialDate: current,
             firstDate: start,
             lastDate: end,
-          ).then((date) {
-            if (date != null) {
-              setState(() {
-                this.current = date;
-              });
-            }
-          });
+          );
+          if (picked != null) {
+            ref.read(settlementsSelectedDateProvider.notifier).setDate(picked);
+          }
         },
       ),
     );
   }
-
-  Widget _buildBody(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
-    return FutureBuilder(
-      initialData: null,
-      future: FirebaseFirestore.instance
-          .collection('settlements')
-          .where('schedule', isEqualTo: toDateHyphenate(current))
-          .get(),
-      builder: (context, snapshot) => snapshot.data != null
-          ? (snapshot.data as QuerySnapshot).docs.length != 0
-              ? ListView.builder(
-                  itemBuilder: (context, idx) {
-                    final data =
-                        (snapshot.data as QuerySnapshot<Map<String, dynamic>>)
-                            .docs[idx]
-                            .data();
-                    return ListTile(
-                      title: Text("${data['name']} (${data['quote']})"),
-                      onTap: () async {
-                        // ⚡ Bolt: O(1) map lookup instead of O(N) list search
-                        final companyCodeMap = await bloc.companyCodeMap$.first;
-                        final company = companyCodeMap[data['code']] ?? Company(data['code'], name: data['name']);
-
-                        Navigator.pushNamed(context, '/company-disclosures',
-                            arguments: company);
-                      },
-                    );
-                  },
-                  itemCount: (snapshot.data as QuerySnapshot).docs.length,
-                )
-              : SizedBox(
-                  child: Card(
-                    child: Column(
-                      children: <Widget>[
-                        ListTile(
-                          leading: Icon(
-                            Icons.announcement,
-                            color: Theme.of(context).colorScheme.surface,
-                          ),
-                          title: Text('指定された日の決算予定はありません'),
-                        )
-                      ],
-                    ),
-                    shape: RoundedRectangleBorder(),
-                  ),
-                  width: double.infinity,
-                  height: 80.0,
-                )
-          : LinearProgressIndicator(),
-    );
-  }
-
-  // Widget _buildBody(BuildContext context) {
-  //   return StreamBuilder<QuerySnapshot>(
-  //     stream: FirebaseFirestore.instance
-  //         .collection('settlements')
-  //         .where('schedule', isEqualTo: toDateHyphenate(current))
-  //         .snapshots(),
-  //     builder: (context, snapshot) => snapshot.hasData
-  //         ? snapshot.data.documents.length != 0
-  //             ? ListView.builder(
-  //                 itemBuilder: (context, idx) {
-  //                   return ListTile(
-  //                       title: Text(snapshot.data.documents[idx].data['name']));
-  //                 },
-  //                 itemCount: snapshot.data.documents.length,
-  //               )
-  //             : SizedBox(
-  //                 child: Card(
-  //                   child: Column(
-  //                     children: <Widget>[
-  //                       ListTile(
-  //                         leading: Icon(
-  //                           Icons.announcement,
-  //                           color: Theme.of(context).backgroundColor,
-  //                         ),
-  //                         title: Text('指定された日の決算予定はありません'),
-  //                       )
-  //                     ],
-  //                   ),
-  //                   shape: RoundedRectangleBorder(),
-  //                 ),
-  //                 width: double.infinity,
-  //                 height: 80.0,
-  //               )
-  //         : LinearProgressIndicator(),
-  //   );
-  // }
 }
