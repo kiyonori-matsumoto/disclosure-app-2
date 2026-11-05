@@ -435,7 +435,7 @@ final class DisclosuresFeedProvider
   }
 }
 
-String _$disclosuresFeedHash() => r'e1bfa322228a38405b026af777402b7acb2b72f1';
+String _$disclosuresFeedHash() => r'd165373cdaf3bf3c03eee233f9e45274d94c2b34';
 
 /// ハイブリッド型（最上部なら自動更新、スクロール中なら新着バッジでズレ防止）開示フィード Notifier
 
@@ -549,4 +549,4 @@ final class FilteredDisclosuresProvider extends $FunctionalProvider<
 }
 
 String _$filteredDisclosuresHash() =>
-    r'b1aae76e9e4678f77e8991d4547c2e45bc3907c8';
+    r'b73c5c169a13f74ee976f98598cada5b7948022b';
