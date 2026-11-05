@@ -264,6 +264,11 @@ AsyncValue<List<DocumentSnapshot<Map<String, dynamic>>>> filteredDisclosures(
   final selectedFilters = ref.watch(selectedFiltersProvider);
   final order = ref.watch(disclosureOrderProvider);
 
+  // お気に入りのみ表示がONなのに、お気に入りが0件の場合は開示なし（0件）
+  if (showOnlyFavs && favorites.isEmpty) {
+    return const AsyncData([]);
+  }
+
   final filtered = feed.displayedDocs.where((doc) {
     final data = doc.data() ?? {};
     return DisclosureFilterHelper.matchesFilter(

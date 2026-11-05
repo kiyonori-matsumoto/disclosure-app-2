@@ -2,6 +2,7 @@ import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
@@ -212,6 +213,14 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 selected: showOnlyFavs,
                 onSelected: (val) {
                   ref.read(showOnlyFavoritesProvider.notifier).set(val);
+                  if (val && ref.read(favoritesProvider).isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('お気に入りに登録されている銘柄がありません'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
                 },
               ),
             ),

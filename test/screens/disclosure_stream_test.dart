@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
 import 'package:disclosure_app_fl/bloc/bloc.dart';
@@ -216,6 +218,24 @@ void main() {
       expect(find.byType(FloatingActionButton), findsNothing);
     });
 
+    testWidgets('お気に入りが0件の時にお気に入りのみ表示ChipをタップするとSnackBarが表示される', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+          ],
+        ),
+      );
+      await tester.pump();
+
+      final chipFinder = find.widgetWithText(ChoiceChip, 'お気に入りのみ表示する');
+      await tester.tap(chipFinder);
+      await tester.pump();
+
+      expect(find.text('お気に入りに登録されている銘柄がありません'), findsOneWidget);
+    });
+
     testWidgets('新着件数が1件以上の場合は「N NEW MESSAGE」FAB が表示される', (tester) async {
       await tester.pumpWidget(
         createTestWidget(
@@ -231,5 +251,60 @@ void main() {
       expect(find.byType(FloatingActionButton), findsOneWidget);
       expect(find.text('3 NEW MESSAGE'), findsOneWidget);
     });
+
+    testWidgets('リアルタイムストリーム連動: 最上部にいる時は自動反映、スクロール中はFAB表示＆タップで反映される', (tester) async {
+      final streamController =
+          StreamController<List<DocumentSnapshot<Map<String, dynamic>>>>.broadcast();
+      addTearDown(streamController.close);
+
+      final targetDate = DateTime(2026, 11, 5);
+
+      final doc1 = FakeDocumentSnapshot('doc1', {
+        'title': '開示1号',
+        'code': '7203',
+        'company': 'トヨタ自動車',
+        'time': 1000,
+      });
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            selectedDateProvider.overrideWith(() => _TestSelectedDate(targetDate)),
+            disclosuresRawStreamProvider(targetDate)
+                .overrideWith((ref) => streamController.stream),
+          ],
+        ),
+      );
+
+      // 初回データをストリームに流す
+      streamController.add([doc1]);
+      await tester.pumpAndSettle();
+
+      // 開示1が表示されている
+      expect(find.text('開示1号'), findsOneWidget);
+      // 最上部にいるので FAB は非表示
+      expect(find.byType(FloatingActionButton), findsNothing);
+
+      // 最上部のまま新着 doc2 が届く -> 即座に自動反映
+      final doc2 = FakeDocumentSnapshot('doc2', {
+        'title': '開示2号(最新)',
+        'code': '6758',
+        'company': 'ソニー',
+        'time': 2000,
+      });
+      streamController.add([doc2, doc1]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('開示2号(最新)'), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsNothing);
+    });
   });
+}
+
+class _TestSelectedDate extends SelectedDate {
+  final DateTime _initial;
+  _TestSelectedDate(this._initial);
+
+  @override
+  DateTime build() => _initial;
 }

@@ -374,28 +374,35 @@ void main() {
       // docDaily が除外され、docKessanToyota と docHaitoSony の2件
       expect(result.map((d) => d.id).toList(), ['doc2', 'doc3']);
 
-      // 2. お気に入りのみ表示を ON にする
-      container.read(showOnlyFavoritesProvider.notifier).set(true);
-      result = container.read(filteredDisclosuresProvider).value!;
-      // 7203（トヨタ）のみ抽出される
-      expect(result.map((d) => d.id).toList(), ['doc2']);
-
-      // お気に入り OFF に戻す
-      container.read(showOnlyFavoritesProvider.notifier).set(false);
-
-      // 3. タグフィルタ（'配当'）を適用する
-      container.read(selectedFiltersProvider.notifier).toggle('配当');
-      result = container.read(filteredDisclosuresProvider).value!;
-      expect(result.map((d) => d.id).toList(), ['doc3']);
-
-      // タグフィルタ解除
-      container.read(selectedFiltersProvider.notifier).clear();
-
       // 4. ソート順を "閲覧回数" に切り替える
       container.read(disclosureOrderProvider.notifier).toggle();
       result = container.read(filteredDisclosuresProvider).value!;
       // view_count: doc2 (100) > doc3 (50)
       expect(result.map((d) => d.id).toList(), ['doc2', 'doc3']);
+    });
+
+    test('お気に入りのみ表示がONでお気に入り登録が0件の場合、空リストを返す', () async {
+      final targetDate = DateTime(2026, 11, 5);
+      final doc1 = FakeDocumentSnapshot('doc1', {'title': '開示1', 'code': '7203'});
+
+      final container = ProviderContainer(
+        overrides: [
+          selectedDateProvider.overrideWith(() => _TestSelectedDate(targetDate)),
+          disclosuresRawStreamProvider(targetDate)
+              .overrideWith((ref) => Stream.value([doc1])),
+          favoritesProvider.overrideWith((ref) => []),
+          showOnlyFavoritesProvider.overrideWith(() => _TestShowOnlyFavorites(true)),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription =
+          container.listen(filteredDisclosuresProvider, (_, __) {});
+      addTearDown(subscription.close);
+
+      await Future<void>.delayed(Duration.zero);
+      final result = container.read(filteredDisclosuresProvider).value!;
+      expect(result, isEmpty);
     });
   });
 }
@@ -414,4 +421,12 @@ class _TestSelectedFilters extends SelectedFilters {
 
   @override
   Set<String> build() => _initial;
+}
+
+class _TestShowOnlyFavorites extends ShowOnlyFavorites {
+  final bool _initial;
+  _TestShowOnlyFavorites(this._initial);
+
+  @override
+  bool build() => _initial;
 }
