@@ -1,5 +1,24 @@
 # Changelog
 
+## [v2.6.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.5.0...v2.6.0) - 2026-11-05
+
+- feat(deps): upgrade firebase ecosystem plugins to latest major versions by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/65
+- feat(notification): resilient topic sync engine and migrate from legacy listTopicsV2 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/69
+- feat(theme): introduce Riverpod 3 and implement theme mode with system setting support by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/70
+- feat(saved-disclosures): migrate saved disclosures screen and auth to Riverpod by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/72
+- refactor: remove legacy saved disclosures and dark mode from AppBloc by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/74
+- fix: resolve PathNotFoundException on companies.json and improve weekly batch cache handling by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/77
+- feat(settings): migrate hideDailyDisclosure to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/80
+- fix(android): upgrade Gradle to 9.3.1 and AGP to 9.1.0 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/78
+- feat(company): add Riverpod providers for company master (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/81
+- feat(favorites): migrate favorites to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/82
+- feat(notifications): migrate notification settings to Riverpod and unify favorite screen (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/83
+- feat(custom-tags): migrate custom tag settings to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/84
+- fix(company): support alphanumeric stock codes and normalize case (#79) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/85
+- feat(company-search): migrate company search and history to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/86
+- feat(disclosures): migrate company disclosures to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/87
+- fix(android): add proguard rules to prevent WorkDatabase startup crash on release by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/90
+
 ## [v2.5.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.4.2...v2.5.0) - 2026-10-31
 
 - Fix UI reaction when downloading EDINET files by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/50
