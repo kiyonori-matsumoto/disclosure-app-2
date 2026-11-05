@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:disclosure_app_fl/models/feed_state.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/screens/disclosure_stream.dart';
@@ -298,7 +301,115 @@ void main() {
       expect(find.text('開示2号(最新)'), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsNothing);
     });
+
+    testWidgets('EDINET に切り替えると EDINET ツールバーが表示され、書類種別Chipタップでダイアログが開く',
+        (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            filteredEdinetsProvider
+                .overrideWith((ref) => const AsyncData([])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // EDINET に切り替え
+      tester
+          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+          .onChanged!('edinet');
+      await tester.pumpAndSettle();
+
+      // EDINET ツールバーの書類種別 Chip（初期表示:「なし」）が表示されていること
+      final chipFinder = find.ancestor(
+        of: find.text('なし'),
+        matching: find.byType(ChoiceChip),
+      );
+      expect(chipFinder, findsOneWidget);
+
+      // 書類種別 Chip をタップ
+      await tester.tap(chipFinder);
+      await tester.pumpAndSettle();
+
+      // フィルタダイアログが開いていること
+      expect(find.byType(SimpleDialog), findsOneWidget);
+      expect(find.text('大量保有報告書'), findsOneWidget);
+
+      // ダイアログを閉じる
+      Navigator.of(tester.element(find.byType(SimpleDialog))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(SimpleDialog), findsNothing);
+    });
+
+    testWidgets('EDINET ツールバーでお気に入り0件時にお気に入りのみ表示ChipをタップするとSnackBarが表示される',
+        (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            filteredEdinetsProvider
+                .overrideWith((ref) => const AsyncData([])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // EDINET に切り替え
+      tester
+          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+          .onChanged!('edinet');
+      await tester.pumpAndSettle();
+
+      // 「お気に入りのみ表示する」をタップ
+      await tester.tap(find.text('お気に入りのみ表示する'));
+      await tester.pump();
+
+      // SnackBar が表示されること
+      expect(find.text('お気に入りに登録されている銘柄がありません'), findsOneWidget);
+    });
+
+    testWidgets('EDINET 表示時に新着件数がある場合、「N NEW MESSAGE」FAB が表示される',
+        (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            filteredEdinetsProvider
+                .overrideWith((ref) => const AsyncData([])),
+            edinetFeedProvider.overrideWith(() => _MockEdinetFeed(
+                  const FeedState<Edinet>(
+                    newCount: 5,
+                    isAtTop: false,
+                  ),
+                )),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // EDINET に切り替え
+      tester
+          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
+          .onChanged!('edinet');
+      await tester.pumpAndSettle();
+
+      // FAB が表示されていること
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.text('5 NEW MESSAGE'), findsOneWidget);
+    });
   });
+}
+
+class _MockEdinetFeed extends EdinetFeed {
+  final FeedState<Edinet> _initial;
+  _MockEdinetFeed(this._initial);
+
+  @override
+  FeedState<Edinet> build() => _initial;
 }
 
 class _TestSelectedDate extends SelectedDate {
