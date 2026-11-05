@@ -46,7 +46,7 @@ void main() {
             data: dailyItem,
             selectedFilterTitles: [],
             hideDailyDisclosure: true,
-            favoriteCompanyCodes: [],
+            favoriteCompanyCodes: {},
           ),
           isFalse,
         );
@@ -56,7 +56,7 @@ void main() {
             data: normalItem,
             selectedFilterTitles: [],
             hideDailyDisclosure: true,
-            favoriteCompanyCodes: [],
+            favoriteCompanyCodes: {},
           ),
           isTrue,
         );
@@ -77,7 +77,7 @@ void main() {
             data: kessanItem,
             selectedFilterTitles: ['決算'],
             hideDailyDisclosure: false,
-            favoriteCompanyCodes: [],
+            favoriteCompanyCodes: {},
           ),
           isTrue,
         );
@@ -87,7 +87,7 @@ void main() {
             data: yutaiItem,
             selectedFilterTitles: ['決算'],
             hideDailyDisclosure: false,
-            favoriteCompanyCodes: [],
+            favoriteCompanyCodes: {},
           ),
           isFalse,
         );
@@ -108,7 +108,7 @@ void main() {
             data: favCompanyItem,
             selectedFilterTitles: [],
             hideDailyDisclosure: false,
-            favoriteCompanyCodes: ['7203'],
+            favoriteCompanyCodes: {'7203'},
           ),
           isTrue,
         );
@@ -118,7 +118,7 @@ void main() {
             data: otherCompanyItem,
             selectedFilterTitles: [],
             hideDailyDisclosure: false,
-            favoriteCompanyCodes: ['7203'],
+            favoriteCompanyCodes: {'7203'},
           ),
           isFalse,
         );
