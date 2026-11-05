@@ -1,7 +1,10 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -76,6 +79,25 @@ class AppDrawer extends StatelessWidget {
             title: Text('設定'),
             onTap: () => Navigator.of(context).popAndPushNamed('/settings'),
           ),
+          if (kDebugMode)
+            Consumer(
+              builder: (context, ref, _) => ListTile(
+                leading: const Icon(Icons.add_alert, color: Colors.amber),
+                title: const Text('【Debug】ダミー新着を受信'),
+                onTap: () {
+                  ref
+                      .read(disclosuresFeedProvider.notifier)
+                      .injectDebugNewDisclosure();
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('【Debug】ダミー新着開示を受信しました'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
           FutureBuilder<PackageInfo>(
             builder: (context, snapshot) => AboutListTile(
               applicationLegalese: '(c) 2019-2023 Matsukiyo Lab.',
