@@ -1,15 +1,12 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/bloc/edinet_bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'no_disclosures.dart';
 
@@ -17,71 +14,46 @@ final smallGrey = TextStyle(
   color: Colors.grey,
   fontSize: 10,
 );
-final formatter = DateFormat.yMd('ja');
 
-class EdinetStreamingWidget extends StatefulWidget {
-  @override
-  _EdinetStreamingWidgetState createState() => _EdinetStreamingWidgetState();
-}
-
-class _EdinetStreamingWidgetState extends State<EdinetStreamingWidget> {
-  late EdinetBloc edinetBloc;
-  AppBloc? bloc;
+class EdinetStreamingWidget extends ConsumerWidget {
+  const EdinetStreamingWidget({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    this.bloc = BlocProvider.of<AppBloc>(context);
-    this.edinetBloc = BlocProvider.of<EdinetBloc>(context);
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final edinetsAsync = ref.watch(filteredEdinetsProvider);
 
-  @override
-  Widget build(BuildContext context) {
-    return EdinetSliverList(stream: this.edinetBloc.edinet$);
-  }
-}
-
-class EdinetSliverList extends StatelessWidget {
-  final ValueStream<List<Edinet>?> stream;
-
-  EdinetSliverList({required this.stream});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<Edinet>?>(
-      stream: stream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return SliverFillRemaining(
-            child: Container(
-              alignment: Alignment.center,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(Icons.event_busy),
-                  Text(snapshot.error.toString()),
-                ],
-              ),
-            ),
+    return edinetsAsync.when(
+      loading: () => const SliverToBoxAdapter(
+        child: LinearProgressIndicator(),
+      ),
+      error: (error, stack) => SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(Icons.event_busy),
+              const SizedBox(height: 8),
+              Text(error.toString()),
+            ],
+          ),
+        ),
+      ),
+      data: (edinets) {
+        if (edinets.isEmpty) {
+          return const SliverFillRemaining(
+            child: NoDisclosures(),
           );
         }
-        return (snapshot.hasData && snapshot.data != null)
-            ? snapshot.data!.length > 0
-                ? SliverList(
-                    delegate: SliverChildBuilderDelegate((context, idx) {
-                      final edinet = snapshot.data![idx];
-                      return Builder(
-                        builder: (context) =>
-                            new EdinetListItem(edinet: edinet),
-                      );
-                    }, childCount: snapshot.data!.length),
-                  )
-                : SliverFillRemaining(
-                    child: new NoDisclosures(),
-                  )
-            : SliverToBoxAdapter(
-                child: LinearProgressIndicator(),
-              );
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, idx) => EdinetListItem(
+              key: Key(edinets[idx].docId ?? '$idx'),
+              edinet: edinets[idx],
+            ),
+            childCount: edinets.length,
+          ),
+        );
       },
     );
   }
@@ -167,23 +139,22 @@ class _EdinetListItemState extends State<EdinetListItem> {
                 ),
               )
             ]),
-        isDownloading ? CircularProgressIndicator() : Container(),
+        isDownloading ? const CircularProgressIndicator() : const SizedBox.shrink(),
       ],
     );
   }
 
   _onLongPress(BuildContext context, List<Company?> companies) => () async {
-        if (companies.length == 0) return;
+        if (companies.isEmpty) return;
 
         RenderBox renderBox = context.findRenderObject() as RenderBox;
         final point = renderBox.localToGlobal(Offset.zero);
         final size = MediaQuery.of(context).size;
-        print(point);
-        final choice = await showMenu(
+        final choice = await showMenu<Company>(
           context: context,
           position: RelativeRect.fromLTRB(size.width, point.dy, 0.0, point.dy),
           items: companies
-              .map((company) => PopupMenuItem(
+              .map((company) => PopupMenuItem<Company>(
                     child: ListTile(
                       title: Text('${company!.name}'),
                     ),
@@ -191,7 +162,7 @@ class _EdinetListItemState extends State<EdinetListItem> {
                   ))
               .toList(),
         );
-        if (choice != null) {
+        if (choice != null && context.mounted) {
           Navigator.pushNamed(context, '/company-disclosures',
               arguments: choice);
         }

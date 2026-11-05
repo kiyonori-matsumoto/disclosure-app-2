@@ -1,7 +1,6 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
@@ -63,20 +62,21 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     ref.read(disclosuresFeedProvider.notifier).updateScrollPosition(
           isAtTop: isAtTop,
         );
+    ref.read(edinetFeedProvider.notifier).updateScrollPosition(
+          isAtTop: isAtTop,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Phase 3-2 まで EDINET 側のために AppBloc を参照可能にする
-    final AppBloc? bloc =
-        displayTarget == 'edinet' ? BlocProvider.of<AppBloc>(context) : null;
-
-    final newCount = ref.watch(pendingNewDisclosureCountProvider);
+    final newCount = displayTarget == 'tdnet'
+        ? ref.watch(pendingNewDisclosureCountProvider)
+        : ref.watch(edinetFeedProvider).newCount;
 
     return Scaffold(
-      body: buildSliverBody(context, bloc: bloc),
+      body: buildSliverBody(context),
       drawer: AppDrawer(),
-      floatingActionButton: (displayTarget == 'tdnet' && newCount > 0)
+      floatingActionButton: newCount > 0
           ? FloatingActionButton.extended(
               onPressed: () {
                 sliverScrollController.animateTo(
@@ -84,7 +84,11 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.easeOut,
                 );
-                ref.read(disclosuresFeedProvider.notifier).refreshToLatest();
+                if (displayTarget == 'tdnet') {
+                  ref.read(disclosuresFeedProvider.notifier).refreshToLatest();
+                } else {
+                  ref.read(edinetFeedProvider.notifier).refreshToLatest();
+                }
               },
               label: Text('$newCount NEW MESSAGE'),
               icon: const Icon(Icons.refresh),
@@ -95,7 +99,7 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     );
   }
 
-  Widget buildSliverBody(BuildContext context, {AppBloc? bloc}) {
+  Widget buildSliverBody(BuildContext context) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
       title: Theme(
@@ -131,20 +135,32 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
       floating: true,
       snap: true,
       actions: <Widget>[
-        if (kDebugMode && displayTarget == 'tdnet')
+        if (kDebugMode)
           IconButton(
             icon: const Icon(Icons.add_alert, color: Colors.amber),
             tooltip: '【Debug】新着開示を注入',
             onPressed: () {
-              ref
-                  .read(disclosuresFeedProvider.notifier)
-                  .injectDebugNewDisclosure();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('【Debug】ダミー新着開示を受信しました'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
+              if (displayTarget == 'tdnet') {
+                ref
+                    .read(disclosuresFeedProvider.notifier)
+                    .injectDebugNewDisclosure();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('【Debug】ダミーTDNET開示を受信しました'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              } else {
+                ref
+                    .read(edinetFeedProvider.notifier)
+                    .injectDebugNewEdinet();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('【Debug】ダミーEDINET開示を受信しました'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
             },
           ),
         IconButton(
@@ -169,8 +185,8 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 ]
               : <Widget>[
                   appbar,
-                  if (bloc != null) edinetFilterToolbar(bloc),
-                  EdinetStreamingWidget(),
+                  edinetFilterToolbar(formatter),
+                  const EdinetStreamingWidget(),
                 ],
         ),
       ),
@@ -247,6 +263,64 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     );
   }
 
+  /// EDINET 用フィルタツールバー
+  SliverPersistentHeader edinetFilterToolbar(DateFormat formatter) {
+    final selectedDate = ref.watch(edinetSelectedDateProvider);
+    final filter = ref.watch(edinetDocTypeFilterProvider);
+    final showOnlyFavs = ref.watch(edinetShowOnlyFavoritesProvider);
+
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: SliverAppBarDelegate(
+        child: ListView(
+          padding: const EdgeInsets.all(8.0),
+          scrollDirection: Axis.horizontal,
+          children: <Widget>[
+            // 日付選択 Chip
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ActionChip(
+                avatar: const Icon(Icons.calendar_today),
+                label: Text(formatter.format(selectedDate)),
+                onPressed: () => _changeEdinetDate(selectedDate),
+              ),
+            ),
+            // 書類種別フィルタ Chip
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ChoiceChip(
+                label: Text(filter.isEmpty ? 'なし' : filter),
+                avatar: const Icon(Icons.filter_list),
+                selected: filter.isNotEmpty,
+                onSelected: (_) => _showEdinetFilterDialog(context),
+              ),
+            ),
+            // お気に入りのみ表示 Chip
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: ChoiceChip(
+                avatar: const Icon(Icons.favorite),
+                label: const Text('お気に入りのみ表示する'),
+                selected: showOnlyFavs,
+                onSelected: (val) {
+                  ref.read(edinetShowOnlyFavoritesProvider.notifier).set(val);
+                  if (val && ref.read(favoritesProvider).isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('お気に入りに登録されている銘柄がありません'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// TDNET 開示情報一覧スリバー
   Widget tdnetList() {
     final disclosuresAsync = ref.watch(filteredDisclosuresProvider);
@@ -299,6 +373,18 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     }
   }
 
+  Future<void> _changeEdinetDate(DateTime initial) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2019, 3, 1),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      ref.read(edinetSelectedDateProvider.notifier).setDate(picked);
+    }
+  }
+
   Future<void> _showFilterDialog(BuildContext context) async {
     await showDialog<void>(
       context: context,
@@ -331,119 +417,31 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     );
   }
 
-  // --- 既存 EDINET 用ツールバー（Phase 3-2 移行まで共存） ---
-  SliverPersistentHeader edinetFilterToolbar(AppBloc bloc) {
-    final formatter = DateFormat.yMd('ja');
-    return SliverPersistentHeader(
-      pinned: true,
-      delegate: SliverAppBarDelegate(
-        child: ListView(
-          padding: const EdgeInsets.all(8.0),
-          scrollDirection: Axis.horizontal,
-          children: <Widget>[
-            StreamBuilder<DateTime>(
-              stream: bloc.edinetDate$,
-              builder: (context, snapshot) => Container(
-                padding: const EdgeInsets.all(4.0),
-                child: ActionChip(
-                  avatar: const Icon(Icons.calendar_today),
-                  label: Text(
-                    snapshot.hasData ? formatter.format(snapshot.data!) : '',
-                  ),
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: snapshot.data ?? DateTime.now(),
-                      firstDate: DateTime(2019, 3, 1),
-                      lastDate: DateTime.now(),
-                    );
-                    if (date != null) {
-                      bloc.edinetDate.add(date);
-                    }
+  Future<void> _showEdinetFilterDialog(BuildContext context) async {
+    final selectedFilter = ref.read(edinetDocTypeFilterProvider);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('filter'),
+        contentPadding: EdgeInsets.zero,
+        children: Edinet.docTypes()
+            .map(
+              (type) => Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: CheckboxListTile(
+                  title: Text(type),
+                  value: type == selectedFilter,
+                  onChanged: (value) {
+                    Navigator.of(dialogContext).pop(value! ? type : '');
                   },
                 ),
               ),
-            ),
-            StreamBuilder<String>(
-              stream: bloc.edinetFilter$,
-              builder: (context, snapshot) {
-                final text = snapshot.data ?? '';
-                return Container(
-                  padding: const EdgeInsets.all(4.0),
-                  child: ChoiceChip(
-                    label: Text(text == '' ? 'なし' : text),
-                    avatar: const Icon(Icons.filter_list),
-                    onSelected: (v) async {
-                      final result = await showDialog<String>(
-                        context: context,
-                        builder: (context) => _edinetFilterDialog(context, bloc),
-                      );
-                      if (result != null) {
-                        bloc.edinetFilterController.add(result);
-                      }
-                    },
-                    selected: text != '',
-                  ),
-                );
-              },
-            ),
-            ShowFavoriteOnlyTooltipWidget(
-              stream: bloc.edinetShowOnlyFavorite$,
-              onSelected: (val) => bloc.edinetSetShowOnlyFavorite.add(val),
-            ),
-          ],
-        ),
+            )
+            .toList(),
       ),
     );
-  }
-
-  Widget _edinetFilterDialog(BuildContext context, AppBloc bloc) =>
-      StreamBuilder<String>(
-        stream: bloc.edinetFilter$,
-        builder: (context, snapshot) => SimpleDialog(
-          title: const Text('filter'),
-          contentPadding: EdgeInsets.zero,
-          children: Edinet.docTypes()
-              .map(
-                (type) => Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: CheckboxListTile(
-                    title: Text(type),
-                    value: type == snapshot.data,
-                    onChanged: (value) {
-                      Navigator.of(context).pop(value! ? type : '');
-                    },
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      );
-}
-
-class ShowFavoriteOnlyTooltipWidget extends StatelessWidget {
-  const ShowFavoriteOnlyTooltipWidget({
-    this.onSelected,
-    this.stream,
-    super.key,
-  });
-
-  final void Function(bool)? onSelected;
-  final Stream<bool>? stream;
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<bool>(
-      stream: stream,
-      builder: (context, snapshot) => Container(
-        padding: const EdgeInsets.all(4.0),
-        child: ChoiceChip(
-          avatar: const Icon(Icons.favorite),
-          label: const Text('お気に入りのみ表示する'),
-          selected: snapshot.hasData && snapshot.data!,
-          onSelected: onSelected,
-        ),
-      ),
-    );
+    if (result != null) {
+      ref.read(edinetDocTypeFilterProvider.notifier).setFilter(result);
+    }
   }
 }
