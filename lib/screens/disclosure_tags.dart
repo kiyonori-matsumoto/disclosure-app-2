@@ -1,106 +1,91 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/bloc/tags_disclosure_bloc.dart';
+import 'package:disclosure_app_fl/providers/tag_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DisclosureTagsScreen extends StatefulWidget {
+class DisclosureTagsScreen extends ConsumerWidget {
   final String? tag;
 
-  DisclosureTagsScreen({this.tag});
+  const DisclosureTagsScreen({super.key, this.tag});
 
   @override
-  _DisclosureTagsScreenState createState() =>
-      _DisclosureTagsScreenState(tag: this.tag);
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTag = tag ?? '';
+    final disclosuresAsync = ref.watch(tagDisclosuresProvider(currentTag));
 
-class _DisclosureTagsScreenState extends State<DisclosureTagsScreen> {
-  final String? tag;
-  TagsDisclosureBloc? bloc2;
-
-  @override
-  initState() {
-    super.initState();
-    final appBloc = BlocProvider.of<AppBloc>(context);
-    this.bloc2 = TagsDisclosureBloc(
-      tag: this.tag,
-      user$: appBloc.user$,
-    );
-    this.bloc2!.disclosure.reload.add(null);
-  }
-
-  _DisclosureTagsScreenState({this.tag});
-
-  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return RefreshIndicator(
-      child: CustomScrollView(slivers: <Widget>[
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => DisclosureListItem(
-              item: snapshot[index],
-              showDate: true,
-              key: Key(snapshot[index]['document']),
-            ),
-            childCount: snapshot.length,
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
-            child: ElevatedButton(
-              child: StreamBuilder<bool>(
-                  stream: bloc2!.disclosure.isLoading$,
-                  builder: (context, snapshot) {
-                    return snapshot.data == false
-                        ? Text('更に読み込む')
-                        : CircularProgressIndicator();
-                  }),
-              onPressed: () {
-                this.bloc2!.disclosure.loadNext.add(snapshot.last);
-              },
-            ),
-          ),
-        )
-      ]),
-      onRefresh: () {
-        bloc2!.disclosure.reload.add(this.tag);
-        return bloc2!.disclosure.isLoading$.where((e) => e).first;
-      },
-    );
-  }
-
-  Widget _buildBody(BuildContext context) {
-    return StreamBuilder<List<DocumentSnapshot>?>(
-      stream: bloc2!.disclosure.data$,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data == null) {
-          return Column(
-            children: <Widget>[
-              LinearProgressIndicator(),
-            ],
-          );
-        }
-        return _buildList(context, snapshot.data!);
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${this.tag}の通知履歴"),
+        title: Text("$currentTagの通知履歴"),
       ),
-      body: _buildBody(context),
+      body: disclosuresAsync.when(
+        loading: () => const Column(
+          children: <Widget>[
+            LinearProgressIndicator(),
+          ],
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(Icons.event_busy, size: 48, color: Colors.grey),
+              const SizedBox(height: 8),
+              Text(error.toString()),
+            ],
+          ),
+        ),
+        data: (paginated) {
+          final docs = paginated.docs;
+          if (docs.isEmpty) {
+            return const NoDisclosures();
+          }
+
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.read(tagDisclosuresProvider(currentTag).notifier).refresh(),
+            child: CustomScrollView(
+              slivers: <Widget>[
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final doc = docs[index];
+                      final docKey = doc.id;
+                      return DisclosureListItem(
+                        item: doc,
+                        showDate: true,
+                        key: Key(docKey),
+                      );
+                    },
+                    childCount: docs.length,
+                  ),
+                ),
+                if (paginated.hasMore)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 24.0),
+                      child: ElevatedButton(
+                        onPressed: paginated.isLoadingMore
+                            ? null
+                            : () => ref
+                                .read(tagDisclosuresProvider(currentTag).notifier)
+                                .loadMore(),
+                        child: paginated.isLoadingMore
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('更に読み込む'),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
       bottomNavigationBar: const BannerAdWidget(),
     );
-  }
-
-  @override
-  void dispose() {
-    bloc2?.dispose();
-    super.dispose();
   }
 }
