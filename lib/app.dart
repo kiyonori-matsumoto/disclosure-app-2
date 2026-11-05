@@ -21,6 +21,7 @@ import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
 import 'utils/auth_helper.dart';
+import 'utils/notification_route_helper.dart';
 
 class AppRootWidget extends StatefulWidget {
   @override
@@ -47,6 +48,25 @@ class AppRootWidgetState extends State<AppRootWidget> {
     _subscriptions.add(
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
     );
+
+    _message.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Terminated 状態（アプリ未起動）から通知タップで起動された場合のハンドリング
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final initialMessage = await _message.getInitialMessage();
+        if (initialMessage != null && mounted) {
+          await _handleNotification(initialMessage);
+        }
+      } catch (e, stack) {
+        debugPrint("Failed to handle initial notification message: $e");
+        FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+      }
+    });
 
     _initAuth();
 
@@ -93,30 +113,19 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
   Future<void> _handleNotification(RemoteMessage message) async {
     debugPrint("###notification handler ###: ${message.messageId}");
-    final data = message.data;
-    final String code = data['code'] ?? '';
-    await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
-    if (navigatorKey.currentState == null) return;
-
-    if (data['type'] == 'tag') {
-      final tag = data['tag'];
-      await navigatorKey.currentState?.pushNamed(
-        '/tag-disclosures',
-        arguments: tag,
-      );
-      return;
-    }
-
-    final company = await getCompany(
-      bloc,
-      code: code,
-      name: data['name'] ?? '',
+    final destination = await NotificationRouteHelper.resolveDestination(
+      message.data,
+      companyResolver: (code, name) => getCompany(
+        bloc,
+        code: code,
+        name: name,
+      ),
     );
-    await navigatorKey.currentState?.pushNamed(
-      '/company-disclosures',
-      arguments: company,
-    );
+
+    NotificationRouteHelper.navigateToDestination(nav, destination);
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
@@ -128,6 +137,19 @@ class AppRootWidgetState extends State<AppRootWidget> {
         builder: (context) => AlertDialog(
           title: Text(message.notification?.title ?? ''),
           content: Text(message.notification?.body ?? ''),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('閉じる'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _handleNotification(message);
+              },
+              child: const Text('開く'),
+            ),
+          ],
         ),
       );
     }
