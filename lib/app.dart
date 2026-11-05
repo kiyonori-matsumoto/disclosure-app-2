@@ -58,26 +58,12 @@ class AppRootWidgetState extends State<AppRootWidget> {
       sound: true,
     );
 
-    // FCM トークンの出力（テスト通知送信用）
-    // ignore: deprecated_member_use
-    _message.getToken().then((token) {
-      debugPrint("==================================================");
-      debugPrint("### FCM_TOKEN ###: $token");
-      debugPrint("==================================================");
-    }).catchError((dynamic e) {
-      debugPrint("Failed to get FCM token: $e");
-    });
-
     // Terminated 状態（アプリ未起動）から通知タップで起動された場合のハンドリング
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final initialMessage = await _message.getInitialMessage();
         if (initialMessage != null && mounted) {
-          debugPrint(
-              "### Found initialMessage (Cold Start): ${initialMessage.messageId}, data: ${initialMessage.data}");
           await _handleNotification(initialMessage);
-        } else {
-          debugPrint("### No initialMessage on launch (Normal Start)");
         }
       } catch (e, stack) {
         debugPrint("Failed to handle initial notification message: $e");
@@ -129,13 +115,9 @@ class AppRootWidgetState extends State<AppRootWidget> {
   }
 
   Future<void> _handleNotification(RemoteMessage message) async {
-    debugPrint(
-        "### notification handler ###: id=${message.messageId}, data=${message.data}");
+    debugPrint("### notification handler ###: ${message.messageId}");
     final nav = navigatorKey.currentState;
-    if (nav == null) {
-      debugPrint("### NavigatorState is null, cannot navigate");
-      return;
-    }
+    if (nav == null) return;
 
     final destination = await NotificationRouteHelper.resolveDestination(
       message.data,
@@ -145,11 +127,8 @@ class AppRootWidgetState extends State<AppRootWidget> {
         name: name,
       ),
     );
-    debugPrint("### Resolved destination: $destination");
 
-    final result =
-        NotificationRouteHelper.navigateToDestination(nav, destination);
-    debugPrint("### Navigation executed: $result");
+    NotificationRouteHelper.navigateToDestination(nav, destination);
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
