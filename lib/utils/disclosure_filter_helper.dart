@@ -31,7 +31,7 @@ class DisclosureFilterHelper {
     required Map<String, dynamic> data,
     required Iterable<String> selectedFilterTitles,
     required bool hideDailyDisclosure,
-    required List<String> favoriteCompanyCodes,
+    required Set<String> favoriteCompanyCodes,
   }) {
     final rawTags = data['tags'];
     final tags = rawTags is Map ? rawTags : const {};
@@ -44,7 +44,9 @@ class DisclosureFilterHelper {
     // 2. Tag filter check
     final hasSelectedFilters = selectedFilterTitles.isNotEmpty;
     if (hasSelectedFilters) {
-      final matchesAnyTag = selectedFilterTitles.any((tag) => tags[tag] != null);
+      final matchesAnyTag = selectedFilterTitles.any(
+        (tag) => tags[tag] != null,
+      );
       if (!matchesAnyTag) {
         return false;
       }
