@@ -473,6 +473,7 @@ class AppBloc extends Bloc {
       (user, setting) {
         if (!setting.containsKey('notification_tags')) {
           // ignore: deprecated_member_use
+          // ignore: deprecated_member_use_from_same_package
           messaging
               .getToken()
               .then((token) {
@@ -511,6 +512,7 @@ class AppBloc extends Bloc {
     });
 
     // ignore: deprecated_member_use
+    // ignore: deprecated_member_use_from_same_package
     messaging
         .getToken()
         .then((token) async {
