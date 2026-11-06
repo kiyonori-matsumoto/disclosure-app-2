@@ -15,6 +15,7 @@ import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/auth_helper.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
+import 'package:disclosure_app_fl/utils/notification_route_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -36,6 +37,9 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey(
+    debugLabel: "Main ScaffoldMessenger",
+  );
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
 
@@ -48,6 +52,25 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
     _subscriptions.add(
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
     );
+
+    _message.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Terminated 状態（アプリ未起動）から通知タップで起動された場合のハンドリング
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final initialMessage = await _message.getInitialMessage();
+        if (initialMessage != null && mounted) {
+          await _handleNotification(initialMessage);
+        }
+      } catch (e, stack) {
+        debugPrint("Failed to handle initial notification message: $e");
+        FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+      }
+    });
 
     _initAuth();
 
@@ -64,46 +87,82 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
   }
 
   Future<void> _handleNotification(RemoteMessage message) async {
-    debugPrint("###notification handler ###: ${message.messageId}");
-    final data = message.data;
-    final String code = data['code'] ?? '';
-    await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
-
-    if (navigatorKey.currentState == null) return;
-
-    if (data['type'] == 'tag') {
-      final tag = data['tag'];
-      await navigatorKey.currentState?.pushNamed(
-        '/tag-disclosures',
-        arguments: tag,
-      );
-      return;
-    }
+    debugPrint("### notification handler ###: ${message.messageId}");
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
     final companyCodeMap = ref.read(companyCodeMapProvider);
-    final company = await getCompany(
-      code: code,
-      name: data['name'] ?? '',
+    final destination = await NotificationRouteHelper.resolveDestination(
+      message.data,
       companyCodeMap: companyCodeMap,
+      companyResolver: (code, name) => getCompany(
+        code: code,
+        name: name,
+        companyCodeMap: companyCodeMap,
+      ),
     );
-    await navigatorKey.currentState?.pushNamed(
-      '/company-disclosures',
-      arguments: company,
-    );
+
+    NotificationRouteHelper.navigateToDestination(nav, destination);
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
-    debugPrint("###notificationMsg handler ###: ${message.messageId}");
-    final dialogContext = navigatorKey.currentState?.overlay?.context;
-    if (dialogContext != null && message.notification != null) {
-      await showDialog<dynamic>(
-        context: dialogContext,
-        builder: (context) => AlertDialog(
-          title: Text(message.notification?.title ?? ''),
-          content: Text(message.notification?.body ?? ''),
+    debugPrint("### notificationMsg handler ###: ${message.messageId}");
+    final title = message.notification?.title ?? '';
+    final body = message.notification?.body ?? '';
+    if (title.isEmpty && body.isEmpty) return;
+
+    final companyCodeMap = ref.read(companyCodeMapProvider);
+    final destination = await NotificationRouteHelper.resolveDestination(
+      message.data,
+      companyCodeMap: companyCodeMap,
+      companyResolver: (code, name) => getCompany(
+        code: code,
+        name: name,
+        companyCodeMap: companyCodeMap,
+      ),
+    );
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger == null) return;
+
+    messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title.isNotEmpty)
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            if (body.isNotEmpty)
+              Text(
+                body,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
         ),
-      );
-    }
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: destination is! NoneDestination
+            ? SnackBarAction(
+                label: '開く',
+                onPressed: () {
+                  final nav = navigatorKey.currentState;
+                  if (nav != null) {
+                    NotificationRouteHelper.navigateToDestination(
+                      nav,
+                      destination,
+                    );
+                  }
+                },
+              )
+            : null,
+      ),
+    );
   }
 
   Future<void> _initAuth() async {
@@ -128,6 +187,7 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: '適時開示(TDNet/Edinet) Notifier',
       locale: const Locale('ja', 'JP'),
       localizationsDelegates: const [
