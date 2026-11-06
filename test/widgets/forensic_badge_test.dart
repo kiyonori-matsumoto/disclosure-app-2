@@ -51,7 +51,7 @@ void main() {
     );
 
     // 代表タグ名 + 残り数 (+1) が表示されること
-    expect(find.text('🚨 倒産危機サイン +1'), findsOneWidget);
+    expect(find.text('🚨 事業継続の重要疑義 +1'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders warning badge with single tag',
@@ -71,7 +71,7 @@ void main() {
       ),
     );
 
-    expect(find.text('⚠️ 本業の現金減少'), findsOneWidget);
+    expect(find.text('⚠️ 営業CFマイナス'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge opens ForensicDetailSheet on tap',
@@ -102,7 +102,7 @@ void main() {
     expect(find.byType(ForensicDetailSheet), findsNothing);
 
     // バッジをタップ
-    await tester.tap(find.text('🚨 倒産危機サイン'));
+    await tester.tap(find.text('🚨 事業継続の重要疑義'));
     await tester.pumpAndSettle();
 
     // ボトムシートが開くこと

@@ -53,13 +53,13 @@ void main() {
     expect(find.text('🚨 重大な財務・経営リスクを検知'), findsOneWidget);
 
     // 検出タグ
-    expect(find.text('🚨 倒産危機サイン'), findsOneWidget);
-    expect(find.text('⚠️ 本業の現金減少'), findsOneWidget);
+    expect(find.text('🚨 事業継続の重要疑義'), findsOneWidget);
+    expect(find.text('⚠️ 営業CFマイナス'), findsOneWidget);
 
     // 診断解説文
     expect(
       find.text(
-        '事業を続けられるかどうかの重大な懸念（継続企業の前提の疑義）が出ています。また、本業の営業活動で現金がマイナス（流出状態）になっています。',
+        '継続企業の前提に関する重要な疑義や不確実性に関する注記（GC注記）が記載されています。また、本業の営業活動によるキャッシュフローがマイナス（現金流出状態）となっています。',
       ),
       findsOneWidget,
     );
@@ -79,7 +79,7 @@ void main() {
     expect(find.text('▲2.8億円'), findsOneWidget);
 
     // 免責事項
-    expect(find.textContaining('本診断は開示書類の定性情報および財務数値を機械的にクロス検証した参考情報です'), findsOneWidget);
+    expect(find.textContaining('特定の有価証券の価値評価や投資の勧誘・助言を目的としたものではありません'), findsOneWidget);
   });
 
   testWidgets('ForensicDetailSheet displays normal summary and metrics correctly',

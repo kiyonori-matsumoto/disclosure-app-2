@@ -363,7 +363,7 @@ class ForensicDetailSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '※ 本診断は開示書類の定性情報および財務数値を機械的にクロス検証した参考情報です。投資判断は必ずご自身で行ってください。',
+                      '※ 本診断は開示書類の定性情報および財務数値を機械的に抽出・解析した参考情報です。特定の有価証券の価値評価や投資の勧誘・助言を目的としたものではありません。投資に関する最終決定は必ずご自身の判断で行ってください。',
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600,

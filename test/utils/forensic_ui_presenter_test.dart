@@ -14,11 +14,11 @@ void main() {
       final tagInfos = presenter.tagInfos;
 
       expect(tagInfos.length, 3);
-      expect(tagInfos[0].displayName, '🚨 倒産危機サイン');
+      expect(tagInfos[0].displayName, '🚨 事業継続の重要疑義');
       expect(tagInfos[0].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[1].displayName, '⚠️ 本業の現金減少');
+      expect(tagInfos[1].displayName, '⚠️ 営業CFマイナス');
       expect(tagInfos[1].severity, ForensicRiskLevel.warning);
-      expect(tagInfos[2].displayName, '⚠️ 外部責任転嫁');
+      expect(tagInfos[2].displayName, '⚠️ 外部要因への言及優勢');
       expect(tagInfos[2].severity, ForensicRiskLevel.warning);
       expect(tagInfos[2].isToneTag, isTrue);
     });
@@ -34,7 +34,7 @@ void main() {
 
       expect(
         text,
-        '事業を続けられるかどうかの重大な懸念（継続企業の前提の疑義）が出ています。また、本業の営業活動で現金がマイナス（流出状態）になっています。',
+        '継続企業の前提に関する重要な疑義や不確実性に関する注記（GC注記）が記載されています。また、本業の営業活動によるキャッシュフローがマイナス（現金流出状態）となっています。',
       );
     });
 
