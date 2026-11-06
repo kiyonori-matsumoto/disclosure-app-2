@@ -39,15 +39,31 @@ class ForensicDetailSheet extends StatelessWidget {
     final theme = Theme.of(context);
     final presenter = ForensicUiPresenter(forensic);
     final isCritical = forensic.riskLevel == ForensicRiskLevel.critical;
+    final isWarning = forensic.riskLevel == ForensicRiskLevel.warning;
 
-    final primaryColor = isCritical ? Colors.red : Colors.orange.shade800;
-    final cardBgColor = isCritical
-        ? (theme.brightness == Brightness.dark
-            ? Colors.red.shade900.withValues(alpha: 0.3)
-            : Colors.red.shade50)
-        : (theme.brightness == Brightness.dark
-            ? Colors.orange.shade900.withValues(alpha: 0.3)
-            : Colors.orange.shade50);
+    final Color primaryColor;
+    final Color cardBgColor;
+    final IconData headerIcon;
+
+    if (isCritical) {
+      primaryColor = Colors.red;
+      cardBgColor = theme.brightness == Brightness.dark
+          ? Colors.red.shade900.withValues(alpha: 0.3)
+          : Colors.red.shade50;
+      headerIcon = Icons.crisis_alert;
+    } else if (isWarning) {
+      primaryColor = Colors.orange.shade800;
+      cardBgColor = theme.brightness == Brightness.dark
+          ? Colors.orange.shade900.withValues(alpha: 0.3)
+          : Colors.orange.shade50;
+      headerIcon = Icons.warning_amber_rounded;
+    } else {
+      primaryColor = Colors.green.shade700;
+      cardBgColor = theme.brightness == Brightness.dark
+          ? Colors.green.shade900.withValues(alpha: 0.3)
+          : Colors.green.shade50;
+      headerIcon = Icons.check_circle_outline;
+    }
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -74,7 +90,7 @@ class ForensicDetailSheet extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    isCritical ? Icons.crisis_alert : Icons.warning_amber_rounded,
+                    headerIcon,
                     color: primaryColor,
                     size: 24,
                   ),
@@ -150,7 +166,7 @@ class ForensicDetailSheet extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                isCritical ? 'CRITICAL (危険)' : 'WARNING (注意)',
+                                presenter.riskLevelLabel,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,

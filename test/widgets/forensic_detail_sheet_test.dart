@@ -81,4 +81,47 @@ void main() {
     // 免責事項
     expect(find.textContaining('本診断は開示書類の定性情報および財務数値を機械的にクロス検証した参考情報です'), findsOneWidget);
   });
+
+  testWidgets('ForensicDetailSheet displays normal summary and metrics correctly',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final forensic = ForensicResult(
+      version: 1,
+      analyzedAt: DateTime.fromMillisecondsSinceEpoch(1730642400 * 1000),
+      riskLevel: ForensicRiskLevel.normal,
+      metrics: const ForensicMetrics(
+        revenue: 45000000,
+        operatingIncome: 4200000,
+        operatingCashFlow: 3800000,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ForensicDetailSheet(
+            forensic: forensic,
+            companyName: '優良企業 (1234)',
+            documentTitle: '決算短信',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('NORMAL (正常)'), findsOneWidget);
+    expect(find.text('健全な開示内容'), findsOneWidget);
+    expect(
+      find.text('重大な財務リスクや特異な定性トーンの変化は検出されませんでした。'),
+      findsOneWidget,
+    );
+    expect(find.text('450億円'), findsOneWidget);
+    expect(find.text('42億円'), findsOneWidget);
+    expect(find.text('38億円'), findsOneWidget);
+  });
 }

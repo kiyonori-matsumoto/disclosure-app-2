@@ -1,6 +1,5 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
-import 'package:disclosure_app_fl/models/forensic_result.dart';
 import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
@@ -97,8 +96,7 @@ class _EdinetListItemState extends State<EdinetListItem> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(widget.edinet.relatedCompaniesName),
-                    if (widget.edinet.forensic != null &&
-                        widget.edinet.forensic!.riskLevel != ForensicRiskLevel.normal) ...[
+                    if (widget.edinet.forensic != null) ...[
                       const SizedBox(height: 4),
                       ForensicBadge(
                         forensic: widget.edinet.forensic,

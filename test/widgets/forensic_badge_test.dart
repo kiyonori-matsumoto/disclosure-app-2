@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('ForensicBadge renders nothing for null or normal riskLevel',
+  testWidgets('ForensicBadge renders nothing for null forensic',
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -15,7 +15,10 @@ void main() {
       ),
     );
     expect(find.byType(GestureDetector), findsNothing);
+  });
 
+  testWidgets('ForensicBadge renders normal badge with sound indicator',
+      (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -25,7 +28,7 @@ void main() {
         ),
       ),
     );
-    expect(find.byType(GestureDetector), findsNothing);
+    expect(find.text('✅ 健全'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders critical badge with representative tag',

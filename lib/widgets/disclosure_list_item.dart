@@ -1,5 +1,4 @@
 import 'package:disclosure_app_fl/models/disclosure.dart';
-import 'package:disclosure_app_fl/models/forensic_result.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
@@ -74,8 +73,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                 disclosure.title ?? '',
                 overflow: TextOverflow.fade,
               ),
-              if (disclosure.forensic != null &&
-                  disclosure.forensic!.riskLevel != ForensicRiskLevel.normal) ...[
+              if (disclosure.forensic != null) ...[
                 const SizedBox(height: 4),
                 ForensicBadge(
                   forensic: disclosure.forensic,

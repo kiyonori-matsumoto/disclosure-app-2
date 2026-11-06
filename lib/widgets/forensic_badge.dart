@@ -72,12 +72,13 @@ class _ForensicBadgeState extends State<ForensicBadge>
   @override
   Widget build(BuildContext context) {
     final forensic = widget.forensic;
-    if (forensic == null || forensic.riskLevel == ForensicRiskLevel.normal) {
+    if (forensic == null) {
       return const SizedBox.shrink();
     }
 
     final presenter = ForensicUiPresenter(forensic);
     final isCritical = forensic.riskLevel == ForensicRiskLevel.critical;
+    final isWarning = forensic.riskLevel == ForensicRiskLevel.warning;
 
     // バッジラベルの決定
     String label;
@@ -86,12 +87,32 @@ class _ForensicBadgeState extends State<ForensicBadge>
       final extraCount = presenter.tagInfos.length - 1;
       label = extraCount > 0 ? '$firstTag +$extraCount' : firstTag;
     } else {
-      label = isCritical ? '🚨 危険リスク' : '⚠️ 注意トーン';
+      if (isCritical) {
+        label = '🚨 危険リスク';
+      } else if (isWarning) {
+        label = '⚠️ 注意トーン';
+      } else {
+        label = '✅ 健全';
+      }
     }
 
-    final bgColor = isCritical ? Colors.red.shade100 : Colors.orange.shade100;
-    final borderColor = isCritical ? Colors.red.shade600 : Colors.orange.shade600;
-    final textColor = isCritical ? Colors.red.shade900 : Colors.deepOrange.shade900;
+    final Color bgColor;
+    final Color borderColor;
+    final Color textColor;
+
+    if (isCritical) {
+      bgColor = Colors.red.shade100;
+      borderColor = Colors.red.shade600;
+      textColor = Colors.red.shade900;
+    } else if (isWarning) {
+      bgColor = Colors.orange.shade100;
+      borderColor = Colors.orange.shade600;
+      textColor = Colors.deepOrange.shade900;
+    } else {
+      bgColor = Colors.green.shade50;
+      borderColor = Colors.green.shade400;
+      textColor = Colors.green.shade900;
+    }
 
     Widget badgeContent = GestureDetector(
       behavior: HitTestBehavior.opaque,
