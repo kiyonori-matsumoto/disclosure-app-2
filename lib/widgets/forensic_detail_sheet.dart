@@ -352,8 +352,69 @@ class ForensicDetailSheet extends StatelessWidget {
                         }).toList(),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
+
+                  // AI判定基準・プロンプトの開示
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Theme(
+                      data: theme.copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        leading: const Icon(Icons.help_outline, size: 20),
+                        title: Text(
+                          'AI 判定基準・プロンプト設問の開示',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                        children: [
+                          Text(
+                            '本診断は、開示文書（MD&A・事業等のリスク・財務注記）に対し、バックエンド解析エンジンが以下の客観的設問（プロンプト）を数理判定した結果に基づいています。',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade700,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ...((presenter.tagInfos.isNotEmpty
+                                  ? presenter.tagInfos
+                                  : ForensicUiPresenter.knownTags.values)
+                              .map((tag) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${tag.displayName}：',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      tag.promptQuestion,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList()),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   // 免責事項
                   Container(

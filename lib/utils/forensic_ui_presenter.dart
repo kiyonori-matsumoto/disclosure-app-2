@@ -5,6 +5,8 @@ class ForensicTagInfo {
   final String displayName;
   final ForensicRiskLevel severity;
   final String templateText;
+  /// バックエンド（functions/src/forensic/schemas/*.ts）で評価されている判定プロンプト設問
+  final String promptQuestion;
   final bool isToneTag;
 
   const ForensicTagInfo({
@@ -12,6 +14,7 @@ class ForensicTagInfo {
     required this.displayName,
     required this.severity,
     required this.templateText,
+    required this.promptQuestion,
     this.isToneTag = false,
   });
 }
@@ -32,62 +35,71 @@ class FormattedMetricItem {
 
 class ForensicUiPresenter {
   static const Map<String, ForensicTagInfo> knownTags = {
-    // 財務・注記リスクタグ
+    // 財務・注記リスクタグ (参照: backend functions/src/forensic/schemas/financial_anomaly.ts)
     'going_concern': ForensicTagInfo(
       id: 'going_concern',
       displayName: '🚨 事業継続の重要疑義',
       severity: ForensicRiskLevel.critical,
       templateText: '継続企業の前提に関する重要な疑義や不確実性に関する注記（GC注記）が記載されています。',
+      promptQuestion: '継続企業の前提に関する注記・疑義（GC注記）の記載がありますか？',
     ),
     'covenant_breach': ForensicTagInfo(
       id: 'covenant_breach',
       displayName: '🚨 財務制限条項に抵触',
       severity: ForensicRiskLevel.critical,
       templateText: '借入契約の財務制限条項への抵触またはその懸念が報告されています。',
+      promptQuestion: '財務制限条項（コベナンツ）への抵触、または抵触懸念の記載がありますか？',
     ),
     'unsustainable_payout': ForensicTagInfo(
       id: 'unsustainable_payout',
       displayName: '🚨 利益超過分配',
       severity: ForensicRiskLevel.critical,
       templateText: '当期純利益を超える配当の実施など、資本や内部留保の取り崩しによる配当維持が報告されています。',
+      promptQuestion: '当期純利益を超える配当・分配（利益超過分配）、または内部留保の大幅取崩しに関する記載がありますか？',
     ),
     'negative_operating_cf': ForensicTagInfo(
       id: 'negative_operating_cf',
       displayName: '⚠️ 営業CFマイナス',
       severity: ForensicRiskLevel.warning,
       templateText: '本業の営業活動によるキャッシュフローがマイナス（現金流出状態）となっています。',
+      promptQuestion: '営業キャッシュ・フローのマイナスや本業での現金流出に関する言及がありますか？（または営業CF実数値がマイナス）',
     ),
     'inventory_receivable_surge': ForensicTagInfo(
       id: 'inventory_receivable_surge',
       displayName: '⚠️ 棚卸資産・売掛金急増',
       severity: ForensicRiskLevel.warning,
       templateText: '棚卸資産（在庫）や売上債権の急増により、運転資本の負担が増加しています。',
+      promptQuestion: '棚卸資産（売れ残り在庫）や売上債権（未回収代金）の急増に関する記載がありますか？',
     ),
     'impairment_loss': ForensicTagInfo(
       id: 'impairment_loss',
       displayName: '⚠️ 減損損失の計上',
       severity: ForensicRiskLevel.warning,
       templateText: '固定資産やのれん等の減損損失、またはその兆候が報告されています。',
+      promptQuestion: '固定資産やのれんの減損損失、または減損の兆候に関する記載がありますか？',
     ),
     'interest_debt_pressure': ForensicTagInfo(
       id: 'interest_debt_pressure',
       displayName: '⚠️ 有利子負債・利払負担',
       severity: ForensicRiskLevel.warning,
-      templateText: '借入金の増加や支払利息の負担増大に関する記載があります。',
+      templateText: '借入金の増加や支払利息の負担増大に関する記載がありますか？',
+      promptQuestion: '借入金の急増、利払い負担増、有利子負債の急増に関する記載がありますか？',
     ),
     'subsequent_events': ForensicTagInfo(
       id: 'subsequent_events',
       displayName: '⚠️ 重要な後発事象',
       severity: ForensicRiskLevel.warning,
       templateText: '決算期日以降に発生した事業・財務に影響を与える重大な事象が報告されています。',
+      promptQuestion: '重要な後発事象（重大訴訟、事故、大口取引終了、不正発覚等）に関する記載がありますか？',
     ),
 
-    // 定性言い訳・経営トーンタグ
+    // 定性言い訳・経営トーンタグ (参照: backend functions/src/forensic/schemas/qualitative_excuses.ts)
     'blame_external_macro': ForensicTagInfo(
       id: 'blame_external_macro',
       displayName: '⚠️ 外部要因への言及優勢',
       severity: ForensicRiskLevel.warning,
       templateText: '業績変動の要因説明において、為替や原材料高など外部マクロ環境への言及が中心となっています。',
+      promptQuestion: '経営陣が説明する業績不振・減益の主因：為替、原材料高、資源高、天候、地政学等に全責任転嫁している',
       isToneTag: true,
     ),
     'blame_temporary_one_off': ForensicTagInfo(
@@ -95,6 +107,7 @@ class ForensicUiPresenter {
       displayName: '⚠️ 一時的要因としての説明',
       severity: ForensicRiskLevel.warning,
       templateText: '業績悪化の主因として「一過性の先行投資」や「システム切替」等の一時的費用を挙げています。',
+      promptQuestion: '経営陣が説明する業績不振・減益の主因：「一過性の先行投資・システム切替」等の一時的要因と強弁している',
       isToneTag: true,
     ),
     'unfounded_optimism': ForensicTagInfo(
@@ -102,6 +115,7 @@ class ForensicUiPresenter {
       displayName: '⚠️ 定性的な回復見通し',
       severity: ForensicRiskLevel.warning,
       templateText: '「足元底打ち傾向」「下期回復を見込む」など、定性的・主観的な回復期待表現が記載されています。',
+      promptQuestion: '「足元底打ち」「中長期的には堅調」「下期回復を見込む」等の具体的数値根拠を欠く楽観形容詞が含まれますか？',
       isToneTag: true,
     ),
     'risk_materialized': ForensicTagInfo(
@@ -109,6 +123,7 @@ class ForensicUiPresenter {
       displayName: '⚠️ 事業リスクの顕在化',
       severity: ForensicRiskLevel.warning,
       templateText: '損害賠償、納期遅延、訴訟など、想定されていた事業リスクが実際に発生・顕在化した旨が追記されています。',
+      promptQuestion: '「損害賠償」「訴訟」「不正」「取引停止」「損失計上」などリスクが実際に顕在化した記述がありますか？',
       isToneTag: true,
     ),
     'new_major_risk': ForensicTagInfo(
@@ -116,6 +131,7 @@ class ForensicUiPresenter {
       displayName: '⚠️ 新規リスク項目の追加',
       severity: ForensicRiskLevel.warning,
       templateText: '前期の開示には記載がなかった、新たな重要リスク項目が追加されています。',
+      promptQuestion: '前期開示になかった、新たな重大リスク項目や大幅な規制・市場リスクが追加されていますか？',
       isToneTag: true,
     ),
     'tone_retreat': ForensicTagInfo(
@@ -123,6 +139,7 @@ class ForensicUiPresenter {
       displayName: '⚠️ 開示トーンの慎重化',
       severity: ForensicRiskLevel.warning,
       templateText: '前期に用いられていた強気の表現が削除または修正され、慎重・不透明感を強調する表現へトーンが変化しています。',
+      promptQuestion: '「順調」「強固」「安定的」などの強気文言が削除され、慎重・不透明・懸念する表現へ後退していますか？',
       isToneTag: true,
     ),
   };
@@ -175,6 +192,7 @@ class ForensicUiPresenter {
         displayName: '⚠️ $tagId',
         severity: ForensicRiskLevel.warning,
         templateText: '特記事項（$tagId）が検知されました。',
+        promptQuestion: '該当項目（$tagId）に関する記載・指標の検知',
       );
     }).toList();
   }

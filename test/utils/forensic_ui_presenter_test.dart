@@ -16,11 +16,14 @@ void main() {
       expect(tagInfos.length, 3);
       expect(tagInfos[0].displayName, '🚨 事業継続の重要疑義');
       expect(tagInfos[0].severity, ForensicRiskLevel.critical);
+      expect(tagInfos[0].promptQuestion, contains('継続企業の前提に関する注記・疑義'));
       expect(tagInfos[1].displayName, '⚠️ 営業CFマイナス');
       expect(tagInfos[1].severity, ForensicRiskLevel.warning);
+      expect(tagInfos[1].promptQuestion, contains('営業キャッシュ・フロー'));
       expect(tagInfos[2].displayName, '⚠️ 外部要因への言及優勢');
       expect(tagInfos[2].severity, ForensicRiskLevel.warning);
       expect(tagInfos[2].isToneTag, isTrue);
+      expect(tagInfos[2].promptQuestion, contains('為替、原材料高'));
     });
 
     test('composes template explanation string accurately', () {

@@ -78,6 +78,12 @@ void main() {
     expect(find.text('営業活動CF'), findsOneWidget);
     expect(find.text('▲2.8億円'), findsOneWidget);
 
+    // AI判定基準・プロンプト設問の開示アコーディオン
+    expect(find.text('AI 判定基準・プロンプト設問の開示'), findsOneWidget);
+    await tester.tap(find.text('AI 判定基準・プロンプト設問の開示'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('継続企業の前提に関する注記・疑義'), findsOneWidget);
+
     // 免責事項
     expect(find.textContaining('特定の有価証券の価値評価や投資の勧誘・助言を目的としたものではありません'), findsOneWidget);
   });
