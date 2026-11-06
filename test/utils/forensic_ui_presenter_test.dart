@@ -104,7 +104,7 @@ void main() {
       );
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.normal)).headline,
-        '健全な開示内容',
+        '特記事項・リスク未検出',
       );
     });
   });

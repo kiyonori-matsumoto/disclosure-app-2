@@ -120,8 +120,8 @@ void main() {
       ),
     );
 
-    expect(find.text('NORMAL (正常)'), findsOneWidget);
-    expect(find.text('健全な開示内容'), findsOneWidget);
+    expect(find.text('NORMAL (未検出)'), findsOneWidget);
+    expect(find.text('特記事項・リスク未検出'), findsOneWidget);
     expect(
       find.text('重大な財務リスクや特異な定性トーンの変化は検出されませんでした。'),
       findsOneWidget,

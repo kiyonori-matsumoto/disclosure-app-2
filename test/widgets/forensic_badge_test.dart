@@ -28,7 +28,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('✅ 健全'), findsOneWidget);
+    expect(find.text('✓ リスク未検出'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders critical badge with representative tag',

@@ -167,7 +167,7 @@ class ForensicUiPresenter {
       case ForensicRiskLevel.warning:
         return '⚠️ 留意すべき財務リスク・開示トーンを検知';
       case ForensicRiskLevel.normal:
-        return '健全な開示内容';
+        return '特記事項・リスク未検出';
     }
   }
 
@@ -178,7 +178,7 @@ class ForensicUiPresenter {
       case ForensicRiskLevel.warning:
         return 'WARNING (注意)';
       case ForensicRiskLevel.normal:
-        return 'NORMAL (正常)';
+        return 'NORMAL (未検出)';
     }
   }
 

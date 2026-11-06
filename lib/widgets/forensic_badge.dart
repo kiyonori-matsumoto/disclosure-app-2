@@ -92,7 +92,7 @@ class _ForensicBadgeState extends State<ForensicBadge>
       } else if (isWarning) {
         label = '⚠️ 注意トーン';
       } else {
-        label = '✅ 健全';
+        label = '✓ リスク未検出';
       }
     }
 
