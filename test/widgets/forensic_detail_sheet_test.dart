@@ -130,4 +130,42 @@ void main() {
     expect(find.text('42億円'), findsOneWidget);
     expect(find.text('38億円'), findsOneWidget);
   });
+
+  testWidgets('ForensicDetailSheet renders clearly in dark mode',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final forensic = ForensicResult(
+      version: 1,
+      analyzedAt: DateTime.fromMillisecondsSinceEpoch(1730642400 * 1000),
+      riskLevel: ForensicRiskLevel.warning,
+      tags: const ['negative_operating_cf'],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: ForensicDetailSheet(
+            forensic: forensic,
+            companyName: 'ダークモード企業 (9999)',
+            documentTitle: '四半期報告書',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('定性・財務フォレンジック解析'), findsOneWidget);
+    expect(find.text('機械判定基準・評価設問（プロンプト）の開示'), findsOneWidget);
+
+    // プロンプト開示を展開して視認できること
+    await tester.tap(find.text('機械判定基準・評価設問（プロンプト）の開示'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('営業キャッシュ・フロー'), findsOneWidget);
+  });
 }

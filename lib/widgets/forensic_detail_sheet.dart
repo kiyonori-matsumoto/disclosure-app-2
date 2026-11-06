@@ -355,11 +355,37 @@ class ForensicDetailSheet extends StatelessWidget {
                     const SizedBox(height: 16),
                   ],
 
-                  // AI判定基準・プロンプトの開示
+                  // 免責事項
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16.0),
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.grey.shade900
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '※ 本解析結果は開示書類の定性情報および財務数値を機械的に抽出・整理した参考情報です。企業状態の健全性や危険性を評価・格付けするものではなく、特定の有価証券の価値評価や投資の勧誘・助言を目的としたものでもありません。投資に関する最終決定は必ずご自身の判断で行ってください。',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+
+                  // 機械判定基準・プロンプト設問の開示（最下部に配置）
                   Container(
                     margin: const EdgeInsets.only(bottom: 16.0),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Theme(
@@ -377,7 +403,9 @@ class ForensicDetailSheet extends StatelessWidget {
                           Text(
                             '本解析は、開示文書（MD&A・事業等のリスク・財務注記）に対し、バックエンド解析エンジンが以下の客観的設問（プロンプト）を数理判定した結果に基づいています。',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.grey.shade700,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey.shade300
+                                  : Colors.grey.shade700,
                               height: 1.4,
                             ),
                           ),
@@ -393,9 +421,12 @@ class ForensicDetailSheet extends StatelessWidget {
                                 children: [
                                   Text(
                                     '${tag.displayName}：',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
+                                      color: theme.brightness == Brightness.dark
+                                          ? Colors.white
+                                          : Colors.black87,
                                     ),
                                   ),
                                   Expanded(
@@ -403,7 +434,9 @@ class ForensicDetailSheet extends StatelessWidget {
                                       tag.promptQuestion,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey.shade800,
+                                        color: theme.brightness == Brightness.dark
+                                            ? Colors.grey.shade100
+                                            : Colors.grey.shade900,
                                       ),
                                     ),
                                   ),
@@ -412,23 +445,6 @@ class ForensicDetailSheet extends StatelessWidget {
                             );
                           }).toList()),
                         ],
-                      ),
-                    ),
-                  ),
-
-                  // 免責事項
-                  Container(
-                    padding: const EdgeInsets.all(10.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '※ 本解析結果は開示書類の定性情報および財務数値を機械的に抽出・整理した参考情報です。企業状態の健全性や危険性を評価・格付けするものではなく、特定の有価証券の価値評価や投資の勧誘・助言を目的としたものでもありません。投資に関する最終決定は必ずご自身の判断で行ってください。',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey.shade600,
-                        height: 1.4,
                       ),
                     ),
                   ),
