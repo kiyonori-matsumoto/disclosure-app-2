@@ -21,6 +21,7 @@ import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'screens/disclosure_stream.dart';
 import 'utils/get_company.dart';
 import 'utils/auth_helper.dart';
+import 'utils/notification_route_helper.dart';
 
 class AppRootWidget extends StatefulWidget {
   @override
@@ -32,6 +33,9 @@ class AppRootWidget extends StatefulWidget {
 class AppRootWidgetState extends State<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
+  );
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey(
+    debugLabel: "Main ScaffoldMessenger",
   );
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
@@ -47,6 +51,25 @@ class AppRootWidgetState extends State<AppRootWidget> {
     _subscriptions.add(
       FirebaseMessaging.onMessageOpenedApp.listen(_handleNotification),
     );
+
+    _message.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Terminated 状態（アプリ未起動）から通知タップで起動された場合のハンドリング
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final initialMessage = await _message.getInitialMessage();
+        if (initialMessage != null && mounted) {
+          await _handleNotification(initialMessage);
+        }
+      } catch (e, stack) {
+        debugPrint("Failed to handle initial notification message: $e");
+        FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+      }
+    });
 
     _initAuth();
 
@@ -92,42 +115,54 @@ class AppRootWidgetState extends State<AppRootWidget> {
   }
 
   Future<void> _handleNotification(RemoteMessage message) async {
-    debugPrint("###notification handler ###: ${message.messageId}");
-    final data = message.data;
-    final String code = data['code'] ?? '';
-    await Future<dynamic>.delayed(const Duration(milliseconds: 1000));
+    debugPrint("### notification handler ###: ${message.messageId}");
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
-    if (navigatorKey.currentState == null) return;
-
-    if (data['type'] == 'tag') {
-      final tag = data['tag'];
-      await navigatorKey.currentState?.pushNamed(
-        '/tag-disclosures',
-        arguments: tag,
-      );
-      return;
-    }
-
-    final company = await getCompany(
-      bloc,
-      code: code,
-      name: data['name'] ?? '',
+    final destination = await NotificationRouteHelper.resolveDestination(
+      message.data,
+      companyResolver: (code, name) => getCompany(
+        bloc,
+        code: code,
+        name: name,
+      ),
     );
-    await navigatorKey.currentState?.pushNamed(
-      '/company-disclosures',
-      arguments: company,
-    );
+
+    NotificationRouteHelper.navigateToDestination(nav, destination);
   }
 
   Future<void> _handleNotificationMsg(RemoteMessage message) async {
-    debugPrint("###notificationMsg handler ###: ${message.messageId}");
-    final dialogContext = navigatorKey.currentState?.overlay?.context;
-    if (dialogContext != null && message.notification != null) {
-      await showDialog<dynamic>(
-        context: dialogContext,
-        builder: (context) => AlertDialog(
-          title: Text(message.notification?.title ?? ''),
-          content: Text(message.notification?.body ?? ''),
+    debugPrint(
+        "### notificationMsg handler (foreground) ###: ${message.messageId}");
+    final notification = message.notification;
+    if (notification == null) return;
+
+    final title = notification.title ?? '';
+    final body = notification.body ?? '';
+    final messageText = title.isNotEmpty
+        ? (body.isNotEmpty ? "$title: $body" : title)
+        : body;
+
+    if (messageText.isEmpty) return;
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger != null) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            messageText,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: '開く',
+            onPressed: () {
+              _handleNotification(message);
+            },
+          ),
         ),
       );
     }
@@ -148,6 +183,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
         return MaterialApp(
           navigatorKey: navigatorKey,
+          scaffoldMessengerKey: scaffoldMessengerKey,
           title: '適時開示(TDNet/Edinet) Notifier',
           locale: Locale('ja', 'JP'),
           localizationsDelegates: [
