@@ -1,5 +1,15 @@
 # Changelog
 
+## [v2.7.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.6.0...v2.7.0) - 2026-11-06
+
+- feat(disclosures): migrate disclosure stream and filtering to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/92
+- feat(settlements): migrate settlements list to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/94
+- feat(edinet): migrate EDINET disclosure stream to Riverpod and unify FeedState (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/95
+- feat(tags): migrate tag disclosures screen to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/96
+- fix(notification): handle initial message on launch, remove delay, and improve routing by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/97
+- refactor(bloc): completely remove legacy AppBloc and migrate FCM topic sync to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/99
+- feat(forensic): 定性リスク＆財務フォレンジック解析結果の UI 表示（リスクバッジ・診断解説シート） (#88) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/100
+
 ## [v2.6.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.5.0...v2.6.0) - 2026-11-05
 
 - feat(deps): upgrade firebase ecosystem plugins to latest major versions by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/65
