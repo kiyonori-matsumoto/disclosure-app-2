@@ -9,3 +9,7 @@
 ## 2025-02-18 - Avoid O(N) stream list search when O(1) map is available in BLoC
 **Learning:** In the disclosure app's architecture, when looking up companies (e.g. mapping codes to Company objects inside streams like those in `SettlementsList` and `AppBloc`), iterating over `companies` lists with methods like `firstWhere` (an O(N) operation) creates unnecessary performance bottlenecks, especially when triggered on every stream event. We already have `companyCodeMap$` and `companyMap$` specifically exposed to provide instant access.
 **Action:** When performing stream processing or list transformations that require company lookups, always utilize `companyCodeMap$` or `companyMap$` for O(1) map lookups instead of iterating over the `company$` list.
+
+## 2025-02-18 - Avoid O(N*M) List filtering in loops
+**Learning:** Filtering document streams using `.where` inside `Rx.combineLatest` can lead to O(N*M) complexity if we iterate over a list (`favoriteCompanyCodes`) for membership checks `contains(code)`.
+**Action:** Always pre-compute a `Set` outside of `.where` loops for O(1) lookups instead of using `List.contains`, and pass it as an `Iterable` so that the signature remains flexible for both Lists and Sets.
