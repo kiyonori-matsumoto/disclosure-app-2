@@ -1,9 +1,11 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:disclosure_app_fl/models/forensic_result.dart';
 import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
+import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,7 +92,22 @@ class _EdinetListItemState extends State<EdinetListItem> {
               ListTile(
                 contentPadding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
                 title: Text(widget.edinet.docDescription ?? ""),
-                subtitle: Text(widget.edinet.relatedCompaniesName),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(widget.edinet.relatedCompaniesName),
+                    if (widget.edinet.forensic != null &&
+                        widget.edinet.forensic!.riskLevel != ForensicRiskLevel.normal) ...[
+                      const SizedBox(height: 4),
+                      ForensicBadge(
+                        forensic: widget.edinet.forensic,
+                        companyName: widget.edinet.relatedCompaniesName,
+                        documentTitle: widget.edinet.docDescription,
+                      ),
+                    ],
+                  ],
+                ),
                 onTap: isDownloading ? null : () async {
                   try {
                     setState(() {

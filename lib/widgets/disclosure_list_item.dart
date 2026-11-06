@@ -1,8 +1,10 @@
 import 'package:bloc_provider/bloc_provider.dart';
 import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
+import 'package:disclosure_app_fl/models/forensic_result.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
+import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -66,9 +68,24 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
               ),
             ],
           ),
-          subtitle: Text(
-            disclosure.title ?? '',
-            overflow: TextOverflow.fade,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                disclosure.title ?? '',
+                overflow: TextOverflow.fade,
+              ),
+              if (disclosure.forensic != null &&
+                  disclosure.forensic!.riskLevel != ForensicRiskLevel.normal) ...[
+                const SizedBox(height: 4),
+                ForensicBadge(
+                  forensic: disclosure.forensic,
+                  companyName: "${disclosure.company} (${disclosure.code})",
+                  documentTitle: disclosure.title,
+                ),
+              ],
+            ],
           ),
           isThreeLine: true,
           onTap: () async {
