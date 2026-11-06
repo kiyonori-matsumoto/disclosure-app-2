@@ -1,42 +1,43 @@
 import 'dart:async';
 
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
-import 'package:disclosure_app_fl/screens/disclosure_company.dart';
-import 'package:disclosure_app_fl/screens/disclosure_tags.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
+import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
+import 'package:disclosure_app_fl/providers/topic_sync_provider.dart';
+import 'package:disclosure_app_fl/screens/disclosure_company.dart';
+import 'package:disclosure_app_fl/screens/disclosure_stream.dart';
+import 'package:disclosure_app_fl/screens/disclosure_tags.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/screens/saved_disclosures.dart';
 import 'package:disclosure_app_fl/screens/search_company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
+import 'package:disclosure_app_fl/utils/auth_helper.dart';
+import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
-import 'screens/disclosure_stream.dart';
-import 'utils/get_company.dart';
-import 'utils/auth_helper.dart';
 
-class AppRootWidget extends StatefulWidget {
+class AppRootWidget extends ConsumerStatefulWidget {
+  const AppRootWidget({Key? key}) : super(key: key);
+
   @override
-  State<StatefulWidget> createState() {
+  ConsumerState<AppRootWidget> createState() {
     return AppRootWidgetState();
   }
 }
 
-class AppRootWidgetState extends State<AppRootWidget> {
+class AppRootWidgetState extends ConsumerState<AppRootWidget> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey(
     debugLabel: "Main Navigation",
   );
   final _message = FirebaseMessaging.instance;
   final List<StreamSubscription> _subscriptions = [];
-
-  AppBloc? bloc;
 
   @override
   void initState() {
@@ -50,36 +51,7 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
     _initAuth();
 
-    final appBloc = BlocProvider.of<AppBloc>(context);
-    bloc = appBloc;
-
-    _subscriptions.add(
-      appBloc.notifications$.listen(
-        (data) {},
-        onError: (dynamic error) {
-          final dialogContext = navigatorKey.currentState?.overlay?.context;
-          if (dialogContext != null) {
-            showDialog<dynamic>(
-              context: dialogContext,
-              builder: (context) => AlertDialog(
-                title: const Text("エラー！"),
-                content: Text(error.toString()),
-              ),
-            );
-          }
-          debugPrint("notification onerror $error");
-        },
-      ),
-    );
-
     _message.subscribeToTopic('edinet_notification');
-    // _message.unsubscribeFromTopic('edinet');
-
-    _subscriptions.add(
-      appBloc.user$.listen((user) {
-        FirebaseCrashlytics.instance.setUserIdentifier(user.uid);
-      }),
-    );
   }
 
   @override
@@ -108,10 +80,11 @@ class AppRootWidgetState extends State<AppRootWidget> {
       return;
     }
 
+    final companyCodeMap = ref.read(companyCodeMapProvider);
     final company = await getCompany(
-      bloc,
       code: code,
       name: data['name'] ?? '',
+      companyCodeMap: companyCodeMap,
     );
     await navigatorKey.currentState?.pushNamed(
       '/company-disclosures',
@@ -139,70 +112,74 @@ class AppRootWidgetState extends State<AppRootWidget> {
 
   @override
   Widget build(BuildContext context) {
-    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    // FCM トピック同期とマイグレーションのライフサイクルを維持
+    ref.watch(topicSyncProvider);
+
+    // ユーザー変更時に Crashlytics のユーザー ID を自動設定
+    ref.listen<dynamic>(currentUserProvider, (previous, next) {
+      if (next != null) {
+        FirebaseCrashlytics.instance.setUserIdentifier(next.uid);
+      }
+    });
+
+    final themeMode = ref.watch(themeModeProvider);
+    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
     final routeObserver = MyRouteObserver();
 
-    return Consumer(
-      builder: (context, ref, child) {
-        final themeMode = ref.watch(themeModeProvider);
-
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          title: '適時開示(TDNet/Edinet) Notifier',
-          locale: Locale('ja', 'JP'),
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: [Locale('ja', '')],
-          theme: ThemeData(
-            primarySwatch: Colors.deepPurple,
-            brightness: Brightness.light,
-            useMaterial3: false,
-          ),
-          darkTheme: ThemeData(
-            primarySwatch: Colors.deepPurple,
-            brightness: Brightness.dark,
-            useMaterial3: false,
-          ),
-          themeMode: themeMode,
-          routes: {
-            '/': (context) => DisclosureStreamScreen(),
-            '/companies': (context) => const SearchCompanyScreen(),
-            '/favorites': (context) => FavoriteScreen(),
-            '/settings': (context) => SettingScreen(),
-            '/savedDisclosures': (context) => SavedDisclosuresScreen(),
-            '/settlements': (context) => SettlementsList(),
-          },
-          onGenerateRoute: (route) {
-            print("onGenerateRoute $route");
-            final routeName = route.name;
-            if (routeName != null) {
-              if (routeName.startsWith('/company-disclosures')) {
-                final company =
-                    route.arguments is Company ? route.arguments as Company : null;
-                return MaterialPageRoute<dynamic>(
-                  builder: (context) => DisclosureCompanyScreen(
-                    company: company,
-                  ),
-                );
-              }
-              if (routeName.startsWith('/tag-disclosures')) {
-                return MaterialPageRoute<dynamic>(
-                  builder: (context) =>
-                      DisclosureTagsScreen(tag: route.arguments as String?),
-                );
-              }
-            }
-            return null;
-          },
-          navigatorObservers: [
-            FirebaseAnalyticsObserver(analytics: analytics),
-            routeObserver,
-          ],
-        );
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      title: '適時開示(TDNet/Edinet) Notifier',
+      locale: const Locale('ja', 'JP'),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ja', '')],
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        brightness: Brightness.light,
+        useMaterial3: false,
+      ),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        brightness: Brightness.dark,
+        useMaterial3: false,
+      ),
+      themeMode: themeMode,
+      routes: {
+        '/': (context) => DisclosureStreamScreen(),
+        '/companies': (context) => const SearchCompanyScreen(),
+        '/favorites': (context) => const FavoriteScreen(),
+        '/settings': (context) => const SettingScreen(),
+        '/savedDisclosures': (context) => const SavedDisclosuresScreen(),
+        '/settlements': (context) => const SettlementsList(),
       },
+      onGenerateRoute: (route) {
+        final routeName = route.name;
+        if (routeName != null) {
+          if (routeName.startsWith('/company-disclosures')) {
+            final company =
+                route.arguments is Company ? route.arguments as Company : null;
+            return MaterialPageRoute<dynamic>(
+              builder: (context) => DisclosureCompanyScreen(
+                company: company,
+              ),
+            );
+          }
+          if (routeName.startsWith('/tag-disclosures')) {
+            return MaterialPageRoute<dynamic>(
+              builder: (context) =>
+                  DisclosureTagsScreen(tag: route.arguments as String?),
+            );
+          }
+        }
+        return null;
+      },
+      navigatorObservers: [
+        FirebaseAnalyticsObserver(analytics: analytics),
+        routeObserver,
+      ],
     );
   }
 }

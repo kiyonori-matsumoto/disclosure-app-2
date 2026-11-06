@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/company_settlement.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
@@ -82,11 +80,6 @@ class FakeCompanyEdinets extends CompanyEdinets {
   Future<PaginatedEdinetsState> build(String edinetCode) => _buildFn();
 }
 
-class MockAppBloc extends Fake implements AppBloc {
-  @override
-  void dispose() {}
-}
-
 void main() {
   setUpAll(() async {
     await initializeDateFormatting('ja');
@@ -126,11 +119,8 @@ void main() {
         ],
         ...overrides.cast(),
       ],
-      child: BlocProvider<AppBloc>(
-        creator: (context, bag) => MockAppBloc(),
-        child: MaterialApp(
-          home: DisclosureCompanyScreen(company: company),
-        ),
+      child: MaterialApp(
+        home: DisclosureCompanyScreen(company: company),
       ),
     );
   }

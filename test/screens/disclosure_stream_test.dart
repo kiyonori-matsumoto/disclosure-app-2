@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Filter;
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/models/feed_state.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
@@ -22,11 +20,6 @@ import 'package:intl/date_symbol_data_local.dart';
 class MockUser extends Fake implements User {
   @override
   String get uid => 'test_uid_stream';
-}
-
-class MockAppBloc extends Fake implements AppBloc {
-  @override
-  void dispose() {}
 }
 
 // ignore: subtype_of_sealed_class
@@ -61,11 +54,8 @@ Widget createTestWidget({
       favoritesProvider.overrideWith((ref) => []),
       ...overrides.cast(),
     ],
-    child: BlocProvider<AppBloc>(
-      creator: (context, bag) => MockAppBloc(),
-      child: const MaterialApp(
-        home: DisclosureStreamScreen(),
-      ),
+    child: const MaterialApp(
+      home: DisclosureStreamScreen(),
     ),
   );
 }

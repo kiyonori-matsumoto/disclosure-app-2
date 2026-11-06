@@ -1,6 +1,5 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +38,6 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
   @override
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
-    final bloc = BlocProvider.of<AppBloc>(context);
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
@@ -134,10 +132,16 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
               ));
             }
             if (choice == 1) {
-              final company = await getCompany(bloc,
-                  code: disclosure.code, name: disclosure.company);
-              Navigator.pushNamed(context, '/company-disclosures',
-                  arguments: company);
+              final companyCodeMap = ref.read(companyCodeMapProvider);
+              final company = await getCompany(
+                code: disclosure.code,
+                name: disclosure.company,
+                companyCodeMap: companyCodeMap,
+              );
+              if (context.mounted) {
+                Navigator.pushNamed(context, '/company-disclosures',
+                    arguments: company);
+              }
             }
           },
         ),
