@@ -232,12 +232,14 @@ class AppBloc extends Bloc {
             .where((filter) => filter.isSelected)
             .map((filter) => filter.title);
 
+        final favoritesSet = _favorites.toSet(); // ⚡ Bolt: Pre-compute Set outside the loop for O(1) membership checks
+
         final docs = d.docs
             .where((doc) => DisclosureFilterHelper.matchesFilter(
                   data: doc.data(),
                   selectedFilterTitles: selectedFilterStr,
                   hideDailyDisclosure: _hideDaily,
-                  favoriteCompanyCodes: _favorites,
+                  favoriteCompanyCodes: favoritesSet,
                 ))
             .toList();
         if (order != null) {

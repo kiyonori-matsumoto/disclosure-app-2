@@ -222,13 +222,15 @@ AsyncValue<List<DocumentSnapshot<Map<String, dynamic>>>> filteredDisclosures(
     return const AsyncData([]);
   }
 
+  final favoritesSet = favorites.toSet(); // ⚡ Bolt: Pre-compute Set outside the loop for O(1) membership checks
+
   final filtered = feed.displayedDocs.where((doc) {
     final data = doc.data() ?? {};
     return DisclosureFilterHelper.matchesFilter(
       data: data,
       selectedFilterTitles: selectedFilters,
       hideDailyDisclosure: hideDaily,
-      favoriteCompanyCodes: favorites,
+      favoriteCompanyCodes: favoritesSet,
     );
   }).toList();
 
