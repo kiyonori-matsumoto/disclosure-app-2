@@ -70,7 +70,10 @@ class SettlementsList extends ConsumerWidget {
                 onTap: () {
                   final companyCodeMap = ref.read(companyCodeMapProvider);
                   final code = settlement.code ?? '';
+                  final normalizedCode =
+                      code.length > 4 ? code.substring(0, 4) : code;
                   final company = companyCodeMap[code] ??
+                      companyCodeMap[normalizedCode] ??
                       Company(code, name: settlement.name ?? '');
 
                   Navigator.pushNamed(

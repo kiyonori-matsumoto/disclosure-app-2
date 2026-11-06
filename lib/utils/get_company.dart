@@ -21,7 +21,11 @@ Future<Company> getCompany({
   if (edinetCode != null && companyMap != null) {
     company = companyMap[edinetCode];
   } else if (code != null && companyCodeMap != null) {
-    company = companyCodeMap[code];
+    final cleanCode = code.trim().toUpperCase();
+    company = companyCodeMap[cleanCode];
+    if (company == null && cleanCode.length > 4) {
+      company = companyCodeMap[cleanCode.substring(0, 4)];
+    }
   }
 
   if (company != null) {

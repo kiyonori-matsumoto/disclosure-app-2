@@ -24,6 +24,17 @@ void main() {
       );
       expect(result.code, equals('7203'));
       expect(result.name, equals('トヨタ自動車'));
+      expect(result.edinetCode, equals('E02144'));
+    });
+
+    test('5桁コード（例: 72030）の場合でも先頭4桁でマスタから企業（EDINETコード含む）を取得できる', () async {
+      final result = await getCompany(
+        code: '72030',
+        companyCodeMap: codeMap,
+      );
+      expect(result.code, equals('7203'));
+      expect(result.name, equals('トヨタ自動車'));
+      expect(result.edinetCode, equals('E02144'));
     });
 
     test('companyMap から EDINET コード一致で企業を取得できる', () async {

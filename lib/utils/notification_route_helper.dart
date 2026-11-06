@@ -103,7 +103,8 @@ class NotificationRouteHelper {
     }
 
     if (companyCodeMap != null && hasCode) {
-      final cachedCompany = companyCodeMap[rawCode];
+      final cachedCompany = companyCodeMap[rawCode] ??
+          (rawCode.length > 4 ? companyCodeMap[rawCode.substring(0, 4)] : null);
       if (cachedCompany != null) {
         return CompanyDestination(cachedCompany);
       }
