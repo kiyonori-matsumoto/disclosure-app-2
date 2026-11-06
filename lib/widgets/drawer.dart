@@ -1,13 +1,13 @@
-import 'package:bloc_provider/bloc_provider.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
+  const AppDrawer({Key? key}) : super(key: key);
+
   Widget? _avator(String? url) {
     if (url == null || url.isEmpty) {
       return null;
@@ -18,35 +18,28 @@ class AppDrawer extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isLinked = user != null &&
+        user.providerData.any((p) => p.providerId == 'google.com');
+    final googleInfo = isLinked
+        ? user.providerData
+            .firstWhere((p) => p.providerId == 'google.com')
+        : null;
 
     return Drawer(
       child: ListView(
         children: <Widget>[
-          StreamBuilder<User>(
-            builder: (context, snapshot) {
-              final user = snapshot.data;
-              final isLinked = user != null &&
-                  user.providerData.any((p) => p.providerId == 'google.com');
-              final googleInfo = isLinked
-                  ? user.providerData
-                      .firstWhere((p) => p.providerId == 'google.com')
-                  : null;
-
-              return UserAccountsDrawerHeader(
-                accountEmail: isLinked
-                    ? Text(googleInfo?.email ?? user.email ?? '')
-                    : null,
-                accountName: Text(isLinked
-                    ? (googleInfo?.displayName ?? user.displayName ?? 'ログイン中')
-                    : 'ゲスト'),
-                currentAccountPicture: isLinked
-                    ? _avator(googleInfo?.photoURL ?? user.photoURL)
-                    : null,
-              );
-            },
-            stream: bloc.user$,
+          UserAccountsDrawerHeader(
+            accountEmail: isLinked
+                ? Text(googleInfo?.email ?? user.email ?? '')
+                : null,
+            accountName: Text(isLinked
+                ? (googleInfo?.displayName ?? user.displayName ?? 'ログイン中')
+                : 'ゲスト'),
+            currentAccountPicture: isLinked
+                ? _avator(googleInfo?.photoURL ?? user.photoURL)
+                : null,
           ),
           ListTile(
             title: Text('適時開示一覧'),

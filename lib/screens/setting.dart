@@ -1,6 +1,5 @@
-import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
+import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
@@ -14,34 +13,23 @@ import '../utils/auth_helper.dart';
 
 import 'notification_tag_setting.dart';
 
-class SettingScreen extends StatefulWidget {
+class SettingScreen extends ConsumerStatefulWidget {
+  const SettingScreen({Key? key}) : super(key: key);
+
   @override
-  _SettingScreenState createState() => _SettingScreenState();
+  ConsumerState<SettingScreen> createState() => _SettingScreenState();
 }
 
-class _SettingScreenState extends State<SettingScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  late AppBloc bloc;
-
-  @override
-  void initState() {
-    super.initState();
-    this.bloc = BlocProvider.of<AppBloc>(context);
-  }
-
+class _SettingScreenState extends ConsumerState<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('設定')),
-      // drawer: AppDrawer(),
+      appBar: AppBar(title: const Text('設定')),
       body: Builder(builder: _buildBody),
     );
   }
 
   Widget _buildBody(BuildContext context) {
-    final bloc = BlocProvider.of<AppBloc>(context);
-
     return ListView(
       padding: EdgeInsets.all(8.0),
       children: <Widget>[
@@ -152,30 +140,28 @@ class _SettingScreenState extends State<SettingScreen> {
           },
         ),
         Divider(),
-        ListHeader(
+        const ListHeader(
           title: 'アカウント設定',
         ),
-        StreamBuilder<User>(
-          stream: bloc.user$,
-          builder: (context, snapshot) => ElevatedButton(
+        () {
+          final user = ref.watch(currentUserProvider);
+          final isLinked = user != null &&
+              user.providerData.any((p) => p.providerId == 'google.com');
+          return ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xff4285f4),
+              backgroundColor: const Color(0xff4285f4),
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              snapshot.hasData &&
-                      snapshot.data!.providerData
-                          .any((p) => p.providerId == "google.com")
-                  ? this._handleSignOut(context)
-                  : this._handleSignIn(context);
+              isLinked
+                  ? _handleSignOut(context)
+                  : _handleSignIn(context);
             },
-            child: snapshot.hasData &&
-                    snapshot.data!.providerData
-                        .any((p) => p.providerId == "google.com")
-                ? Text('GOOGLE連携を解除')
-                : Text('GOOGLE連携'),
-          ),
-        ),
+            child: isLinked
+                ? const Text('GOOGLE連携を解除')
+                : const Text('GOOGLE連携'),
+          );
+        }(),
         ListTile(
           title: Row(
             children: <Widget>[Text('プライバシーポリシー'), Icon(Icons.open_in_browser)],
@@ -234,7 +220,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Future<void> _handleSignOut(BuildContext context) async {
     try {
-      final user = _auth.currentUser;
+      final user = ref.read(currentUserProvider);
       if (user != null) {
         await user.unlink('google.com');
         try {

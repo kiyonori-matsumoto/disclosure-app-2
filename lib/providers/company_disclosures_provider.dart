@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company_settlement.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -175,6 +176,10 @@ class CompanyEdinets extends _$CompanyEdinets {
     final snapshot = await query.get();
     final docs = snapshot.docs;
     final items = docs.map((d) => Edinet.fromDocumentSnapshot(d)).toList();
+    final companyEdinetMap = ref.watch(companyEdinetMapProvider);
+    for (final item in items) {
+      item.fillCompanyName(companyEdinetMap);
+    }
 
     return PaginatedEdinetsState(
       items: items,
@@ -203,6 +208,10 @@ class CompanyEdinets extends _$CompanyEdinets {
       final snapshot = await query.get();
       final docs = snapshot.docs;
       final newItems = docs.map((d) => Edinet.fromDocumentSnapshot(d)).toList();
+      final companyEdinetMap = ref.read(companyEdinetMapProvider);
+      for (final item in newItems) {
+        item.fillCompanyName(companyEdinetMap);
+      }
 
       state = AsyncData(current.copyWith(
         items: [...current.items, ...newItems],

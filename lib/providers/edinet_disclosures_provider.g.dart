@@ -335,7 +335,7 @@ final class EdinetFeedProvider
   }
 }
 
-String _$edinetFeedHash() => r'9656a2e3d22fc902efaa0dbe5e44867b562d0408';
+String _$edinetFeedHash() => r'd36b7066fe78bbff71d92d4370c98bb73ace50ba';
 
 /// EDINET ハイブリッド型開示フィード Notifier (最上部なら自動更新、スクロール中は画面ズレ防止＆新着バッジ)
 

@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:flutter/foundation.dart';
 
-Future<Company> getCompany(
-  AppBloc? bloc, {
+Future<Company> getCompany({
   String? code,
   String? edinetCode,
   String? name,
@@ -23,16 +21,10 @@ Future<Company> getCompany(
   if (edinetCode != null && companyMap != null) {
     company = companyMap[edinetCode];
   } else if (code != null && companyCodeMap != null) {
-    company = companyCodeMap[code];
-  }
-
-  if (company == null && bloc != null) {
-    if (edinetCode != null) {
-      final companies = await bloc.companyMap$.first;
-      company = companies[edinetCode];
-    } else if (code != null) {
-      final companies = await bloc.companyCodeMap$.first;
-      company = companies[code];
+    final cleanCode = code.trim().toUpperCase();
+    company = companyCodeMap[cleanCode];
+    if (company == null && cleanCode.length > 4) {
+      company = companyCodeMap[cleanCode.substring(0, 4)];
     }
   }
 
