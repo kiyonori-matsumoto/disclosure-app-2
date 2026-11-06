@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:bloc_provider/bloc_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/bloc/bloc.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/company_settlement.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/screens/disclosure_company.dart';
@@ -82,11 +81,6 @@ class FakeCompanyEdinets extends CompanyEdinets {
   Future<PaginatedEdinetsState> build(String edinetCode) => _buildFn();
 }
 
-class MockAppBloc extends Fake implements AppBloc {
-  @override
-  void dispose() {}
-}
-
 void main() {
   setUpAll(() async {
     await initializeDateFormatting('ja');
@@ -126,11 +120,8 @@ void main() {
         ],
         ...overrides.cast(),
       ],
-      child: BlocProvider<AppBloc>(
-        creator: (context, bag) => MockAppBloc(),
-        child: MaterialApp(
-          home: DisclosureCompanyScreen(company: company),
-        ),
+      child: MaterialApp(
+        home: DisclosureCompanyScreen(company: company),
       ),
     );
   }
@@ -545,6 +536,24 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
       expect(button.onPressed, isNull);
+    });
+
+    testWidgets('渡された Company の edinetCode が空でもマスタ（companyCodeMapProvider）に存在すれば EDINET タブが表示される',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(createTestWidget(
+        company: Company('7203', name: 'トヨタ自動車'), // edinetCode は空
+        overrides: [
+          companyCodeMapProvider.overrideWith((ref) => {
+                '7203': Company('7203', name: 'トヨタ自動車', edinetCode: 'E02144'),
+              }),
+          companyEdinetsProvider('E02144').overrideWith(
+            () => FakeCompanyEdinets(const PaginatedEdinetsState(items: [])),
+          ),
+        ],
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('EDINET'), findsOneWidget);
     });
   });
 }

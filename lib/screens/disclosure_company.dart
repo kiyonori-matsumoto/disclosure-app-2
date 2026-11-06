@@ -1,6 +1,7 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
@@ -16,9 +17,25 @@ class DisclosureCompanyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final companyName = company?.name ?? '';
-    final companyCode = company?.code ?? '';
-    final edinetCode = company?.edinetCode ?? '';
+    final initialCode = company?.code?.trim() ?? '';
+    final normalizedCode =
+        initialCode.length > 4 ? initialCode.substring(0, 4) : initialCode;
+
+    // 企業マスタ（companyCodeMapProvider）から企業情報を補完・解決
+    final codeMap = ref.watch(companyCodeMapProvider);
+    final matchedCompany = codeMap[initialCode] ??
+        (normalizedCode.isNotEmpty ? codeMap[normalizedCode] : null) ??
+        company;
+
+    final companyName = (company?.name ?? '').isNotEmpty
+        ? company!.name!
+        : (matchedCompany?.name ?? '');
+    final companyCode = initialCode.isNotEmpty
+        ? initialCode
+        : (matchedCompany?.code ?? '');
+    final edinetCode = (company?.edinetCode ?? '').isNotEmpty
+        ? company!.edinetCode!
+        : (matchedCompany?.edinetCode ?? '');
     final hasEdinet = edinetCode.isNotEmpty;
     final tabLength = hasEdinet ? 2 : 1;
 

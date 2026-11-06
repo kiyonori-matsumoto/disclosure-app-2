@@ -51,7 +51,10 @@ class _SearchCompanyScreenState extends ConsumerState<SearchCompanyScreen> {
 
             _controller.clear();
             final codeMap = ref.read(companyCodeMapProvider);
-            final company = codeMap[trimmed] ?? Company(trimmed);
+            final normalized =
+                trimmed.length > 4 ? trimmed.substring(0, 4) : trimmed;
+            final company =
+                codeMap[trimmed] ?? codeMap[normalized] ?? Company(trimmed);
             Navigator.pushNamed(context, '/company-disclosures',
                 arguments: company);
           },

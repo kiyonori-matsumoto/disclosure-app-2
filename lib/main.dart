@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:disclosure_app_fl/provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -86,9 +85,7 @@ void main() async {
     debugPrint('User declined or has not accepted permission');
   }
 
-  runApp(ProviderScope(
-    child: AppProvider(
-      child: AppRootWidget(),
-    ),
+  runApp(const ProviderScope(
+    child: AppRootWidget(),
   ));
 }
