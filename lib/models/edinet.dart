@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
+import 'package:disclosure_app_fl/models/forensic_result.dart';
 
 class Edinet {
   String? docDescription;
@@ -21,6 +22,7 @@ class Edinet {
   int? time;
   int? lastEvaluate;
   int? viewCount;
+  ForensicResult? forensic;
 
   Edinet({
     this.docDescription,
@@ -42,6 +44,7 @@ class Edinet {
     this.time,
     this.lastEvaluate,
     this.viewCount,
+    this.forensic,
   });
 
   Edinet.fromDocumentSnapshot(DocumentSnapshot snapshot) {
@@ -60,6 +63,14 @@ class Edinet {
     time = (item['time'] - 9 * 60 * 60) * 1000;
     lastEvaluate = item['time'];
     viewCount = item['view_count'];
+    if (item.containsKey('forensic') && item['forensic'] != null) {
+      try {
+        final forensicMap = item['forensic'] is Map<String, dynamic>
+            ? item['forensic'] as Map<String, dynamic>
+            : Map<String, dynamic>.from(item['forensic'] as Map);
+        forensic = ForensicResult.fromMap(forensicMap);
+      } catch (_) {}
+    }
   }
 
   void fillCompanyName(Map<String, Company> companies) {
