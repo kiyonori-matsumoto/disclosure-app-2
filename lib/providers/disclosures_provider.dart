@@ -154,6 +154,8 @@ class DisclosuresFeed extends _$DisclosuresFeed {
     state = updated;
   }
 
+  static int _debugCounter = 0;
+
   /// 【デバッグ用】仮想の新着開示ドキュメントを1件注入する（kDebugMode限定）
   void injectDebugNewDisclosure({
     String? title,
@@ -164,7 +166,7 @@ class DisclosuresFeed extends _$DisclosuresFeed {
     final now = DateTime.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-    final dummyId = 'debug_${now.millisecondsSinceEpoch}';
+    final dummyId = 'debug_${now.microsecondsSinceEpoch}_${_debugCounter++}';
     final dummyDoc = DebugDummyDocumentSnapshot(dummyId, {
       'title': title ?? '【新着テスト】業績予想の修正に関するお知らせ ($timeStr)',
       'company': company ?? 'テスト株式会社',
