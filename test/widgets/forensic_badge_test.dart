@@ -28,7 +28,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('✓ リスク未検出'), findsOneWidget);
+    expect(find.text('✓ 特記事項なし'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders critical badge with representative tag',
@@ -107,7 +107,7 @@ void main() {
 
     // ボトムシートが開くこと
     expect(find.byType(ForensicDetailSheet), findsOneWidget);
-    expect(find.text('定性・財務フォレンジック診断'), findsOneWidget);
+    expect(find.text('定性・財務フォレンジック解析'), findsOneWidget);
     expect(find.text('アクセルマーク (3624)'), findsOneWidget);
   });
 }

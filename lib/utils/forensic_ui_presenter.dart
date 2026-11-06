@@ -68,7 +68,7 @@ class ForensicUiPresenter {
       id: 'inventory_receivable_surge',
       displayName: '⚠️ 棚卸資産・売掛金急増',
       severity: ForensicRiskLevel.warning,
-      templateText: '棚卸資産（在庫）や売上債権の急増により、運転資本の負担が増加しています。',
+      templateText: '棚卸資産（在庫）や売上債権の急増に関する記載があります。',
       promptQuestion: '棚卸資産（売れ残り在庫）や売上債権（未回収代金）の急増に関する記載がありますか？',
     ),
     'impairment_loss': ForensicTagInfo(
@@ -106,7 +106,7 @@ class ForensicUiPresenter {
       id: 'blame_temporary_one_off',
       displayName: '⚠️ 一時的要因としての説明',
       severity: ForensicRiskLevel.warning,
-      templateText: '業績悪化の主因として「一過性の先行投資」や「システム切替」等の一時的費用を挙げています。',
+      templateText: '業績変動の要因説明において、「一過性の先行投資」や「システム切替」等の一時的費用を挙げています。',
       promptQuestion: '経営陣が説明する業績不振・減益の主因：「一過性の先行投資・システム切替」等の一時的要因と強弁している',
       isToneTag: true,
     ),
@@ -138,7 +138,7 @@ class ForensicUiPresenter {
       id: 'tone_retreat',
       displayName: '⚠️ 開示トーンの慎重化',
       severity: ForensicRiskLevel.warning,
-      templateText: '前期に用いられていた強気の表現が削除または修正され、慎重・不透明感を強調する表現へトーンが変化しています。',
+      templateText: '前期に用いられていた表現が修正され、慎重・不透明感を伴う表現へトーンが変更されています。',
       promptQuestion: '「順調」「強固」「安定的」などの強気文言が削除され、慎重・不透明・懸念する表現へ後退していますか？',
       isToneTag: true,
     ),
@@ -163,20 +163,20 @@ class ForensicUiPresenter {
   String get headline {
     switch (result.riskLevel) {
       case ForensicRiskLevel.critical:
-        return '🚨 重大な財務・経営リスクを検知';
+        return '重大な注記・財務制限事項を検出';
       case ForensicRiskLevel.warning:
-        return '⚠️ 留意すべき財務リスク・開示トーンを検知';
+        return '財務指標・定性トーンに関する特記事項を検出';
       case ForensicRiskLevel.normal:
-        return '特記事項・リスク未検出';
+        return '対象となる注記・特記事項は未検出';
     }
   }
 
   String get riskLevelLabel {
     switch (result.riskLevel) {
       case ForensicRiskLevel.critical:
-        return 'CRITICAL (危険)';
+        return 'CRITICAL (重要注記・制限事項)';
       case ForensicRiskLevel.warning:
-        return 'WARNING (注意)';
+        return 'WARNING (特記事項・変動要因)';
       case ForensicRiskLevel.normal:
         return 'NORMAL (未検出)';
     }
@@ -208,9 +208,9 @@ class ForensicUiPresenter {
     final tags = tagInfos;
     if (tags.isEmpty) {
       if (result.riskLevel == ForensicRiskLevel.normal) {
-        return '重大な財務リスクや特異な定性トーンの変化は検出されませんでした。';
+        return '本開示において、対象となる重要注記・財務制限事項や定性トーンの特記項目は検出されませんでした。';
       }
-      return '詳細なリスク項目は検出されていません。';
+      return '対象となる特記項目は検出されていません。';
     }
 
     final buffer = StringBuffer();

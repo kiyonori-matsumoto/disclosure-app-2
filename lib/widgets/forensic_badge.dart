@@ -88,11 +88,11 @@ class _ForensicBadgeState extends State<ForensicBadge>
       label = extraCount > 0 ? '$firstTag +$extraCount' : firstTag;
     } else {
       if (isCritical) {
-        label = '🚨 危険リスク';
+        label = '🚨 重要項目検知';
       } else if (isWarning) {
-        label = '⚠️ 注意トーン';
+        label = '⚠️ 特記事項あり';
       } else {
-        label = '✓ リスク未検出';
+        label = '✓ 特記事項なし';
       }
     }
 

@@ -96,15 +96,15 @@ void main() {
     test('headlines reflect riskLevel', () {
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.critical)).headline,
-        '🚨 重大な財務・経営リスクを検知',
+        '重大な注記・財務制限事項を検出',
       );
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.warning)).headline,
-        '⚠️ 留意すべき財務リスク・開示トーンを検知',
+        '財務指標・定性トーンに関する特記事項を検出',
       );
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.normal)).headline,
-        '特記事項・リスク未検出',
+        '対象となる注記・特記事項は未検出',
       );
     });
   });

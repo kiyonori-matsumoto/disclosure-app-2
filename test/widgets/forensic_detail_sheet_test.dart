@@ -44,13 +44,13 @@ void main() {
     );
 
     // ヘッダー・企業情報
-    expect(find.text('定性・財務フォレンジック診断'), findsOneWidget);
+    expect(find.text('定性・財務フォレンジック解析'), findsOneWidget);
     expect(find.text('アクセルマーク (3624)'), findsOneWidget);
     expect(find.text('第31期 有価証券報告書'), findsOneWidget);
 
     // 総合判定見出し
-    expect(find.text('CRITICAL (危険)'), findsOneWidget);
-    expect(find.text('🚨 重大な財務・経営リスクを検知'), findsOneWidget);
+    expect(find.text('CRITICAL (重要注記・制限事項)'), findsOneWidget);
+    expect(find.text('重大な注記・財務制限事項を検出'), findsOneWidget);
 
     // 検出タグ
     expect(find.text('🚨 事業継続の重要疑義'), findsOneWidget);
@@ -79,13 +79,13 @@ void main() {
     expect(find.text('▲2.8億円'), findsOneWidget);
 
     // AI判定基準・プロンプト設問の開示アコーディオン
-    expect(find.text('AI 判定基準・プロンプト設問の開示'), findsOneWidget);
-    await tester.tap(find.text('AI 判定基準・プロンプト設問の開示'));
+    expect(find.text('機械判定基準・評価設問（プロンプト）の開示'), findsOneWidget);
+    await tester.tap(find.text('機械判定基準・評価設問（プロンプト）の開示'));
     await tester.pumpAndSettle();
     expect(find.textContaining('継続企業の前提に関する注記・疑義'), findsOneWidget);
 
     // 免責事項
-    expect(find.textContaining('特定の有価証券の価値評価や投資の勧誘・助言を目的としたものではありません'), findsOneWidget);
+    expect(find.textContaining('企業状態の健全性や危険性を評価・格付けするものではなく'), findsOneWidget);
   });
 
   testWidgets('ForensicDetailSheet displays normal summary and metrics correctly',
@@ -121,9 +121,9 @@ void main() {
     );
 
     expect(find.text('NORMAL (未検出)'), findsOneWidget);
-    expect(find.text('特記事項・リスク未検出'), findsOneWidget);
+    expect(find.text('対象となる注記・特記事項は未検出'), findsOneWidget);
     expect(
-      find.text('重大な財務リスクや特異な定性トーンの変化は検出されませんでした。'),
+      find.text('本開示において、対象となる重要注記・財務制限事項や定性トーンの特記項目は検出されませんでした。'),
       findsOneWidget,
     );
     expect(find.text('450億円'), findsOneWidget);

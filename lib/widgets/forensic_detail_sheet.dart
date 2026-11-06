@@ -97,7 +97,7 @@ class ForensicDetailSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '定性・財務フォレンジック診断',
+                      '定性・財務フォレンジック解析',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -202,7 +202,7 @@ class ForensicDetailSheet extends StatelessWidget {
                   // 検出バッジ一覧
                   if (presenter.tagInfos.isNotEmpty) ...[
                     Text(
-                      '検出リスク・定性トーン',
+                      '検出された注記・開示トーン項目',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -248,7 +248,7 @@ class ForensicDetailSheet extends StatelessWidget {
 
                   // 診断解説文
                   Text(
-                    '診断解説',
+                    '解析結果の概要',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -275,7 +275,7 @@ class ForensicDetailSheet extends StatelessWidget {
                   // 要因タグ (causes)
                   if (presenter.causeLabels.isNotEmpty) ...[
                     Text(
-                      '会社側の説明要因',
+                      '開示文書に記載された要因',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -299,7 +299,7 @@ class ForensicDetailSheet extends StatelessWidget {
                   // 主要財務メトリクス表
                   if (presenter.metricItems.isNotEmpty) ...[
                     Text(
-                      '主要財務メトリクス（検証ファクト）',
+                      '主要財務数値（開示実績値）',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -367,7 +367,7 @@ class ForensicDetailSheet extends StatelessWidget {
                       child: ExpansionTile(
                         leading: const Icon(Icons.help_outline, size: 20),
                         title: Text(
-                          'AI 判定基準・プロンプト設問の開示',
+                          '機械判定基準・評価設問（プロンプト）の開示',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -375,7 +375,7 @@ class ForensicDetailSheet extends StatelessWidget {
                         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                         children: [
                           Text(
-                            '本診断は、開示文書（MD&A・事業等のリスク・財務注記）に対し、バックエンド解析エンジンが以下の客観的設問（プロンプト）を数理判定した結果に基づいています。',
+                            '本解析は、開示文書（MD&A・事業等のリスク・財務注記）に対し、バックエンド解析エンジンが以下の客観的設問（プロンプト）を数理判定した結果に基づいています。',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.grey.shade700,
                               height: 1.4,
@@ -424,7 +424,7 @@ class ForensicDetailSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '※ 本診断は開示書類の定性情報および財務数値を機械的に抽出・解析した参考情報です。特定の有価証券の価値評価や投資の勧誘・助言を目的としたものではありません。投資に関する最終決定は必ずご自身の判断で行ってください。',
+                      '※ 本解析結果は開示書類の定性情報および財務数値を機械的に抽出・整理した参考情報です。企業状態の健全性や危険性を評価・格付けするものではなく、特定の有価証券の価値評価や投資の勧誘・助言を目的としたものでもありません。投資に関する最終決定は必ずご自身の判断で行ってください。',
                       style: TextStyle(
                         fontSize: 10,
                         color: Colors.grey.shade600,
