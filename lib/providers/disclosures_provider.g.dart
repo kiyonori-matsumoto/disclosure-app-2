@@ -435,7 +435,7 @@ final class DisclosuresFeedProvider
   }
 }
 
-String _$disclosuresFeedHash() => r'd165373cdaf3bf3c03eee233f9e45274d94c2b34';
+String _$disclosuresFeedHash() => r'dc5304b8032073be5158bc2e9f8f37c9ddf36ad9';
 
 /// ハイブリッド型（最上部なら自動更新、スクロール中なら新着バッジでズレ防止）開示フィード Notifier
 

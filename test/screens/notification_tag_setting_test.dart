@@ -61,4 +61,43 @@ void main() {
     expect(mockAction.toggled.length, 1);
     expect(mockAction.toggled.first, ('test_uid_456', defaultFilterStrings.first, true));
   });
+
+  testWidgets('タグ行をタップすると通知履歴画面（/tag-disclosures）へ遷移する',
+      (WidgetTester tester) async {
+    String? navigatedRoute;
+    Object? navigatedArgs;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => MockUser()),
+          userDocStreamProvider.overrideWith((ref) => Stream.value({})),
+          notificationTagsProvider.overrideWithValue([]),
+        ],
+        child: MaterialApp(
+          home: const NotificationTagSettingScreen(),
+          onGenerateRoute: (settings) {
+            if (settings.name == '/tag-disclosures') {
+              navigatedRoute = settings.name;
+              navigatedArgs = settings.arguments;
+              return MaterialPageRoute(
+                builder: (_) => const Scaffold(body: Text('TagDisclosuresMock')),
+              );
+            }
+            return null;
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // 「決算」の行をタップ
+    await tester.tap(find.text('決算'));
+    await tester.pumpAndSettle();
+
+    expect(navigatedRoute, '/tag-disclosures');
+    expect(navigatedArgs, '決算');
+    expect(find.text('TagDisclosuresMock'), findsOneWidget);
+  });
 }

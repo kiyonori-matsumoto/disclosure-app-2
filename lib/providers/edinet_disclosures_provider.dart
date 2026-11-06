@@ -125,6 +125,8 @@ class EdinetFeed extends _$EdinetFeed {
     state = updated;
   }
 
+  static int _debugCounter = 0;
+
   /// 【デバッグ用】仮想の新着 EDINET 開示を注入する（kDebugMode限定）
   void injectDebugNewEdinet({
     String? title,
@@ -134,7 +136,7 @@ class EdinetFeed extends _$EdinetFeed {
     final now = DateTime.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-    final dummyDocId = 'debug_edinet_${now.millisecondsSinceEpoch}';
+    final dummyDocId = 'debug_edinet_${now.microsecondsSinceEpoch}_${_debugCounter++}';
 
     final dummy = Edinet(
       docId: dummyDocId,

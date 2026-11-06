@@ -37,16 +37,38 @@ class NotificationTagSettingScreen extends ConsumerWidget {
           child: ListView(
             children: defaultFilterStrings.map((tag) {
               final isSelected = currentTags.contains(tag);
-              return SwitchListTile(
+              return ListTile(
+                leading: const Icon(Icons.local_offer_outlined),
                 title: Text(tag),
-                value: isSelected,
-                onChanged: (v) {
-                  final uid = ref.read(currentUserProvider)?.uid;
-                  if (uid != null) {
-                    ref
-                        .read(notificationTagsActionProvider.notifier)
-                        .toggle(uid, tag, isSelected: isSelected);
-                  }
+                subtitle: Text(
+                  isSelected ? '通知ON（タップで履歴表示）' : 'タップで履歴表示',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected ? Colors.blue : Colors.grey,
+                  ),
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Switch(
+                      value: isSelected,
+                      onChanged: (v) {
+                        final uid = ref.read(currentUserProvider)?.uid;
+                        if (uid != null) {
+                          ref
+                              .read(notificationTagsActionProvider.notifier)
+                              .toggle(uid, tag, isSelected: isSelected);
+                        }
+                      },
+                    ),
+                    const Icon(Icons.chevron_right, color: Colors.grey),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.of(context).pushNamed(
+                    '/tag-disclosures',
+                    arguments: tag,
+                  );
                 },
               );
             }).toList(),
