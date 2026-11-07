@@ -14,6 +14,7 @@ import 'package:disclosure_app_fl/screens/search_company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/auth_helper.dart';
+import 'package:disclosure_app_fl/utils/default_topic_helper.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/notification_route_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
@@ -74,16 +75,7 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
 
     _initAuth();
 
-    _subscribeToDefaultTopics();
-  }
-
-  Future<void> _subscribeToDefaultTopics() async {
-    try {
-      await _message.subscribeToTopic('edinet_notification');
-    } catch (e, stack) {
-      debugPrint("Failed to subscribe to edinet_notification topic: $e");
-      FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
-    }
+    DefaultTopicHelper.subscribeToDefaultTopics(messaging: _message);
   }
 
   @override
