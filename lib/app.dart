@@ -14,6 +14,7 @@ import 'package:disclosure_app_fl/screens/search_company.dart';
 import 'package:disclosure_app_fl/screens/setting.dart';
 import 'package:disclosure_app_fl/screens/settlements_list.dart';
 import 'package:disclosure_app_fl/utils/auth_helper.dart';
+import 'package:disclosure_app_fl/utils/default_topic_helper.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/notification_route_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
@@ -74,7 +75,7 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
 
     _initAuth();
 
-    _message.subscribeToTopic('edinet_notification');
+    DefaultTopicHelper.subscribeToDefaultTopics(messaging: _message);
   }
 
   @override
