@@ -74,7 +74,16 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
 
     _initAuth();
 
-    _message.subscribeToTopic('edinet_notification');
+    _subscribeToDefaultTopics();
+  }
+
+  Future<void> _subscribeToDefaultTopics() async {
+    try {
+      await _message.subscribeToTopic('edinet_notification');
+    } catch (e, stack) {
+      debugPrint("Failed to subscribe to edinet_notification topic: $e");
+      FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+    }
   }
 
   @override
