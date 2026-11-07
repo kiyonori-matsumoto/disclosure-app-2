@@ -3,6 +3,14 @@ import 'dart:io';
 import 'package:disclosure_app_fl/utils/default_topic_helper.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _FakeIOException implements IOException {
+  final String message;
+  const _FakeIOException(this.message);
+
+  @override
+  String toString() => 'java.io.IOException: $message';
+}
+
 void main() {
   group('DefaultTopicHelper.subscribeToDefaultTopics', () {
     test('edinetNotificationTopic が正しく "edinet_notification" に設定されている', () {
@@ -43,7 +51,7 @@ void main() {
         await expectLater(
           DefaultTopicHelper.subscribeToDefaultTopics(
             onSubscribe: (topic) async {
-              throw const IOException('FCM Registration failed!');
+              throw const _FakeIOException('FCM Registration failed!');
             },
             onError: (e, s) {
               errorCalled = true;
@@ -56,10 +64,7 @@ void main() {
 
         expect(errorCalled, isTrue);
         expect(capturedError, isA<IOException>());
-        expect(
-          (capturedError as IOException).toString(),
-          contains('FCM Registration failed!'),
-        );
+        expect(capturedError.toString(), contains('FCM Registration failed!'));
         expect(capturedStack, isNotNull);
       },
     );
