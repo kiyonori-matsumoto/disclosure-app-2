@@ -128,18 +128,21 @@ void main() {
       ),
     );
 
-    // GestureDetector の直下に拡張パディングが存在すること
-    final gestureFinder = find.byType(GestureDetector);
-    expect(gestureFinder, findsOneWidget);
+    // InkWell の直下に拡張パディングが存在すること
+    final inkWellFinder = find.byType(InkWell);
+    expect(inkWellFinder, findsOneWidget);
 
     final paddingFinder = find.descendant(
-      of: gestureFinder,
+      of: inkWellFinder,
       matching: find.byType(Padding),
     );
     expect(paddingFinder, findsWidgets);
 
-    // バッジの GestureDetector 自体をタップしてもボトムシートが開くこと
-    await tester.tap(gestureFinder);
+    // クリッカブルであることを示す chevron_right アイコンが存在すること
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+
+    // バッジの InkWell（拡張タッチ領域）をタップしてボトムシートが開くこと
+    await tester.tap(inkWellFinder);
     await tester.pumpAndSettle();
     expect(find.byType(ForensicDetailSheet), findsOneWidget);
   });
