@@ -1,4 +1,3 @@
-import 'package:disclosure_app_fl/screens/disclosure_stream.dart';
 import 'package:flutter/material.dart';
 
 class ContentViewCount extends StatelessWidget {
@@ -11,15 +10,22 @@ class ContentViewCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (viewCount == null || viewCount == 0)
-      return const SizedBox(width: 0.0, height: 0.0);
+    if (viewCount == null || viewCount == 0) {
+      return const SizedBox.shrink();
+    }
+    final color = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(Icons.cloud_download, size: 10, color: Colors.grey),
+        Icon(Icons.cloud_download, size: 14, color: color),
+        const SizedBox(width: 3),
         Text(
-          "${viewCount.toString()} | ",
-          style: smallGrey,
-        )
+          viewCount.toString(),
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+          ),
+        ),
       ],
     );
   }

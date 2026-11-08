@@ -14,11 +14,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../widgets/drawer.dart';
 
-final smallGrey = TextStyle(
-  color: Colors.grey,
-  fontSize: 10,
-);
-
 class DisclosureStreamScreen extends ConsumerStatefulWidget {
   const DisclosureStreamScreen({super.key});
 
