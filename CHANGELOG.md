@@ -1,5 +1,14 @@
 # Changelog
 
+## [v2.7.1](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.0...v2.7.1) - 2026-11-08
+
+- refactor(fcm): remove deprecated edinet_notification topic subscription by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/103
+- feat(ui): 情報設計の最適化（TabBar切替・検索動線強化・サポートリンク退避） by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/110
+- feat(ui): 開示リストアイテムの情報階層とフォントサイズの改善 (#105) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/111
+- feat(theme): Material 3 への刷新とカラーパレットの近代化 (#108) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/113
+- fix(theme): ダークモードおよびテーマカラーのコントラスト不整合の解消 (#107) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/112
+- feat(forensic): 定量フォレンジック指標（Beneish M-Score・アクルーアル比率等）および新レッドフラグの UI 表示対応 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/114
+
 ## [v2.7.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.6.0...v2.7.0) - 2026-11-06
 
 - feat(disclosures): migrate disclosure stream and filtering to Riverpod (#76) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/92
