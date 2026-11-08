@@ -163,8 +163,25 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
           );
         }(),
         ListTile(
-          title: Row(
-            children: <Widget>[Text('プライバシーポリシー'), Icon(Icons.open_in_browser)],
+          title: const Row(
+            children: <Widget>[
+              Text('サポートサイト'),
+              SizedBox(width: 4),
+              Icon(Icons.open_in_browser, size: 18),
+            ],
+          ),
+          onTap: () {
+            const url = 'https://disclosure-app.firebaseapp.com/';
+            launchURL(url);
+          },
+        ),
+        ListTile(
+          title: const Row(
+            children: <Widget>[
+              Text('プライバシーポリシー'),
+              SizedBox(width: 4),
+              Icon(Icons.open_in_browser, size: 18),
+            ],
           ),
           onTap: () {
             const url = 'https://disclosure-app.firebaseapp.com/privacy/';
@@ -256,11 +273,13 @@ class ListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
       child: Text(
-        this.title,
+        title,
         style: TextStyle(
-          color: Theme.of(context).textTheme.bodySmall!.color,
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
         ),
       ),
     );

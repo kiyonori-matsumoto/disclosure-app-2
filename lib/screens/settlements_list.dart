@@ -20,6 +20,15 @@ class SettlementsList extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('${toDate(current.millisecondsSinceEpoch)}の決算予定'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: '会社検索',
+            onPressed: () {
+              Navigator.pushNamed(context, '/companies');
+            },
+          ),
+        ],
       ),
       body: settlementsAsync.when(
         loading: () => const LinearProgressIndicator(),
@@ -39,14 +48,13 @@ class SettlementsList extends ConsumerWidget {
               width: double.infinity,
               height: 80.0,
               child: Card(
-                shape: const RoundedRectangleBorder(),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     ListTile(
                       leading: Icon(
                         Icons.announcement,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       title: const Text('指定された日の決算予定はありません'),
                     ),

@@ -238,4 +238,33 @@ void main() {
     expect(mockFavoritesAction.added, [('test_uid_search', '7203')]);
     expect(find.text('トヨタ自動車をお気に入りに追加しました'), findsOneWidget);
   });
+
+  testWidgets('ダークモード時にAppBarの背景色とアイコン色が適切に設定されColors.blackではないこと',
+      (WidgetTester tester) async {
+    final darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: Colors.deepPurple,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          companiesStreamProvider
+              .overrideWith((ref) => Stream.value(testCompanies)),
+          companyHistoryProvider.overrideWithValue([]),
+        ],
+        child: MaterialApp(
+          theme: darkTheme,
+          home: const SearchCompanyScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect(appBar.backgroundColor, equals(darkTheme.colorScheme.surface));
+    expect(appBar.iconTheme?.color, equals(darkTheme.colorScheme.onSurface));
+    expect(appBar.iconTheme?.color, isNot(equals(Colors.black)));
+  });
 }

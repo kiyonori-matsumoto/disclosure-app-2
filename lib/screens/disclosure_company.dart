@@ -134,11 +134,10 @@ class DisclosureCompanyScreen extends ConsumerWidget {
               if (hasValidSettlement)
                 SliverToBoxAdapter(
                   child: Card(
-                    shape: const RoundedRectangleBorder(),
                     child: ListTile(
                       leading: Icon(
                         Icons.announcement,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       title: Text(settlement.toMessage()),
                     ),

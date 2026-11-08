@@ -4,7 +4,6 @@ import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
 import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
-import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
@@ -14,11 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../widgets/drawer.dart';
-
-final smallGrey = TextStyle(
-  color: Colors.grey,
-  fontSize: 10,
-);
 
 class DisclosureStreamScreen extends ConsumerStatefulWidget {
   const DisclosureStreamScreen({super.key});
@@ -30,15 +24,28 @@ class DisclosureStreamScreen extends ConsumerStatefulWidget {
 }
 
 class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
-    with RouteAware {
+    with RouteAware, SingleTickerProviderStateMixin {
   final MyRouteObserver routeObserver = MyRouteObserver();
   String displayTarget = 'tdnet';
   final ScrollController sliverScrollController = ScrollController();
+  late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     sliverScrollController.addListener(_onScroll);
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    final newTarget = _tabController.index == 0 ? 'tdnet' : 'edinet';
+    if (displayTarget != newTarget) {
+      setState(() {
+        displayTarget = newTarget;
+      });
+    }
   }
 
   @override
@@ -52,6 +59,8 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     routeObserver.unsubscribe(this);
     sliverScrollController.removeListener(_onScroll);
     sliverScrollController.dispose();
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -102,38 +111,18 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
   Widget buildSliverBody(BuildContext context) {
     final formatter = DateFormat.yMd('ja');
     final appbar = SliverAppBar(
-      title: Theme(
-        data: Theme.of(context).copyWith(brightness: Brightness.dark),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: displayTarget,
-            hint: Text(
-              displayTarget.toUpperCase(),
-              style: Theme.of(context).primaryTextTheme.titleLarge,
-            ),
-            items: const [
-              DropdownMenuItem(
-                value: 'tdnet',
-                child: Text('TDNET'),
-              ),
-              DropdownMenuItem(
-                value: 'edinet',
-                child: Text('EDINET'),
-              ),
-            ],
-            onChanged: (String? v) {
-              if (v != null) {
-                setState(() {
-                  displayTarget = v;
-                });
-              }
-            },
-          ),
-        ),
-      ),
+      title: const Text('開示情報速報'),
       pinned: false,
       floating: true,
       snap: true,
+      bottom: TabBar(
+        controller: _tabController,
+        indicatorWeight: 3.0,
+        tabs: const [
+          Tab(text: 'TDNET'),
+          Tab(text: 'EDINET'),
+        ],
+      ),
       actions: <Widget>[
         if (kDebugMode)
           IconButton(
@@ -164,30 +153,39 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
             },
           ),
         IconButton(
-          icon: const Icon(Icons.new_releases),
+          icon: const Icon(Icons.search),
+          tooltip: '会社検索',
           onPressed: () {
-            launchURL('https://disclosure-app.firebaseapp.com/whatsnew/1.1/');
+            Navigator.of(context).pushNamed('/companies');
           },
-          tooltip: '新機能',
         ),
       ],
     );
 
     return SafeArea(
-      child: Scrollbar(
-        child: CustomScrollView(
-          controller: sliverScrollController,
-          slivers: displayTarget == 'tdnet'
-              ? <Widget>[
-                  appbar,
-                  filterToolbar(formatter),
-                  tdnetList(),
-                ]
-              : <Widget>[
-                  appbar,
-                  edinetFilterToolbar(formatter),
-                  const EdinetStreamingWidget(),
-                ],
+      child: NestedScrollView(
+        controller: sliverScrollController,
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            appbar,
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: <Widget>[
+            CustomScrollView(
+              slivers: <Widget>[
+                filterToolbar(formatter),
+                tdnetList(),
+              ],
+            ),
+            CustomScrollView(
+              slivers: <Widget>[
+                edinetFilterToolbar(formatter),
+                const EdinetStreamingWidget(),
+              ],
+            ),
+          ],
         ),
       ),
     );

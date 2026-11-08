@@ -75,6 +75,11 @@ void main() {
 
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(find.text('指定された日の決算予定はありません'), findsOneWidget);
+      final announcementIcon =
+          tester.widget<Icon>(find.byIcon(Icons.announcement));
+      final theme = Theme.of(tester.element(find.byType(SettlementsList)));
+      expect(announcementIcon.color, equals(theme.colorScheme.primary));
+      expect(announcementIcon.color, isNot(equals(theme.colorScheme.surface)));
     });
 
     testWidgets('決算予定データが存在する場合、リストアイテムが表示される', (tester) async {
