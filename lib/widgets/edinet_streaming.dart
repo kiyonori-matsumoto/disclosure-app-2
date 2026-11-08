@@ -11,11 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'no_disclosures.dart';
 
-final smallGrey = TextStyle(
-  color: Colors.grey,
-  fontSize: 10,
-);
-
 class EdinetStreamingWidget extends ConsumerWidget {
   const EdinetStreamingWidget({super.key});
 
@@ -79,34 +74,23 @@ class _EdinetListItemState extends State<EdinetListItem> {
 
   @override
   Widget build(BuildContext context) {
-    final docId = widget.edinet.docId ?? '';
+    final theme = Theme.of(context);
+    final secondaryTextColor =
+        theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
     final time = widget.edinet.time ?? 0;
+    final docType = widget.edinet.docType;
+    final hasViewCount =
+        widget.edinet.viewCount != null && widget.edinet.viewCount! > 0;
+    final hasBottomRow =
+        widget.edinet.forensic != null || docType.isNotEmpty || hasViewCount;
+
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
-        Stack(
-            key: Key(docId),
-            alignment: Alignment.topRight,
-            children: <Widget>[
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-                title: Text(widget.edinet.docDescription ?? ""),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(widget.edinet.relatedCompaniesName),
-                    if (widget.edinet.forensic != null) ...[
-                      const SizedBox(height: 4),
-                      ForensicBadge(
-                        forensic: widget.edinet.forensic,
-                        companyName: widget.edinet.relatedCompaniesName,
-                        documentTitle: widget.edinet.docDescription,
-                      ),
-                    ],
-                  ],
-                ),
-                onTap: isDownloading ? null : () async {
+        InkWell(
+          onTap: isDownloading
+              ? null
+              : () async {
                   try {
                     setState(() {
                       isDownloading = true;
@@ -114,7 +98,8 @@ class _EdinetListItemState extends State<EdinetListItem> {
                     await downloadAndOpenEdinet(widget.edinet.docId);
                   } catch (e, stack) {
                     debugPrint("Failed to download EDINET document: $e");
-                    FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
+                    FirebaseCrashlytics.instance
+                        .recordError(e, stack, fatal: false);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -131,30 +116,104 @@ class _EdinetListItemState extends State<EdinetListItem> {
                     }
                   }
                 },
-                onLongPress: _onLongPress(context, widget.edinet.companies),
-              ),
+          onLongPress: _onLongPress(context, widget.edinet.companies),
+          child: Column(
+            children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      "${widget.edinet.docType} | ",
-                      style: smallGrey,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 11.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1行目: 会社名 + 時刻
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.edinet.relatedCompaniesName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.showDate ? toDate(time) : toTime(time),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    ContentViewCount(
-                      viewCount: widget.edinet.viewCount,
-                    ),
+                    const SizedBox(height: 5),
+                    // 2行目: 書類タイトル (最も重要)
                     Text(
-                      widget.showDate ? toDate(time) : toTime(time),
-                      style: smallGrey,
-                    )
+                      widget.edinet.docDescription ?? "",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        height: 1.35,
+                        color: theme.textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    // 3行目: フォレンジックバッジ + 書類種別 + 閲覧数
+                    if (hasBottomRow) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (widget.edinet.forensic != null) ...[
+                            ForensicBadge(
+                              forensic: widget.edinet.forensic,
+                              companyName: widget.edinet.relatedCompaniesName,
+                              documentTitle: widget.edinet.docDescription,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          if (docType.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1.5),
+                              margin: const EdgeInsets.only(right: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                docType,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ),
+                          const Spacer(),
+                          if (hasViewCount)
+                            ContentViewCount(
+                              viewCount: widget.edinet.viewCount,
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-              )
-            ]),
-        isDownloading ? const CircularProgressIndicator() : const SizedBox.shrink(),
+              ),
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: theme.dividerColor.withValues(alpha: 0.4),
+              ),
+            ],
+          ),
+        ),
+        if (isDownloading) const CircularProgressIndicator(),
       ],
     );
   }

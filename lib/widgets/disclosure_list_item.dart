@@ -1,21 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
+import 'package:disclosure_app_fl/utils/download_disclosure.dart';
+import 'package:disclosure_app_fl/utils/get_company.dart';
+import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
 import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:disclosure_app_fl/utils/get_company.dart';
-
-import 'package:disclosure_app_fl/utils/download_disclosure.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import '../utils/time.dart';
-
-final smallGrey = TextStyle(
-  color: Colors.grey,
-  fontSize: 10,
-);
 
 class DisclosureListItem extends ConsumerStatefulWidget {
   const DisclosureListItem({
@@ -39,51 +33,19 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
   @override
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
+    final theme = Theme.of(context);
+    final secondaryTextColor =
+        theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
+    final tags = (disclosure.tags ?? []).where((t) => t.isNotEmpty).toList();
+    final hasViewCount =
+        disclosure.viewCount != null && disclosure.viewCount! > 0;
+    final hasBottomRow =
+        disclosure.forensic != null || tags.isNotEmpty || hasViewCount;
+
     return Stack(
       alignment: AlignmentDirectional.center,
       children: <Widget>[
-        isDownloading ? CircularProgressIndicator() : Container(),
-        ListTile(
-          title: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text("${disclosure.company}(${disclosure.code})"),
-              ),
-              Row(
-                children: <Widget>[
-                  if ((disclosure.tags ?? []).isNotEmpty)
-                    Text(
-                      "${(disclosure.tags ?? []).join(', ')} | ",
-                      style: smallGrey,
-                    ),
-                  ContentViewCount(viewCount: disclosure.viewCount),
-                  Text(
-                    toTime(disclosure.time ?? 0, showDate: widget.showDate),
-                    style: smallGrey,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                disclosure.title ?? '',
-                overflow: TextOverflow.fade,
-              ),
-              if (disclosure.forensic != null) ...[
-                const SizedBox(height: 4),
-                ForensicBadge(
-                  forensic: disclosure.forensic,
-                  companyName: "${disclosure.company} (${disclosure.code})",
-                  documentTitle: disclosure.title,
-                ),
-              ],
-            ],
-          ),
-          isThreeLine: true,
+        InkWell(
           onTap: () async {
             try {
               setState(() {
@@ -110,10 +72,9 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
             }
           },
           onLongPress: () async {
-            RenderBox renderBox = context.findRenderObject() as RenderBox;
+            final renderBox = context.findRenderObject() as RenderBox;
             final point = renderBox.localToGlobal(Offset.zero);
             final size = MediaQuery.of(context).size;
-            print(point);
             final choice = await showMenu(
               context: context,
               position:
@@ -141,10 +102,12 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
               ref
                   .read(savedDisclosuresActionProvider.notifier)
                   .save(disclosure);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('保存しました'),
-                duration: Duration(seconds: 3),
-              ));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('保存しました'),
+                  duration: Duration(seconds: 3),
+                ));
+              }
             }
             if (choice == 1) {
               final companyCodeMap = ref.read(companyCodeMapProvider);
@@ -159,7 +122,104 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
               }
             }
           },
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 11.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1行目: 会社名(証券コード) + 時刻
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "${disclosure.company} (${disclosure.code})",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          toTime(disclosure.time ?? 0,
+                              showDate: widget.showDate),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    // 2行目: 開示タイトル (最も重要)
+                    Text(
+                      disclosure.title ?? '',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        height: 1.35,
+                        color: theme.textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    // 3行目: フォレンジックバッジ + タグ + 閲覧数
+                    if (hasBottomRow) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (disclosure.forensic != null) ...[
+                            ForensicBadge(
+                              forensic: disclosure.forensic,
+                              companyName:
+                                  "${disclosure.company} (${disclosure.code})",
+                              documentTitle: disclosure.title,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          for (final tag in tags) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1.5),
+                              margin: const EdgeInsets.only(right: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const Spacer(),
+                          if (hasViewCount)
+                            ContentViewCount(viewCount: disclosure.viewCount),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: theme.dividerColor.withValues(alpha: 0.4),
+              ),
+            ],
+          ),
         ),
+        if (isDownloading) const CircularProgressIndicator(),
       ],
     );
   }

@@ -42,6 +42,6 @@ void main() {
     );
 
     expect(find.byIcon(Icons.cloud_download), findsOneWidget);
-    expect(find.text('42 | '), findsOneWidget);
+    expect(find.text('42'), findsOneWidget);
   });
 }

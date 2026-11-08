@@ -87,8 +87,8 @@ void main() {
 
       expect(find.text('有価証券報告書（第10期）'), findsOneWidget);
       expect(find.text('四半期報告書（第3四半期）'), findsOneWidget);
-      expect(find.text('有価証券報告書 | '), findsOneWidget);
-      expect(find.text('四半期報告書 | '), findsOneWidget);
+      expect(find.text('有価証券報告書'), findsOneWidget);
+      expect(find.text('四半期報告書'), findsOneWidget);
       expect(find.byType(EdinetListItem), findsNWidgets(2));
     });
 
@@ -108,8 +108,8 @@ void main() {
         createTestWidget(asyncValue: AsyncData([edinet])),
       );
 
-      // ListTile を長押し
-      await tester.longPress(find.text('大量保有報告書'));
+      // EdinetListItem を長押し
+      await tester.longPress(find.byType(EdinetListItem));
       await tester.pumpAndSettle();
 
       // ポップアップメニュー内に企業名が表示されていること

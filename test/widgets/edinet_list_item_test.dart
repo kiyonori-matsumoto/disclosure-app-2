@@ -29,7 +29,7 @@ void main() {
       );
 
       expect(find.byType(EdinetListItem), findsOneWidget);
-      expect(find.text('有価証券報告書 | '), findsOneWidget);
+      expect(find.text('有価証券報告書'), findsOneWidget);
     });
 
     testWidgets('renders correct content when fields are provided',
