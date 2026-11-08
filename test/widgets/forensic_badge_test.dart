@@ -110,4 +110,37 @@ void main() {
     expect(find.text('定性・財務フォレンジック解析'), findsOneWidget);
     expect(find.text('アクセルマーク (3624)'), findsOneWidget);
   });
+
+  testWidgets('ForensicBadge provides extended touch target for mis-tap prevention',
+      (tester) async {
+    const forensic = ForensicResult(
+      riskLevel: ForensicRiskLevel.warning,
+      tags: ['negative_operating_cf'],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ForensicBadge(
+            forensic: forensic,
+          ),
+        ),
+      ),
+    );
+
+    // GestureDetector の直下に拡張パディングが存在すること
+    final gestureFinder = find.byType(GestureDetector);
+    expect(gestureFinder, findsOneWidget);
+
+    final paddingFinder = find.descendant(
+      of: gestureFinder,
+      matching: find.byType(Padding),
+    );
+    expect(paddingFinder, findsWidgets);
+
+    // バッジの GestureDetector 自体をタップしてもボトムシートが開くこと
+    await tester.tap(gestureFinder);
+    await tester.pumpAndSettle();
+    expect(find.byType(ForensicDetailSheet), findsOneWidget);
+  });
 }
