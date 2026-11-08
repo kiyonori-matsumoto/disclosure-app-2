@@ -164,20 +164,29 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     );
 
     return SafeArea(
-      child: Scrollbar(
-        child: CustomScrollView(
-          controller: sliverScrollController,
-          slivers: displayTarget == 'tdnet'
-              ? <Widget>[
-                  appbar,
-                  filterToolbar(formatter),
-                  tdnetList(),
-                ]
-              : <Widget>[
-                  appbar,
-                  edinetFilterToolbar(formatter),
-                  const EdinetStreamingWidget(),
-                ],
+      child: NestedScrollView(
+        controller: sliverScrollController,
+        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+          return <Widget>[
+            appbar,
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: <Widget>[
+            CustomScrollView(
+              slivers: <Widget>[
+                filterToolbar(formatter),
+                tdnetList(),
+              ],
+            ),
+            CustomScrollView(
+              slivers: <Widget>[
+                edinetFilterToolbar(formatter),
+                const EdinetStreamingWidget(),
+              ],
+            ),
+          ],
         ),
       ),
     );
