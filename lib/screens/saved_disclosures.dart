@@ -26,11 +26,14 @@ class SavedDisclosuresScreen extends ConsumerWidget {
         child: Text('エラーが発生しました: $error'),
       ),
       data: (docs) {
+        final theme = Theme.of(context);
         if (docs.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               '保存されたドキュメントはありません',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: theme.textTheme.bodySmall?.color ?? Colors.grey,
+              ),
             ),
           );
         }
@@ -47,7 +50,10 @@ class SavedDisclosuresScreen extends ConsumerWidget {
                       padding: const EdgeInsets.only(left: 10.0),
                       child: Text(
                         '追加日: ${entry.key}',
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(
+                          color:
+                              theme.textTheme.bodySmall?.color ?? Colors.grey,
+                        ),
                       ),
                     ),
                     sliver: SliverList(

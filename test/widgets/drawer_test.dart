@@ -91,4 +91,47 @@ void main() {
     expect(find.text('テストユーザー'), findsOneWidget);
     expect(find.text('test@example.com'), findsOneWidget);
   });
+
+  testWidgets('ダークモード時にUserAccountsDrawerHeaderの背景とテキスト色が高コントラストに設定される',
+      (WidgetTester tester) async {
+    final darkTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.deepPurple,
+        brightness: Brightness.dark,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => MockGuestUser()),
+        ],
+        child: MaterialApp(
+          theme: darkTheme,
+          home: const Scaffold(
+            drawer: AppDrawer(),
+          ),
+        ),
+      ),
+    );
+
+    final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    final header =
+        tester.widget<UserAccountsDrawerHeader>(find.byType(UserAccountsDrawerHeader));
+    final boxDecoration = header.decoration as BoxDecoration?;
+    expect(boxDecoration?.color, equals(darkTheme.colorScheme.primaryContainer));
+
+    final nameText = tester.widget<Text>(find.text('ゲスト'));
+    expect(nameText.style?.color, equals(darkTheme.colorScheme.onPrimaryContainer));
+    expect(nameText.style?.color, isNot(equals(Colors.black)));
+
+    final emailText = tester.widget<Text>(find.text('未連携（ゲスト利用中）'));
+    expect(emailText.style?.color, isNotNull);
+
+    expect(find.byType(CircleAvatar), findsWidgets);
+  });
 }

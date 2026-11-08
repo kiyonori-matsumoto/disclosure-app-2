@@ -26,14 +26,23 @@ class _SearchCompanyScreenState extends ConsumerState<SearchCompanyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).secondaryHeaderColor,
-        iconTheme: Theme.of(context).iconTheme.copyWith(color: Colors.black),
+        backgroundColor: theme.colorScheme.surface,
+        foregroundColor: theme.colorScheme.onSurface,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         title: TextField(
           autofocus: true,
-          style: Theme.of(context).textTheme.titleLarge,
-          decoration: const InputDecoration.collapsed(hintText: '証券コード or 会社名'),
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+          decoration: InputDecoration.collapsed(
+            hintText: '証券コード or 会社名',
+            hintStyle: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
           controller: _controller,
           onChanged: (text) {
             setState(() {

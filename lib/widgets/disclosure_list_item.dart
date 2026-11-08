@@ -35,9 +35,9 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final companyColor = isDark ? Colors.grey.shade300 : Colors.grey.shade800;
-    final secondaryTextColor =
-        theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
+    final companyColor =
+        isDark ? theme.colorScheme.onSurface : Colors.grey.shade800;
+    final secondaryTextColor = theme.colorScheme.onSurfaceVariant;
     final tags = (disclosure.tags ?? []).where((t) => t.isNotEmpty).toList();
     final hasViewCount =
         disclosure.viewCount != null && disclosure.viewCount! > 0;

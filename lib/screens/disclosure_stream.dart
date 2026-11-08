@@ -117,7 +117,6 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
       snap: true,
       bottom: TabBar(
         controller: _tabController,
-        indicatorColor: Colors.white,
         indicatorWeight: 3.0,
         tabs: const [
           Tab(text: 'TDNET'),
