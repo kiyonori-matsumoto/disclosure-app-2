@@ -83,8 +83,10 @@ class _EdinetListItemState extends State<EdinetListItem> {
     final docType = widget.edinet.docType;
     final hasViewCount =
         widget.edinet.viewCount != null && widget.edinet.viewCount! > 0;
-    final hasBottomRow =
-        widget.edinet.forensic != null || docType.isNotEmpty || hasViewCount;
+    final hasBottomRow = widget.edinet.forensic != null || docType.isNotEmpty;
+    final companiesWithCode = widget.edinet.companies;
+    final primaryCode =
+        companiesWithCode.isNotEmpty ? companiesWithCode.first?.code : null;
 
     return Stack(
       alignment: AlignmentDirectional.center,
@@ -127,11 +129,24 @@ class _EdinetListItemState extends State<EdinetListItem> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1行目: 会社名 + 時刻
+                    // 1行目: [証券コード] 会社名 + [閲覧数] [時刻]
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        if ((primaryCode ?? '').isNotEmpty) ...[
+                          Text(
+                            primaryCode!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: secondaryTextColor,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: Text(
                             widget.edinet.relatedCompaniesName,
@@ -144,6 +159,12 @@ class _EdinetListItemState extends State<EdinetListItem> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        if (hasViewCount) ...[
+                          ContentViewCount(
+                            viewCount: widget.edinet.viewCount,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Text(
                           widget.showDate ? toDate(time) : toTime(time),
                           style: TextStyle(
@@ -164,7 +185,7 @@ class _EdinetListItemState extends State<EdinetListItem> {
                         color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
-                    // 3行目: フォレンジックバッジ + 書類種別 + 閲覧数
+                    // 3行目: フォレンジックバッジ + 書類種別
                     if (hasBottomRow) ...[
                       const SizedBox(height: 6),
                       Row(
@@ -194,11 +215,6 @@ class _EdinetListItemState extends State<EdinetListItem> {
                                   color: secondaryTextColor,
                                 ),
                               ),
-                            ),
-                          const Spacer(),
-                          if (hasViewCount)
-                            ContentViewCount(
-                              viewCount: widget.edinet.viewCount,
                             ),
                         ],
                       ),

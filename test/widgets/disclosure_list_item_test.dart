@@ -55,7 +55,8 @@ void main() {
         ),
       );
 
-      expect(find.text('テスト株式会社 (7203)'), findsOneWidget);
+      expect(find.text('7203'), findsOneWidget);
+      expect(find.text('テスト株式会社'), findsOneWidget);
       expect(find.text('2026年3月期 決算短信〔IFRS〕(連結)'), findsOneWidget);
       expect(find.text('決算'), findsOneWidget);
       expect(find.text('適時開示'), findsOneWidget);

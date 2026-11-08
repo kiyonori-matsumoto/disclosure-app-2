@@ -41,8 +41,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
     final tags = (disclosure.tags ?? []).where((t) => t.isNotEmpty).toList();
     final hasViewCount =
         disclosure.viewCount != null && disclosure.viewCount! > 0;
-    final hasBottomRow =
-        disclosure.forensic != null || tags.isNotEmpty || hasViewCount;
+    final hasBottomRow = disclosure.forensic != null || tags.isNotEmpty;
 
     return Stack(
       alignment: AlignmentDirectional.center,
@@ -132,14 +131,27 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1行目: 会社名(証券コード) + 時刻
+                    // 1行目: [証券コード] 会社名 + [閲覧数] [時刻]
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        if ((disclosure.code ?? '').isNotEmpty) ...[
+                          Text(
+                            disclosure.code!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: secondaryTextColor,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: Text(
-                            "${disclosure.company} (${disclosure.code})",
+                            disclosure.company ?? '',
                             style: TextStyle(
                               fontSize: 13,
                               color: companyColor,
@@ -149,6 +161,10 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        if (hasViewCount) ...[
+                          ContentViewCount(viewCount: disclosure.viewCount),
+                          const SizedBox(width: 6),
+                        ],
                         Text(
                           toTime(disclosure.time ?? 0,
                               showDate: widget.showDate),
@@ -170,7 +186,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                         color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
-                    // 3行目: フォレンジックバッジ + タグ + 閲覧数
+                    // 3行目: フォレンジックバッジ + タグ
                     if (hasBottomRow) ...[
                       const SizedBox(height: 6),
                       Row(
@@ -203,9 +219,6 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                               ),
                             ),
                           ],
-                          const Spacer(),
-                          if (hasViewCount)
-                            ContentViewCount(viewCount: disclosure.viewCount),
                         ],
                       ),
                     ],
