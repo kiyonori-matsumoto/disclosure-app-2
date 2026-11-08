@@ -48,7 +48,6 @@ class SettlementsList extends ConsumerWidget {
               width: double.infinity,
               height: 80.0,
               child: Card(
-                shape: const RoundedRectangleBorder(),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[

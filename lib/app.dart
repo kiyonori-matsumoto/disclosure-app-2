@@ -24,6 +24,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+ThemeData buildLightTheme() => ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.deepPurple,
+        brightness: Brightness.light,
+      ),
+    );
+
+ThemeData buildDarkTheme() => ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.deepPurple,
+        brightness: Brightness.dark,
+      ),
+    );
+
 class AppRootWidget extends ConsumerStatefulWidget {
   const AppRootWidget({Key? key}) : super(key: key);
 
@@ -194,16 +210,8 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('ja', '')],
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        brightness: Brightness.light,
-        useMaterial3: false,
-      ),
-      darkTheme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        brightness: Brightness.dark,
-        useMaterial3: false,
-      ),
+      theme: buildLightTheme(),
+      darkTheme: buildDarkTheme(),
       themeMode: themeMode,
       routes: {
         '/': (context) => const DisclosureStreamScreen(),

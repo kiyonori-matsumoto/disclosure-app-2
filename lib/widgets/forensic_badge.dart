@@ -96,22 +96,31 @@ class _ForensicBadgeState extends State<ForensicBadge>
       }
     }
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final Color bgColor;
     final Color borderColor;
     final Color textColor;
 
     if (isCritical) {
-      bgColor = Colors.red.shade100;
-      borderColor = Colors.red.shade600;
-      textColor = Colors.red.shade900;
+      bgColor = isDark
+          ? Colors.red.shade900.withValues(alpha: 0.35)
+          : Colors.red.shade100;
+      borderColor = isDark ? Colors.red.shade400 : Colors.red.shade600;
+      textColor = isDark ? Colors.red.shade200 : Colors.red.shade900;
     } else if (isWarning) {
-      bgColor = Colors.orange.shade100;
-      borderColor = Colors.orange.shade600;
-      textColor = Colors.deepOrange.shade900;
+      bgColor = isDark
+          ? Colors.orange.shade900.withValues(alpha: 0.35)
+          : Colors.orange.shade100;
+      borderColor = isDark ? Colors.orange.shade400 : Colors.orange.shade600;
+      textColor = isDark ? Colors.orange.shade200 : Colors.deepOrange.shade900;
     } else {
-      bgColor = Colors.green.shade50;
-      borderColor = Colors.green.shade400;
-      textColor = Colors.green.shade900;
+      bgColor = isDark
+          ? Colors.green.shade900.withValues(alpha: 0.35)
+          : Colors.green.shade50;
+      borderColor = isDark ? Colors.green.shade400 : Colors.green.shade400;
+      textColor = isDark ? Colors.green.shade200 : Colors.green.shade900;
     }
 
     Widget badgeContent = GestureDetector(

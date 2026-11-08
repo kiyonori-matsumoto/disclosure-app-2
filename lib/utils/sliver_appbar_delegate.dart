@@ -10,8 +10,14 @@ class SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final theme = Theme.of(context);
     return SizedBox.expand(
-      child: Card(child: child, color: Theme.of(context).secondaryHeaderColor),
+      child: Material(
+        color: theme.colorScheme.surface,
+        surfaceTintColor: theme.colorScheme.surfaceTint,
+        elevation: overlapsContent ? 2 : 0,
+        child: child,
+      ),
     );
   }
 

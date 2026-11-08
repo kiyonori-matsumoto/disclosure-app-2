@@ -76,9 +76,9 @@ class _EdinetListItemState extends State<EdinetListItem> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final companyColor = isDark ? Colors.grey.shade300 : Colors.grey.shade800;
-    final secondaryTextColor =
-        theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
+    final companyColor =
+        isDark ? theme.colorScheme.onSurface : Colors.grey.shade800;
+    final secondaryTextColor = theme.colorScheme.onSurfaceVariant;
     final time = widget.edinet.time ?? 0;
     final docType = widget.edinet.docType;
     final hasViewCount =
