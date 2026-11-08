@@ -38,7 +38,8 @@ class FormattedQuantitativeIndicator {
   final String label; // 例: 総資産アクルーアル比率
   final String acronym; // 例: Sloan Accruals
   final String formattedValue; // 例: +18.0%
-  final String thresholdDescription; // 例: 正常目安: 8.0%未満 (>15.0%で重大)
+  final String formula; // 例: (当期純利益 － 営業CF) ÷ 総資産
+  final String thresholdDescription; // 例: 指標基準値: 8.0%未満 (15.0%超でCritical)
   final ForensicRiskLevel status; // normal, warning, critical
   final String hint; // 指標の検知目的・解説
 
@@ -47,6 +48,7 @@ class FormattedQuantitativeIndicator {
     required this.label,
     required this.acronym,
     required this.formattedValue,
+    required this.formula,
     required this.thresholdDescription,
     required this.status,
     required this.hint,
@@ -73,38 +75,48 @@ class ForensicUiPresenter {
     ),
     'unsustainable_payout': ForensicTagInfo(
       id: 'unsustainable_payout',
-      displayName: '🚨 利益超過分配・タコ足配当',
+      displayName: '🚨 利益超過配当・FCF乖離',
       severity: ForensicRiskLevel.critical,
-      templateText: '営業CF赤字下での配当やFCF赤字下の過剰還元、当期純利益を超える配当の実施など、資本や借入に依存した無理な配当維持が報告されています。',
-      promptQuestion: '営業CF赤字やFCF赤字下の過剰配当、利益剰余金欠損での配当、または当期利益を超える配当性向100%超がありますか？',
+      templateText:
+          '営業CF赤字下での配当実施、フリーキャッシュフロー（FCF）赤字下の配当維持、または当期純利益を超える配当（配当性向100%超）が算出されています。',
+      promptQuestion:
+          '営業CF赤字またはFCF赤字下の配当維持、利益剰余金マイナス下の配当、または配当性向100%超が算出されていますか？',
     ),
     'accruals_anomaly': ForensicTagInfo(
       id: 'accruals_anomaly',
-      displayName: '🚨 アクルーアル異常（ペーパー利益）',
+      displayName: '🚨 総資産アクルーアル乖離',
       severity: ForensicRiskLevel.critical,
-      templateText: '純利益と営業キャッシュフローの大幅な乖離（総資産アクルーアル比率の異常）が検出され、キャッシュを伴わない見せかけの利益リスクがあります。',
-      promptQuestion: '利益と営業CFの大幅乖離・ペーパー利益（総資産アクルーアル比率 >15%で重大、>8%で注意）が検出されていますか？',
+      templateText:
+          '当期純利益と営業キャッシュフローの大幅な乖離（総資産アクルーアル比率の基準超過）が算出され、営業CFを伴わない会計上利益の拡大が確認されます。',
+      promptQuestion:
+          '当期純利益と営業活動CFの大幅乖離（総資産アクルーアル比率 >15.0%でCritical、>8.0%でWarning）が算出されていますか？',
     ),
     'asset_quality_deterioration': ForensicTagInfo(
       id: 'asset_quality_deterioration',
-      displayName: '🚨 資産の質悪化（費用繰延）',
+      displayName: '🚨 資産構造変動（AQI上昇）',
       severity: ForensicRiskLevel.critical,
-      templateText: '資産の質指数（AQI）の急上昇が検出され、本来費用とすべき支出が無形資産や長期前払費用等へ繰り延べ（資産化）されている疑いがあります。',
-      promptQuestion: '非流動・非有形資産比率の前年比急増（Beneish AQI > 1.254で重大、>1.15で注意）による費用の資産化・繰延リスクがありますか？',
+      templateText:
+          '資産の質指数（AQI）の急上昇が算出され、総資産に占める流動資産・有形固定資産以外の非流動資産等の比率が前期比で拡大しています。',
+      promptQuestion:
+          '流動資産・有形固定資産以外の非流動資産比率の前期比急増（Beneish AQI > 1.254でCritical、> 1.15でWarning）が算出されていますか？',
     ),
     'liquidity_crunch': ForensicTagInfo(
       id: 'liquidity_crunch',
       displayName: '🚨 短期流動性ショック',
       severity: ForensicRiskLevel.critical,
-      templateText: '流動負債に対する手元現預金の枯渇または現預金の急激な減少が検出され、短期的な資金ショート・黒字倒産危機が懸念されます。',
-      promptQuestion: '流動負債に対する手元現預金比率の低下（<8%かつ営業CF赤字で重大、現預金30%以上急減で注意）による資金ショート懸念がありますか？',
+      templateText:
+          '流動負債に対する手元現預金比率の低下または現預金残高の急減が算出され、短期流動性の急速な収縮が示されています。',
+      promptQuestion:
+          '流動負債に対する手元現預金比率の低下（<8.0%かつ営業CF赤字でCritical、現預金前期比30%以上急減でWarning）が算出されていますか？',
     ),
     'equity_erosion': ForensicTagInfo(
       id: 'equity_erosion',
       displayName: '🚨 純資産毀損・債務超過',
       severity: ForensicRiskLevel.critical,
-      templateText: '債務超過または累積赤字下での純資産の急減、あるいは自己資本比率の著しい低下が検出され、資本基盤の重大な毀損状態にあります。',
-      promptQuestion: '債務超過または累積赤字下での純資産30%以上急減、自己資本比率10%未満の過剰レバレッジが検出されていますか？',
+      templateText:
+          '純資産のマイナス（債務超過）、累積損失下での純資産前期比大幅減少、または自己資本比率10%未満の資本水準が算出されています。',
+      promptQuestion:
+          '債務超過、累積赤字下での純資産30%以上急減、または自己資本比率10%未満が算出されていますか？',
     ),
     'negative_operating_cf': ForensicTagInfo(
       id: 'negative_operating_cf',
@@ -117,8 +129,10 @@ class ForensicUiPresenter {
       id: 'inventory_receivable_surge',
       displayName: '⚠️ 棚卸資産・売掛金急増',
       severity: ForensicRiskLevel.warning,
-      templateText: '売上債権回転期間指数（DSRI）や棚卸資産回転期間指数（DSI）の異常上昇、または棚卸資産（在庫）・売上債権の急増に関する記載が検出されています。',
-      promptQuestion: '売上債権回転期間指数(DSRI)や棚卸資産回転期間指数(DSI)の急増、または棚卸資産（売れ残り在庫）・売上債権（未回収代金）の急増に関する記載がありますか？',
+      templateText:
+          '売上高の推移に対して売上債権回転期間指数（DSRI）や棚卸資産回転期間指数（DSI）が基準値を超過、または在庫・売掛金の急増に関する記載が確認されています。',
+      promptQuestion:
+          '売上債権回転期間指数(DSRI)や棚卸資産回転期間指数(DSI)の基準超過、または棚卸資産・売上債権の急増に関する記載がありますか？',
     ),
     'impairment_loss': ForensicTagInfo(
       id: 'impairment_loss',
@@ -437,9 +451,10 @@ class ForensicUiPresenter {
         label: '総資産アクルーアル比率',
         acronym: 'Accruals',
         formattedValue: formatted,
-        thresholdDescription: '正常目安: 8.0%未満 (>15.0% 重大)',
+        formula: '(当期純利益 － 営業活動CF) ÷ 総資産',
+        thresholdDescription: '指標基準値: 8.0%未満 (15.0%超でCritical)',
         status: status,
-        hint: 'キャッシュ創出を伴わない見せかけのペーパー利益・利益の質の劣化を検知',
+        hint: '営業活動CFを伴わない会計上利益の乖離・非現金性利益の膨張度合いを算出',
       ));
     }
 
@@ -456,9 +471,10 @@ class ForensicUiPresenter {
         label: '売上債権回転期間指数',
         acronym: 'Beneish DSRI',
         formattedValue: formatted,
-        thresholdDescription: '正常目安: 1.20倍以下 (>1.465倍 重大)',
+        formula: '(当期売上債権 ÷ 当期売上高) ÷ (前期売上債権 ÷ 前期売上高)',
+        thresholdDescription: '指標基準値: 1.20倍以下 (1.465倍超でCritical)',
         status: status,
-        hint: '期末の押し込み販売・架空売上・回収不能債権の滞留リスクを検知',
+        hint: '売上高の変動に対する売上債権（売掛金・受取手形等）回転期間の前期比伸長度を算出',
       ));
     }
 
@@ -475,9 +491,10 @@ class ForensicUiPresenter {
         label: '棚卸資産回転期間指数',
         acronym: 'DSI Index',
         formattedValue: formatted,
-        thresholdDescription: '正常目安: 1.25倍以下 (>1.50倍 重大)',
+        formula: '(当期棚卸資産 ÷ 当期売上高) ÷ (前期棚卸資産 ÷ 前期売上高)',
+        thresholdDescription: '指標基準値: 1.25倍以下 (1.50倍超でCritical)',
         status: status,
-        hint: '架空在庫の計上・原価の在庫付け替え（原価圧縮）・不良在庫滞留を検知',
+        hint: '売上高の変動に対する棚卸資産（商品・製品・原材料等）の滞留・前期比増加度を算出',
       ));
     }
 
@@ -494,9 +511,10 @@ class ForensicUiPresenter {
         label: '資産の質指数',
         acronym: 'Beneish AQI',
         formattedValue: formatted,
-        thresholdDescription: '正常目安: 1.15倍以下 (>1.254倍 重大)',
+        formula: '当期非流動非有形比率 ÷ 前期同比率 [1 - (流動資産+有形固定資産)÷総資産]',
+        thresholdDescription: '指標基準値: 1.15倍以下 (1.254倍超でCritical)',
         status: status,
-        hint: '本来費用とすべき支出の無形資産や前払費用への繰延（資産化）リスクを検知',
+        hint: '流動資産および有形固定資産以外の非流動資産（無形資産・投資その他）の前期比拡大度を算出',
       ));
     }
 
@@ -514,9 +532,10 @@ class ForensicUiPresenter {
         label: '対流動負債 現預金比率',
         acronym: 'Cash Coverage',
         formattedValue: '$pct%',
-        thresholdDescription: '安全目安: 15.0%以上 (<8.0%かつ営業CF赤字で重大)',
+        formula: '現金及び預金 ÷ 流動負債合計',
+        thresholdDescription: '指標基準値: 15.0%以上 (8.0%未満かつ営業CF赤字でCritical)',
         status: status,
-        hint: '1年以内の短期負債に対する手元即時支払余力・資金ショートリスクを検知',
+        hint: '1年以内期日到来の流動負債に対する手元即時支払性流動資産の保有比率を算出',
       ));
     }
 
@@ -534,9 +553,10 @@ class ForensicUiPresenter {
         label: '自己資本比率',
         acronym: 'Equity Ratio',
         formattedValue: '$pct%',
-        thresholdDescription: '安全目安: 10.0%以上 (0%以下で債務超過)',
+        formula: '純資産合計 ÷ 総資産合計',
+        thresholdDescription: '指標基準値: 10.0%以上 (0%以下で債務超過)',
         status: status,
-        hint: '過剰借入レバレッジおよび債務超過リスクを検知',
+        hint: '総資産に対する自己資本（純資産）の構成比率および資本余力を算出',
       ));
     }
 
@@ -556,9 +576,10 @@ class ForensicUiPresenter {
         label: '純資産 前期比増減率',
         acronym: 'Equity Change',
         formattedValue: formatted,
-        thresholdDescription: '正常目安: 30.0%以上の急減なし',
+        formula: '(当期純資産 － 前期純資産) ÷ 前期純資産',
+        thresholdDescription: '指標基準値: 前期比30.0%以上の減少なし',
         status: status,
-        hint: '累積赤字や減損による自己資本の急激な毀損・上場基準抵触リスクを検知',
+        hint: '当期純利益・配当・評価差額等に伴う自己資本残高の前期末比変動率を算出',
       ));
     }
 

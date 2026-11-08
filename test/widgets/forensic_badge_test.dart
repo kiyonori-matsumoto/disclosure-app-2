@@ -71,7 +71,7 @@ void main() {
       ),
     );
 
-    expect(find.text('🚨 アクルーアル異常（ペーパー利益） +2'), findsOneWidget);
+    expect(find.text('🚨 総資産アクルーアル乖離 +2'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders warning badge with single tag',

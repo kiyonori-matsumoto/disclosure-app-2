@@ -37,12 +37,12 @@ void main() {
 
       // 新規定量フォレンジックタグ
       expect(tagInfos[3].id, 'accruals_anomaly');
-      expect(tagInfos[3].displayName, '🚨 アクルーアル異常（ペーパー利益）');
+      expect(tagInfos[3].displayName, '🚨 総資産アクルーアル乖離');
       expect(tagInfos[3].severity, ForensicRiskLevel.critical);
       expect(tagInfos[3].promptQuestion, contains('総資産アクルーアル比率'));
 
       expect(tagInfos[4].id, 'asset_quality_deterioration');
-      expect(tagInfos[4].displayName, '🚨 資産の質悪化（費用繰延）');
+      expect(tagInfos[4].displayName, '🚨 資産構造変動（AQI上昇）');
       expect(tagInfos[4].severity, ForensicRiskLevel.critical);
       expect(tagInfos[4].promptQuestion, contains('Beneish AQI'));
 
@@ -192,36 +192,44 @@ void main() {
       // 1. Accruals
       expect(inds[0].key, 'accrualsRatio');
       expect(inds[0].formattedValue, '+18.0%');
+      expect(inds[0].formula, '(当期純利益 － 営業活動CF) ÷ 総資産');
+      expect(inds[0].thresholdDescription, contains('指標基準値: 8.0%未満'));
       expect(inds[0].status, ForensicRiskLevel.critical);
 
       // 2. DSRI
       expect(inds[1].key, 'dsri');
       expect(inds[1].formattedValue, '1.60倍');
+      expect(inds[1].formula, contains('売上債権'));
       expect(inds[1].status, ForensicRiskLevel.critical);
 
       // 3. DSI
       expect(inds[2].key, 'dsiIndex');
       expect(inds[2].formattedValue, '1.30倍');
+      expect(inds[2].formula, contains('棚卸資産'));
       expect(inds[2].status, ForensicRiskLevel.warning);
 
       // 4. AQI
       expect(inds[3].key, 'aqi');
       expect(inds[3].formattedValue, '1.10倍');
+      expect(inds[3].formula, contains('非流動非有形比率'));
       expect(inds[3].status, ForensicRiskLevel.normal);
 
       // 5. Cash coverage
       expect(inds[4].key, 'cashCoverage');
       expect(inds[4].formattedValue, '5.0%');
+      expect(inds[4].formula, contains('流動負債合計'));
       expect(inds[4].status, ForensicRiskLevel.critical);
 
       // 6. Equity ratio
       expect(inds[5].key, 'equityRatio');
       expect(inds[5].formattedValue, '8.0%');
+      expect(inds[5].formula, contains('総資産合計'));
       expect(inds[5].status, ForensicRiskLevel.warning);
 
       // 7. Net assets drop
       expect(inds[6].key, 'netAssetsDropRate');
       expect(inds[6].formattedValue, '▲40.0%');
+      expect(inds[6].formula, contains('前期純資産'));
       expect(inds[6].status, ForensicRiskLevel.critical);
     });
 
