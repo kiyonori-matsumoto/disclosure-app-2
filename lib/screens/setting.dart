@@ -273,11 +273,13 @@ class ListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
       child: Text(
-        this.title,
+        title,
         style: TextStyle(
-          color: Theme.of(context).textTheme.bodySmall!.color,
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
         ),
       ),
     );

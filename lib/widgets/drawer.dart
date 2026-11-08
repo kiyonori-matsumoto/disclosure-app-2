@@ -9,17 +9,25 @@ import 'package:package_info_plus/package_info_plus.dart';
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({Key? key}) : super(key: key);
 
-  Widget? _avator(String? url) {
-    if (url == null || url.isEmpty) {
-      return null;
+  Widget _avatar(String? url, ThemeData theme) {
+    if (url != null && url.isNotEmpty) {
+      return CircleAvatar(
+        backgroundImage: NetworkImage(url),
+      );
     }
     return CircleAvatar(
-      backgroundImage: NetworkImage(url),
+      backgroundColor: theme.colorScheme.primary,
+      child: Icon(
+        Icons.person,
+        color: theme.colorScheme.onPrimary,
+        size: 40,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final user = ref.watch(currentUserProvider);
     final isLinked = user != null &&
         user.providerData.any((p) => p.providerId == 'google.com');
@@ -32,15 +40,40 @@ class AppDrawer extends ConsumerWidget {
       child: ListView(
         children: <Widget>[
           UserAccountsDrawerHeader(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+            ),
             accountEmail: isLinked
-                ? Text(googleInfo?.email ?? user.email ?? '')
-                : null,
-            accountName: Text(isLinked
-                ? (googleInfo?.displayName ?? user.displayName ?? 'ログイン中')
-                : 'ゲスト'),
-            currentAccountPicture: isLinked
-                ? _avator(googleInfo?.photoURL ?? user.photoURL)
-                : null,
+                ? Text(
+                    googleInfo?.email ?? user.email ?? '',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimaryContainer
+                          .withValues(alpha: 0.85),
+                      fontSize: 13,
+                    ),
+                  )
+                : Text(
+                    '未連携（ゲスト利用中）',
+                    style: TextStyle(
+                      color: theme.colorScheme.onPrimaryContainer
+                          .withValues(alpha: 0.85),
+                      fontSize: 13,
+                    ),
+                  ),
+            accountName: Text(
+              isLinked
+                  ? (googleInfo?.displayName ?? user.displayName ?? 'ログイン中')
+                  : 'ゲスト',
+              style: TextStyle(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            currentAccountPicture: _avatar(
+              googleInfo?.photoURL ?? user?.photoURL,
+              theme,
+            ),
           ),
           ListTile(
             title: const Text('適時開示一覧'),
