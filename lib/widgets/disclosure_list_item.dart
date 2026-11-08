@@ -34,6 +34,8 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
   Widget build(BuildContext context) {
     final Disclosure disclosure = Disclosure.fromDocumentSnapshot(widget.item);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final companyColor = isDark ? Colors.grey.shade300 : Colors.grey.shade800;
     final secondaryTextColor =
         theme.textTheme.bodySmall?.color ?? Colors.grey.shade600;
     final tags = (disclosure.tags ?? []).where((t) => t.isNotEmpty).toList();
@@ -140,8 +142,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                             "${disclosure.company} (${disclosure.code})",
                             style: TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
+                              color: companyColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -159,14 +160,14 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                       ],
                     ),
                     const SizedBox(height: 5),
-                    // 2行目: 開示タイトル (最も重要)
+                    // 2行目: 開示タイトル
                     Text(
                       disclosure.title ?? '',
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.normal,
                         height: 1.35,
-                        color: theme.textTheme.titleMedium?.color,
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     // 3行目: フォレンジックバッジ + タグ + 閲覧数
