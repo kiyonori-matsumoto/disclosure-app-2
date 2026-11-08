@@ -79,13 +79,91 @@ void main() {
     expect(find.text('▲2.8億円'), findsOneWidget);
 
     // AI判定基準・プロンプト設問の開示アコーディオン
-    expect(find.text('機械判定基準・評価設問（プロンプト）の開示'), findsOneWidget);
-    await tester.tap(find.text('機械判定基準・評価設問（プロンプト）の開示'));
+    expect(find.text('機械判定基準・算出方法・評価設問の開示'), findsOneWidget);
+    await tester.tap(find.text('機械判定基準・算出方法・評価設問の開示'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('継続企業の前提に関する注記・疑義'), findsOneWidget);
+    expect(find.text('【定量財務指標の算出式・しきい値基準】'), findsOneWidget);
+    expect(find.textContaining('現在進行形で存在することを示す注記'), findsOneWidget);
 
     // 免責事項
     expect(find.textContaining('企業状態の健全性や危険性を評価・格付けするものではなく'), findsOneWidget);
+  });
+
+  testWidgets('ForensicDetailSheet displays quantitative indicators and metadata badges',
+      (tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final forensic = ForensicResult(
+      version: 1,
+      analyzedAt: DateTime.fromMillisecondsSinceEpoch(1730642400 * 1000),
+      riskLevel: ForensicRiskLevel.critical,
+      tags: const ['accruals_anomaly', 'liquidity_crunch'],
+      metrics: const ForensicMetrics(
+        standard: 'J-GAAP',
+        periodType: 'FY',
+        isFinancialIndustry: false,
+        current: FinancialSnapshot(
+          revenue: 10000000,
+          operatingIncome: 200000,
+          netIncome: 1800000,
+          operatingCashFlow: -100000,
+          investingCashFlow: -50000,
+          netAssets: 2500000,
+          cashAndDeposits: 300000,
+        ),
+        calculations: QuantitativeCalculations(
+          accrualsRatio: 0.19,
+          dsri: 1.55,
+          fcf: -150000,
+          cashCoverage: 0.05,
+          equityRatio: 0.25,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ForensicDetailSheet(
+            forensic: forensic,
+            companyName: 'フューチャーリンクネットワーク (9241)',
+            documentTitle: '決算短信',
+          ),
+        ),
+      ),
+    );
+
+    // メタデータバッジ
+    expect(find.text('J-GAAP'), findsOneWidget);
+    expect(find.text('通期 (FY)'), findsOneWidget);
+
+    // 新規定量タグ
+    expect(find.text('🚨 総資産アクルーアル乖離'), findsOneWidget);
+    expect(find.text('🚨 短期流動性ショック'), findsOneWidget);
+
+    // 定量フォレンジック指標セクション
+    expect(find.text('定量フォレンジック指標（財務モデル分析）'), findsOneWidget);
+    expect(find.text('総資産アクルーアル比率'), findsOneWidget);
+    expect(find.text('+19.0%'), findsOneWidget);
+    expect(find.text('算出式: (当期純利益 － 営業活動CF) ÷ 総資産'), findsOneWidget);
+    expect(find.text('売上債権回転期間指数'), findsOneWidget);
+    expect(find.text('1.55倍'), findsOneWidget);
+    expect(find.text('算出式: (当期売上債権 ÷ 当期売上高) ÷ (前期売上債権 ÷ 前期売上高)'), findsOneWidget);
+    expect(find.text('対流動負債 現預金比率'), findsOneWidget);
+    expect(find.text('5.0%'), findsOneWidget);
+
+    // 拡張財務数値
+    expect(find.text('フリーCF (FCF)'), findsOneWidget);
+    expect(find.text('▲1.5億円'), findsOneWidget);
+    expect(find.text('純資産'), findsOneWidget);
+    expect(find.text('25億円'), findsOneWidget);
+    expect(find.text('現金及び預金'), findsOneWidget);
+    expect(find.text('3億円'), findsOneWidget);
   });
 
   testWidgets('ForensicDetailSheet displays normal summary and metrics correctly',
@@ -161,10 +239,10 @@ void main() {
     );
 
     expect(find.text('定性・財務フォレンジック解析'), findsOneWidget);
-    expect(find.text('機械判定基準・評価設問（プロンプト）の開示'), findsOneWidget);
+    expect(find.text('機械判定基準・算出方法・評価設問の開示'), findsOneWidget);
 
     // プロンプト開示を展開して視認できること
-    await tester.tap(find.text('機械判定基準・評価設問（プロンプト）の開示'));
+    await tester.tap(find.text('機械判定基準・算出方法・評価設問の開示'));
     await tester.pumpAndSettle();
     expect(find.textContaining('営業キャッシュ・フロー'), findsOneWidget);
   });

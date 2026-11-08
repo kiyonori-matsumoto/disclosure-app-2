@@ -7,23 +7,54 @@ void main() {
     test('resolves known tags with correct display names and severity', () {
       const result = ForensicResult(
         riskLevel: ForensicRiskLevel.critical,
-        tags: ['going_concern', 'negative_operating_cf', 'blame_external_macro'],
+        tags: [
+          'going_concern',
+          'negative_operating_cf',
+          'blame_external_macro',
+          'accruals_anomaly',
+          'asset_quality_deterioration',
+          'liquidity_crunch',
+          'equity_erosion',
+        ],
       );
 
       final presenter = ForensicUiPresenter(result);
       final tagInfos = presenter.tagInfos;
 
-      expect(tagInfos.length, 3);
+      expect(tagInfos.length, 7);
       expect(tagInfos[0].displayName, '🚨 事業継続の重要疑義');
       expect(tagInfos[0].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[0].promptQuestion, contains('継続企業の前提に関する注記・疑義'));
+      expect(tagInfos[0].promptQuestion, contains('GC注記'));
+
       expect(tagInfos[1].displayName, '⚠️ 営業CFマイナス');
       expect(tagInfos[1].severity, ForensicRiskLevel.warning);
       expect(tagInfos[1].promptQuestion, contains('営業キャッシュ・フロー'));
+
       expect(tagInfos[2].displayName, '⚠️ 外部要因への言及優勢');
       expect(tagInfos[2].severity, ForensicRiskLevel.warning);
       expect(tagInfos[2].isToneTag, isTrue);
       expect(tagInfos[2].promptQuestion, contains('為替、原材料高'));
+
+      // 新規定量フォレンジックタグ
+      expect(tagInfos[3].id, 'accruals_anomaly');
+      expect(tagInfos[3].displayName, '🚨 総資産アクルーアル乖離');
+      expect(tagInfos[3].severity, ForensicRiskLevel.critical);
+      expect(tagInfos[3].promptQuestion, contains('総資産アクルーアル比率'));
+
+      expect(tagInfos[4].id, 'asset_quality_deterioration');
+      expect(tagInfos[4].displayName, '🚨 資産構造変動（AQI上昇）');
+      expect(tagInfos[4].severity, ForensicRiskLevel.critical);
+      expect(tagInfos[4].promptQuestion, contains('Beneish AQI'));
+
+      expect(tagInfos[5].id, 'liquidity_crunch');
+      expect(tagInfos[5].displayName, '🚨 短期流動性ショック');
+      expect(tagInfos[5].severity, ForensicRiskLevel.critical);
+      expect(tagInfos[5].promptQuestion, contains('手元現預金比率'));
+
+      expect(tagInfos[6].id, 'equity_erosion');
+      expect(tagInfos[6].displayName, '🚨 純資産毀損・債務超過');
+      expect(tagInfos[6].severity, ForensicRiskLevel.critical);
+      expect(tagInfos[6].promptQuestion, contains('純資産30%以上急減'));
     });
 
     test('composes template explanation string accurately', () {
@@ -91,6 +122,115 @@ void main() {
       expect(items[3].label, '営業活動CF');
       expect(items[3].formattedValue, '▲2.8億円');
       expect(items[3].isNegative, isTrue);
+    });
+
+    test('returns expanded metric items including FCF, net assets, and cash', () {
+      const result = ForensicResult(
+        metrics: ForensicMetrics(
+          current: FinancialSnapshot(
+            revenue: 10000000,
+            operatingIncome: 500000,
+            netIncome: 300000,
+            operatingCashFlow: 800000,
+            investingCashFlow: -300000,
+            netAssets: 4000000,
+            cashAndDeposits: 1200000,
+          ),
+          calculations: QuantitativeCalculations(
+            fcf: 500000,
+          ),
+        ),
+      );
+
+      final presenter = ForensicUiPresenter(result);
+      final items = presenter.metricItems;
+
+      expect(items.length, 8);
+      expect(items[0].label, '売上高');
+      expect(items[0].formattedValue, '100億円');
+      expect(items[4].label, '投資活動CF');
+      expect(items[4].formattedValue, '▲3億円');
+      expect(items[5].label, 'フリーCF (FCF)');
+      expect(items[5].formattedValue, '5億円');
+      expect(items[6].label, '純資産');
+      expect(items[6].formattedValue, '40億円');
+      expect(items[7].label, '現金及び預金');
+      expect(items[7].formattedValue, '12億円');
+    });
+
+    test('formats quantitativeIndicators accurately with risk levels', () {
+      const result = ForensicResult(
+        metrics: ForensicMetrics(
+          standard: 'IFRS',
+          periodType: 'FY',
+          isFinancialIndustry: false,
+          current: FinancialSnapshot(
+            operatingCashFlow: -100000,
+            netAssets: 500000,
+            retainedEarnings: -200000,
+          ),
+          calculations: QuantitativeCalculations(
+            accrualsRatio: 0.18, // > 0.15 -> Critical
+            dsri: 1.60, // > 1.465 -> Critical
+            dsiIndex: 1.30, // 1.25..1.50 -> Warning
+            aqi: 1.10, // <= 1.15 -> Normal
+            cashCoverage: 0.05, // < 0.08 & OCF < 0 -> Critical
+            equityRatio: 0.08, // < 0.10 -> Warning
+            netAssetsDropRate: -0.40, // <= -0.30 & retainedEarnings < 0 -> Critical
+          ),
+        ),
+      );
+
+      final presenter = ForensicUiPresenter(result);
+      expect(presenter.standardLabel, 'IFRS');
+      expect(presenter.periodTypeLabel, '通期 (FY)');
+      expect(presenter.isFinancialIndustry, isFalse);
+
+      final inds = presenter.quantitativeIndicators;
+      expect(inds.length, 7);
+
+      // 1. Accruals
+      expect(inds[0].key, 'accrualsRatio');
+      expect(inds[0].formattedValue, '+18.0%');
+      expect(inds[0].formula, '(当期純利益 － 営業活動CF) ÷ 総資産');
+      expect(inds[0].thresholdDescription, contains('指標基準値: 8.0%未満'));
+      expect(inds[0].status, ForensicRiskLevel.critical);
+
+      // 2. DSRI
+      expect(inds[1].key, 'dsri');
+      expect(inds[1].formattedValue, '1.60倍');
+      expect(inds[1].formula, contains('売上債権'));
+      expect(inds[1].status, ForensicRiskLevel.critical);
+
+      // 3. DSI
+      expect(inds[2].key, 'dsiIndex');
+      expect(inds[2].formattedValue, '1.30倍');
+      expect(inds[2].formula, contains('棚卸資産'));
+      expect(inds[2].status, ForensicRiskLevel.warning);
+
+      // 4. AQI
+      expect(inds[3].key, 'aqi');
+      expect(inds[3].formattedValue, '1.10倍');
+      expect(inds[3].formula, contains('非流動非有形比率'));
+      expect(inds[3].status, ForensicRiskLevel.normal);
+
+      // 5. Cash coverage
+      expect(inds[4].key, 'cashCoverage');
+      expect(inds[4].formattedValue, '5.0%');
+      expect(inds[4].formula, contains('流動負債合計'));
+      expect(inds[4].status, ForensicRiskLevel.critical);
+
+      // 6. Equity ratio
+      expect(inds[5].key, 'equityRatio');
+      expect(inds[5].formattedValue, '8.0%');
+      expect(inds[5].formula, contains('総資産合計'));
+      expect(inds[5].status, ForensicRiskLevel.warning);
+
+      // 7. Net assets drop
+      expect(inds[6].key, 'netAssetsDropRate');
+      expect(inds[6].formattedValue, '▲40.0%');
+      expect(inds[6].formula, contains('前期純資産'));
+      expect(inds[6].status, ForensicRiskLevel.critical);
     });
 
     test('headlines reflect riskLevel', () {

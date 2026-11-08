@@ -48,6 +48,83 @@ void main() {
       expect(result.details?.hasNegativeFactors, isTrue);
     });
 
+    test('parses quantitative snapshot and calculations correctly', () {
+      final map = {
+        'version': 1,
+        'riskLevel': 'critical',
+        'tags': ['accruals_anomaly', 'equity_erosion'],
+        'metrics': {
+          'standard': 'J-GAAP',
+          'periodType': 'FY',
+          'isFinancialIndustry': false,
+          'current': {
+            'revenue': 10000000,
+            'operatingIncome': 500000,
+            'netIncome': 2000000,
+            'operatingCashFlow': 200000,
+            'tradeReceivables': 1600000,
+            'inventories': 1200000,
+            'cashAndDeposits': 800000,
+            'currentLiabilities': 5000000,
+            'netAssets': 3000000,
+            'investingCashFlow': -100000,
+          },
+          'prior': {
+            'revenue': 9000000,
+            'tradeReceivables': 1000000,
+            'cashAndDeposits': 1500000,
+            'netAssets': 4500000,
+          },
+          'calculations': {
+            'accrualsRatio': 0.18,
+            'dsri': 1.60,
+            'dsiIndex': 1.22,
+            'aqi': 1.12,
+            'fcf': 100000,
+            'cashCoverage': 0.16,
+            'cashDropRate': -0.4667,
+            'equityRatio': 0.30,
+            'netAssetsDropRate': -0.3333,
+          },
+          'unit': '千円',
+        },
+      };
+
+      final result = ForensicResult.fromMap(map);
+      expect(result.metrics?.standard, 'J-GAAP');
+      expect(result.metrics?.periodType, 'FY');
+      expect(result.metrics?.isFinancialIndustry, isFalse);
+
+      // 有効値ゲッターの確認
+      expect(result.metrics?.effectiveRevenue, 10000000);
+      expect(result.metrics?.effectiveNetIncome, 2000000);
+      expect(result.metrics?.effectiveOperatingCashFlow, 200000);
+      expect(result.metrics?.tradeReceivables, 1600000);
+      expect(result.metrics?.inventories, 1200000);
+      expect(result.metrics?.cashAndDeposits, 800000);
+      expect(result.metrics?.netAssets, 3000000);
+      expect(result.metrics?.investingCashFlow, -100000);
+
+      // calculations
+      final calcs = result.metrics?.calculations;
+      expect(calcs?.accrualsRatio, 0.18);
+      expect(calcs?.dsri, 1.60);
+      expect(calcs?.dsiIndex, 1.22);
+      expect(calcs?.aqi, 1.12);
+      expect(calcs?.fcf, 100000);
+      expect(calcs?.cashCoverage, 0.16);
+      expect(calcs?.cashDropRate, -0.4667);
+      expect(calcs?.equityRatio, 0.30);
+      expect(calcs?.netAssetsDropRate, -0.3333);
+
+      // toMap
+      final serialized = result.toMap();
+      final metricsMap = serialized['metrics'] as Map<String, dynamic>;
+      expect(metricsMap['standard'], 'J-GAAP');
+      expect(metricsMap['periodType'], 'FY');
+      expect((metricsMap['calculations'] as Map)['accrualsRatio'], 0.18);
+    });
+
     test('handles empty or null fields safely', () {
       final result = ForensicResult.fromMap({});
 
