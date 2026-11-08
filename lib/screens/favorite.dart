@@ -11,7 +11,18 @@ class FavoriteScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text("お気に入り")),
+      appBar: AppBar(
+        title: const Text("お気に入り"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: '会社検索',
+            onPressed: () {
+              Navigator.pushNamed(context, '/companies');
+            },
+          ),
+        ],
+      ),
       body: _buildBody(context, ref),
     );
   }

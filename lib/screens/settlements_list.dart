@@ -20,6 +20,15 @@ class SettlementsList extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('${toDate(current.millisecondsSinceEpoch)}の決算予定'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: '会社検索',
+            onPressed: () {
+              Navigator.pushNamed(context, '/companies');
+            },
+          ),
+        ],
       ),
       body: settlementsAsync.when(
         loading: () => const LinearProgressIndicator(),

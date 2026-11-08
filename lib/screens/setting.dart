@@ -163,8 +163,25 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
           );
         }(),
         ListTile(
-          title: Row(
-            children: <Widget>[Text('プライバシーポリシー'), Icon(Icons.open_in_browser)],
+          title: const Row(
+            children: <Widget>[
+              Text('サポートサイト'),
+              SizedBox(width: 4),
+              Icon(Icons.open_in_browser, size: 18),
+            ],
+          ),
+          onTap: () {
+            const url = 'https://disclosure-app.firebaseapp.com/';
+            launchURL(url);
+          },
+        ),
+        ListTile(
+          title: const Row(
+            children: <Widget>[
+              Text('プライバシーポリシー'),
+              SizedBox(width: 4),
+              Icon(Icons.open_in_browser, size: 18),
+            ],
           ),
           onTap: () {
             const url = 'https://disclosure-app.firebaseapp.com/privacy/';

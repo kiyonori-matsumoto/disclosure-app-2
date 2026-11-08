@@ -1,5 +1,6 @@
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
+import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,23 +43,23 @@ class AppDrawer extends ConsumerWidget {
                 : null,
           ),
           ListTile(
-            title: Text('適時開示一覧'),
-            leading: Icon(Icons.insert_drive_file),
+            title: const Text('適時開示一覧'),
+            leading: const Icon(Icons.insert_drive_file),
             onTap: () => Navigator.of(context).pushReplacementNamed('/'),
           ),
           ListTile(
-            title: Text('会社検索'),
-            leading: Icon(Icons.search),
+            title: const Text('会社検索'),
+            leading: const Icon(Icons.search),
             onTap: () => Navigator.of(context).popAndPushNamed('/companies'),
           ),
           ListTile(
-            title: Text('お気に入り'),
-            leading: Icon(Icons.star),
+            title: const Text('お気に入り'),
+            leading: const Icon(Icons.star),
             onTap: () => Navigator.of(context).popAndPushNamed('/favorites'),
           ),
           ListTile(
-            title: Text('決算予定'),
-            leading: Icon(Icons.monetization_on),
+            title: const Text('決算予定'),
+            leading: const Icon(Icons.monetization_on),
             onTap: () => Navigator.of(context).popAndPushNamed('/settlements'),
           ),
           ListTile(
@@ -91,6 +92,13 @@ class AppDrawer extends ConsumerWidget {
                 },
               ),
             ),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('サポートサイト'),
+            onTap: () {
+              launchURL('https://disclosure-app.firebaseapp.com/');
+            },
+          ),
           FutureBuilder<PackageInfo>(
             builder: (context, snapshot) => AboutListTile(
               applicationLegalese: '(c) 2019-2023 Matsukiyo Lab.',
