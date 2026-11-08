@@ -307,9 +307,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // EDINET に切り替え
-      tester
-          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-          .onChanged!('edinet');
+      await tester.tap(find.text('EDINET'));
       await tester.pumpAndSettle();
 
       // EDINET ツールバーの書類種別 Chip（初期表示:「なし」）が表示されていること
@@ -348,9 +346,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // EDINET に切り替え
-      tester
-          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-          .onChanged!('edinet');
+      await tester.tap(find.text('EDINET'));
       await tester.pumpAndSettle();
 
       // 「お気に入りのみ表示する」をタップ
@@ -382,14 +378,38 @@ void main() {
       await tester.pumpAndSettle();
 
       // EDINET に切り替え
-      tester
-          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-          .onChanged!('edinet');
+      await tester.tap(find.text('EDINET'));
       await tester.pumpAndSettle();
 
       // FAB が表示されていること
       expect(find.byType(FloatingActionButton), findsOneWidget);
       expect(find.text('5 NEW MESSAGE'), findsOneWidget);
+    });
+
+    testWidgets('画面の横スワイプで TDNET から EDINET に切り替えられること',
+        (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            filteredEdinetsProvider
+                .overrideWith((ref) => const AsyncData([])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 左へスワイプ（右側の EDINET 画面へフリング）
+      await tester.fling(find.byType(TabBarView), const Offset(-500, 0), 2000);
+      await tester.pumpAndSettle();
+
+      // EDINET ツールバーの書類種別 Chip（初期表示:「なし」）が表示されていること
+      final chipFinder = find.ancestor(
+        of: find.text('なし'),
+        matching: find.byType(ChoiceChip),
+      );
+      expect(chipFinder, findsOneWidget);
     });
   });
 }
