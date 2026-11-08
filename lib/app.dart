@@ -206,7 +206,7 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
       ),
       themeMode: themeMode,
       routes: {
-        '/': (context) => DisclosureStreamScreen(),
+        '/': (context) => const DisclosureStreamScreen(),
         '/companies': (context) => const SearchCompanyScreen(),
         '/favorites': (context) => const FavoriteScreen(),
         '/settings': (context) => const SettingScreen(),
