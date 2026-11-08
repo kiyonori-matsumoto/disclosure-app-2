@@ -73,8 +73,6 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
     });
 
     _initAuth();
-
-    _message.subscribeToTopic('edinet_notification');
   }
 
   @override
