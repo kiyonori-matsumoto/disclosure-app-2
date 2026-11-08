@@ -32,6 +32,7 @@ class NotificationTagSettingScreen extends ConsumerWidget {
         ),
       ),
       data: (_) {
+        final theme = Theme.of(context);
         final currentTags = ref.watch(notificationTagsProvider);
         return SafeArea(
           child: ListView(
@@ -44,7 +45,9 @@ class NotificationTagSettingScreen extends ConsumerWidget {
                   isSelected ? '通知ON（タップで履歴表示）' : 'タップで履歴表示',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isSelected ? Colors.blue : Colors.grey,
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : (theme.textTheme.bodySmall?.color ?? Colors.grey),
                   ),
                 ),
                 trailing: Row(
@@ -61,7 +64,7 @@ class NotificationTagSettingScreen extends ConsumerWidget {
                         }
                       },
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.grey),
+                    const Icon(Icons.chevron_right),
                   ],
                 ),
                 onTap: () {

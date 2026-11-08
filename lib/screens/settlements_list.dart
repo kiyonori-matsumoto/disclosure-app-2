@@ -55,7 +55,7 @@ class SettlementsList extends ConsumerWidget {
                     ListTile(
                       leading: Icon(
                         Icons.announcement,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       title: const Text('指定された日の決算予定はありません'),
                     ),

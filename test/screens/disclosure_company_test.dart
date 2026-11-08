@@ -264,6 +264,12 @@ void main() {
 
       expect(find.byIcon(Icons.announcement), findsOneWidget);
       expect(find.text(settlement.toMessage()), findsOneWidget);
+      final announcementIcon =
+          tester.widget<Icon>(find.byIcon(Icons.announcement));
+      final theme =
+          Theme.of(tester.element(find.byType(DisclosureCompanyScreen)));
+      expect(announcementIcon.color, equals(theme.colorScheme.primary));
+      expect(announcementIcon.color, isNot(equals(theme.colorScheme.surface)));
     });
 
     testWidgets('過去の決算発表予定（1日以上前）の場合はアナウンスカードが表示されない',

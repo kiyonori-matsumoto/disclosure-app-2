@@ -138,7 +138,7 @@ class DisclosureCompanyScreen extends ConsumerWidget {
                     child: ListTile(
                       leading: Icon(
                         Icons.announcement,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       title: Text(settlement.toMessage()),
                     ),
