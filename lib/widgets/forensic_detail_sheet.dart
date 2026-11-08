@@ -119,8 +119,12 @@ class ForensicDetailSheet extends StatelessWidget {
                 controller: scrollController,
                 padding: const EdgeInsets.all(16.0),
                 children: [
-                  // 企業名・開示タイトル
-                  if (companyName != null || documentTitle != null) ...[
+                  // 企業名・開示タイトル・会計基準/期間区分
+                  if (companyName != null ||
+                      documentTitle != null ||
+                      presenter.standardLabel != null ||
+                      presenter.periodTypeLabel != null ||
+                      presenter.isFinancialIndustry) ...[
                     if (companyName != null)
                       Text(
                         companyName!,
@@ -131,7 +135,7 @@ class ForensicDetailSheet extends StatelessWidget {
                       ),
                     if (documentTitle != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2.0, bottom: 8.0),
+                        padding: const EdgeInsets.only(top: 2.0, bottom: 6.0),
                         child: Text(
                           documentTitle!,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -139,6 +143,37 @@ class ForensicDetailSheet extends StatelessWidget {
                           ),
                         ),
                       ),
+                    if (presenter.standardLabel != null ||
+                        presenter.periodTypeLabel != null ||
+                        presenter.isFinancialIndustry) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            if (presenter.standardLabel != null)
+                              _buildMetadataBadge(
+                                context,
+                                presenter.standardLabel!,
+                                icon: Icons.account_balance_outlined,
+                              ),
+                            if (presenter.periodTypeLabel != null)
+                              _buildMetadataBadge(
+                                context,
+                                presenter.periodTypeLabel!,
+                                icon: Icons.calendar_today_outlined,
+                              ),
+                            if (presenter.isFinancialIndustry)
+                              _buildMetadataBadge(
+                                context,
+                                '金融業',
+                                icon: Icons.account_balance,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
 
                   // 総合リスク診断カード
@@ -293,6 +328,21 @@ class ForensicDetailSheet extends StatelessWidget {
                         );
                       }).toList(),
                     ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // 定量フォレンジック指標（財務モデル分析）
+                  if (presenter.quantitativeIndicators.isNotEmpty) ...[
+                    Text(
+                      '定量フォレンジック指標（財務モデル分析）',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...presenter.quantitativeIndicators.map((ind) {
+                      return _buildIndicatorCard(context, ind);
+                    }),
                     const SizedBox(height: 16),
                   ],
 
@@ -454,6 +504,167 @@ class ForensicDetailSheet extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMetadataBadge(BuildContext context, String text,
+      {IconData? icon}) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndicatorCard(
+      BuildContext context, FormattedQuantitativeIndicator ind) {
+    final theme = Theme.of(context);
+    final isCritical = ind.status == ForensicRiskLevel.critical;
+    final isWarning = ind.status == ForensicRiskLevel.warning;
+
+    final Color statusColor;
+    final String statusLabel;
+    final Color badgeBgColor;
+
+    if (isCritical) {
+      statusColor = Colors.red.shade700;
+      statusLabel = 'CRITICAL';
+      badgeBgColor = Colors.red.shade100;
+    } else if (isWarning) {
+      statusColor = Colors.orange.shade800;
+      statusLabel = 'WARNING';
+      badgeBgColor = Colors.orange.shade100;
+    } else {
+      statusColor = Colors.green.shade700;
+      statusLabel = '正常';
+      badgeBgColor = Colors.green.shade100;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: isCritical
+            ? (theme.brightness == Brightness.dark
+                ? Colors.red.shade900.withValues(alpha: 0.15)
+                : Colors.red.shade50.withValues(alpha: 0.5))
+            : (isWarning
+                ? (theme.brightness == Brightness.dark
+                    ? Colors.orange.shade900.withValues(alpha: 0.15)
+                    : Colors.orange.shade50.withValues(alpha: 0.5))
+                : theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isCritical
+              ? Colors.red.shade300
+              : (isWarning ? Colors.orange.shade300 : Colors.grey.shade300),
+          width: isCritical || isWarning ? 1.2 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ind.label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      ind.acronym,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    ind.formattedValue,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: isCritical
+                          ? Colors.red.shade700
+                          : (isWarning ? Colors.orange.shade800 : null),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: badgeBgColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            ind.hint,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 11,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            ind.thresholdDescription,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

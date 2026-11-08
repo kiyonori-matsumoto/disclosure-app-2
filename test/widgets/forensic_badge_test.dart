@@ -54,6 +54,26 @@ void main() {
     expect(find.text('🚨 事業継続の重要疑義 +1'), findsOneWidget);
   });
 
+  testWidgets('ForensicBadge renders critical badge with quantitative tag',
+      (tester) async {
+    const forensic = ForensicResult(
+      riskLevel: ForensicRiskLevel.critical,
+      tags: ['accruals_anomaly', 'liquidity_crunch', 'equity_erosion'],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ForensicBadge(
+            forensic: forensic,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('🚨 アクルーアル異常（ペーパー利益） +2'), findsOneWidget);
+  });
+
   testWidgets('ForensicBadge renders warning badge with single tag',
       (tester) async {
     const forensic = ForensicResult(
