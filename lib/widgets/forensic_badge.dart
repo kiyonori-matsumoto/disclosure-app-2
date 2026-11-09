@@ -123,35 +123,52 @@ class _ForensicBadgeState extends State<ForensicBadge>
       textColor = isDark ? Colors.green.shade200 : Colors.green.shade900;
     }
 
-    Widget badgeContent = GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        showForensicDetailSheet(
-          context: context,
-          forensic: forensic,
-          companyName: widget.companyName,
-          documentTitle: widget.documentTitle,
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: borderColor, width: 1.0),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+    void openDetailSheet() {
+      showForensicDetailSheet(
+        context: context,
+        forensic: forensic,
+        companyName: widget.companyName,
+        documentTitle: widget.documentTitle,
+      );
+    }
+
+    Widget badgeContent = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        splashColor: textColor.withValues(alpha: 0.16),
+        highlightColor: textColor.withValues(alpha: 0.08),
+        onTap: openDetailSheet,
+        child: Padding(
+          // 見た目のコンパクトさを保ちつつ、誤タップを防ぐための透明タッチターゲット領域
+          padding: const EdgeInsets.only(top: 4.0, bottom: 6.0, right: 8.0),
+          child: Ink(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: borderColor, width: 1.0),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.chevron_right,
+                  size: 11,
+                  color: textColor,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
