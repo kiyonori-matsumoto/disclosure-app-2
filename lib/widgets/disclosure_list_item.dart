@@ -81,7 +81,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 11.0),
+                    horizontal: 16.0, vertical: 10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -127,23 +127,28 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                             color: secondaryTextColor,
                           ),
                         ),
-                        const SizedBox(width: 2),
-                        IconButton(
-                          icon: const Icon(Icons.more_vert, size: 18),
-                          color: secondaryTextColor,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 28,
-                            minHeight: 28,
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: 'オプション',
+                          child: InkResponse(
+                            radius: 14,
+                            onTap: () =>
+                                _showActionMenu(context, disclosure),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 2.0, vertical: 2.0),
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: secondaryTextColor
+                                    .withValues(alpha: 0.75),
+                              ),
+                            ),
                           ),
-                          visualDensity: VisualDensity.compact,
-                          tooltip: 'オプション',
-                          onPressed: () =>
-                              _showActionMenu(context, disclosure),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3.5),
                     // 2行目: 開示タイトル
                     Text(
                       disclosure.title ?? '',
