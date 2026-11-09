@@ -146,5 +146,57 @@ void main() {
 
       expect(find.byType(ForensicBadge), findsOneWidget);
     });
+
+    testWidgets('オプションボタンのタップでアクションシートが表示されること', (tester) async {
+      final doc = FakeDocumentSnapshot({
+        'company': 'テスト株式会社',
+        'code': '7203',
+        'title': '決算短信',
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DisclosureListItem(item: doc),
+            ),
+          ),
+        ),
+      );
+
+      final optionButton = find.byTooltip('オプション');
+      expect(optionButton, findsOneWidget);
+      await tester.tap(optionButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('テスト株式会社 (7203)'), findsOneWidget);
+      expect(find.text('保存'), findsOneWidget);
+      expect(find.text('7203の適時開示情報'), findsOneWidget);
+    });
+
+    testWidgets('長押しでアクションシートが表示されること', (tester) async {
+      final doc = FakeDocumentSnapshot({
+        'company': 'テスト株式会社',
+        'code': '7203',
+        'title': '決算短信',
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DisclosureListItem(item: doc),
+            ),
+          ),
+        ),
+      );
+
+      await tester.longPress(find.byType(DisclosureListItem));
+      await tester.pumpAndSettle();
+
+      expect(find.text('テスト株式会社 (7203)'), findsOneWidget);
+      expect(find.text('保存'), findsOneWidget);
+      expect(find.text('7203の適時開示情報'), findsOneWidget);
+    });
   });
 }

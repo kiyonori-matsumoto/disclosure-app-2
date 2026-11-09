@@ -1,5 +1,6 @@
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
@@ -87,9 +88,10 @@ class SavedDisclosuresScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            background: Container(
-                              color: Colors.green,
-                            ),
+                            background:
+                                const DismissibleDeleteBackground.left(),
+                            secondaryBackground:
+                                const DismissibleDeleteBackground.right(),
                           );
                         },
                         childCount: entry.value.length,

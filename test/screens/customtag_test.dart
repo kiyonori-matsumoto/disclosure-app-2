@@ -2,6 +2,7 @@ import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/custom_tags_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/screens/customtag.dart';
+import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,6 +74,14 @@ void main() {
 
     for (final tag in testTags) {
       expect(find.text(tag), findsOneWidget);
+    }
+
+    final dismissibles =
+        tester.widgetList<Dismissible>(find.byType(Dismissible));
+    for (final dismissible in dismissibles) {
+      expect(dismissible.background, isA<DismissibleDeleteBackground>());
+      expect(dismissible.secondaryBackground,
+          isA<DismissibleDeleteBackground>());
     }
   });
 

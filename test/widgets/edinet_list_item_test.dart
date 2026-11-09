@@ -1,3 +1,4 @@
+import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/models/forensic_result.dart';
 import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
@@ -118,6 +119,35 @@ void main() {
       );
 
       expect(find.byType(ForensicBadge), findsOneWidget);
+    });
+
+    testWidgets('オプションボタンのタップで関連企業のアクションシートが表示されること',
+        (WidgetTester tester) async {
+      final edinet = Edinet(
+        docDescription: '有価証券報告書',
+        docId: 'S100TEST',
+        time: 1700000000000,
+        docTypeCode: '120',
+        filerName: 'テスト提出者',
+        filer: Company('9999', name: 'テスト株式会社'),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: EdinetListItem(edinet: edinet),
+            ),
+          ),
+        ),
+      );
+
+      final optionButton = find.byTooltip('オプション');
+      expect(optionButton, findsOneWidget);
+      await tester.tap(optionButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('テスト株式会社'), findsOneWidget);
     });
   });
 }

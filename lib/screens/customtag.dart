@@ -2,6 +2,7 @@ import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/custom_tags_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/widgets/bottom_text_field_with_icon.dart';
+import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,9 +45,10 @@ class CustomTagScreen extends ConsumerWidget {
                           final tag = tags[index];
                           return Dismissible(
                             key: ValueKey(tag),
-                            background: Container(
-                              color: Colors.red,
-                            ),
+                            background:
+                                const DismissibleDeleteBackground.left(),
+                            secondaryBackground:
+                                const DismissibleDeleteBackground.right(),
                             child: ListTile(
                               title: Text(tag),
                             ),
