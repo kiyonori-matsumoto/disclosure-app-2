@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
+import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,6 +87,64 @@ void main() {
       );
 
       expect(find.byType(DisclosureListItem), findsOneWidget);
+    });
+
+    testWidgets('isForensicEnabled が false の場合、forensic データがあってもバッジは非表示',
+        (tester) async {
+      final doc = FakeDocumentSnapshot({
+        'company': 'テスト株式会社',
+        'code': '7203',
+        'title': '有価証券報告書',
+        'forensic': {
+          'risk_level': 'warning',
+          'total_red_flags': 1,
+          'analyzed_at': '2026-11-09T00:00:00Z',
+        },
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isForensicEnabledProvider.overrideWithValue(false),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: DisclosureListItem(item: doc),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ForensicBadge), findsNothing);
+    });
+
+    testWidgets('isForensicEnabled が true の場合、forensic データがあればバッジが表示される',
+        (tester) async {
+      final doc = FakeDocumentSnapshot({
+        'company': 'テスト株式会社',
+        'code': '7203',
+        'title': '有価証券報告書',
+        'forensic': {
+          'risk_level': 'warning',
+          'total_red_flags': 1,
+          'analyzed_at': '2026-11-09T00:00:00Z',
+        },
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isForensicEnabledProvider.overrideWithValue(true),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: DisclosureListItem(item: doc),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ForensicBadge), findsOneWidget);
     });
   });
 }

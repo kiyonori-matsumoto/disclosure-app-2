@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
+import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'package:disclosure_app_fl/providers/topic_sync_provider.dart';
 import 'package:disclosure_app_fl/screens/disclosure_company.dart';
@@ -17,6 +18,7 @@ import 'package:disclosure_app_fl/utils/auth_helper.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/notification_route_helper.dart';
 import 'package:disclosure_app_fl/utils/routeobserver.dart';
+import 'package:disclosure_app_fl/widgets/force_update_dialog.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -81,6 +83,15 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
         final initialMessage = await _message.getInitialMessage();
         if (initialMessage != null && mounted) {
           await _handleNotification(initialMessage);
+        }
+
+        // 強制アップデートの確認（クリティカル時のみ）
+        final updateState = await ref.read(forceUpdateStateProvider.future);
+        if (updateState.isRequired && mounted) {
+          final navContext = navigatorKey.currentContext;
+          if (navContext != null) {
+            ForceUpdateDialog.show(navContext, updateState);
+          }
         }
       } catch (e, stack) {
         debugPrint("Failed to handle initial notification message: $e");
@@ -192,6 +203,18 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
     ref.listen<dynamic>(currentUserProvider, (previous, next) {
       if (next != null) {
         FirebaseCrashlytics.instance.setUserIdentifier(next.uid);
+      }
+    });
+
+    // 強制アップデートが必要になった場合のダイアログ表示監視
+    ref.listen<AsyncValue<ForceUpdateState>>(forceUpdateStateProvider,
+        (previous, next) {
+      final state = next.value;
+      if (state != null && state.isRequired) {
+        final navContext = navigatorKey.currentContext;
+        if (navContext != null) {
+          ForceUpdateDialog.show(navContext, state);
+        }
       }
     });
 
