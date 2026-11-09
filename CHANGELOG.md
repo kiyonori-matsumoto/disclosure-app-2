@@ -1,5 +1,11 @@
 # Changelog
 
+## [v2.7.2](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.1...v2.7.2) - 2026-11-09
+
+- feat(remote-config): Firebase Remote Config によるフォレンジック機能の限定公開および強制アップデート基盤の導入 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/115
+- fix(forensic): フォレンジックバッジのタッチターゲット領域を拡張して誤タップを防止 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/102
+- feat(ui): スワイプ削除インジケーターの統一とコンテキストメニューのボトムシート化 (#109) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/117
+
 ## [v2.7.1](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.0...v2.7.1) - 2026-11-08
 
 - refactor(fcm): remove deprecated edinet_notification topic subscription by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/103
