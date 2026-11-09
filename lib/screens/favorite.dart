@@ -2,6 +2,7 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,9 +56,10 @@ class FavoriteScreen extends ConsumerWidget {
                           final fav = favorites[index];
                           return Dismissible(
                             key: fav.key ?? ValueKey(fav.code ?? index),
-                            background: Container(
-                              color: Colors.red,
-                            ),
+                            background:
+                                const DismissibleDeleteBackground.left(),
+                            secondaryBackground:
+                                const DismissibleDeleteBackground.right(),
                             child: FadedListTile(
                               fav: fav,
                               key: fav.key,

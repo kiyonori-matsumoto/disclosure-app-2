@@ -3,6 +3,7 @@ import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
+import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +60,14 @@ void main() {
 
     expect(find.text('7203 トヨタ自動車'), findsOneWidget);
     expect(find.text('6758 ソニーグループ'), findsOneWidget);
+
+    final dismissibles =
+        tester.widgetList<Dismissible>(find.byType(Dismissible));
+    for (final dismissible in dismissibles) {
+      expect(dismissible.background, isA<DismissibleDeleteBackground>());
+      expect(dismissible.secondaryBackground,
+          isA<DismissibleDeleteBackground>());
+    }
   });
 
   testWidgets('アイテムをスワイプ削除後、SnackBarの「取り消す」をタップして復元できる',

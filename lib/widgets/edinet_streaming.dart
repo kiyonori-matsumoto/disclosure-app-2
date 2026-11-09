@@ -5,6 +5,7 @@ import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
+import 'package:disclosure_app_fl/widgets/disclosure_action_sheet.dart';
 import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
@@ -123,12 +124,12 @@ class _EdinetListItemState extends ConsumerState<EdinetListItem> {
                     }
                   }
                 },
-          onLongPress: _onLongPress(context, widget.edinet.companies),
+          onLongPress: () => _showActionMenu(context),
           child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 11.0),
+                    horizontal: 16.0, vertical: 10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -175,9 +176,27 @@ class _EdinetListItemState extends ConsumerState<EdinetListItem> {
                             color: secondaryTextColor,
                           ),
                         ),
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: 'オプション',
+                          child: InkResponse(
+                            radius: 14,
+                            onTap: () => _showActionMenu(context),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 2.0, vertical: 2.0),
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: secondaryTextColor
+                                    .withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3.5),
                     // 2行目: 書類タイトル
                     Text(
                       widget.edinet.docDescription ?? "",
@@ -238,27 +257,31 @@ class _EdinetListItemState extends ConsumerState<EdinetListItem> {
     );
   }
 
-  _onLongPress(BuildContext context, List<Company?> companies) => () async {
-        if (companies.isEmpty) return;
+  void _showActionMenu(BuildContext context) {
+    final validCompanies =
+        widget.edinet.companies.whereType<Company>().toList();
+    if (validCompanies.isEmpty) return;
 
-        RenderBox renderBox = context.findRenderObject() as RenderBox;
-        final point = renderBox.localToGlobal(Offset.zero);
-        final size = MediaQuery.of(context).size;
-        final choice = await showMenu<Company>(
-          context: context,
-          position: RelativeRect.fromLTRB(size.width, point.dy, 0.0, point.dy),
-          items: companies
-              .map((company) => PopupMenuItem<Company>(
-                    child: ListTile(
-                      title: Text('${company!.name}'),
-                    ),
-                    value: company,
-                  ))
-              .toList(),
+    final companyTitle = widget.edinet.relatedCompaniesName;
+    showItemActionSheet(
+      context: context,
+      title: companyTitle.isNotEmpty ? companyTitle : 'EDINET開示情報',
+      subtitle: widget.edinet.docDescription,
+      items: validCompanies.map((company) {
+        return ActionSheetItem(
+          icon: Icons.business_outlined,
+          title: company.name ?? '',
+          onTap: () {
+            if (context.mounted) {
+              Navigator.pushNamed(
+                context,
+                '/company-disclosures',
+                arguments: company,
+              );
+            }
+          },
         );
-        if (choice != null && context.mounted) {
-          Navigator.pushNamed(context, '/company-disclosures',
-              arguments: choice);
-        }
-      };
+      }).toList(),
+    );
+  }
 }

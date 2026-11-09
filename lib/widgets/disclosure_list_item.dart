@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/utils/download_disclosure.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
+import 'package:disclosure_app_fl/widgets/disclosure_action_sheet.dart';
 import 'package:disclosure_app_fl/widgets/forensic_badge.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
@@ -75,62 +76,12 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
               }
             }
           },
-          onLongPress: () async {
-            final renderBox = context.findRenderObject() as RenderBox;
-            final point = renderBox.localToGlobal(Offset.zero);
-            final size = MediaQuery.of(context).size;
-            final choice = await showMenu(
-              context: context,
-              position:
-                  RelativeRect.fromLTRB(size.width, point.dy, 0.0, point.dy),
-              items: [
-                const PopupMenuItem(
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.save,
-                      color: Colors.grey,
-                    ),
-                    title: Text('保存'),
-                  ),
-                  value: 0,
-                ),
-                PopupMenuItem(
-                  child: ListTile(
-                    title: Text('${disclosure.code}の適時開示情報'),
-                  ),
-                  value: 1,
-                ),
-              ],
-            );
-            if (choice == 0) {
-              ref
-                  .read(savedDisclosuresActionProvider.notifier)
-                  .save(disclosure);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('保存しました'),
-                  duration: Duration(seconds: 3),
-                ));
-              }
-            }
-            if (choice == 1) {
-              final companyCodeMap = ref.read(companyCodeMapProvider);
-              final company = await getCompany(
-                code: disclosure.code,
-                name: disclosure.company,
-                companyCodeMap: companyCodeMap,
-              );
-              if (context.mounted) {
-                Navigator.pushNamed(context, '/company-disclosures',
-                    arguments: company);
-              }
-            }
-          },
+          onLongPress: () => _showActionMenu(context, disclosure),
           child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 11.0),
+                    horizontal: 16.0, vertical: 10.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -176,9 +127,28 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                             color: secondaryTextColor,
                           ),
                         ),
+                        const SizedBox(width: 4),
+                        Tooltip(
+                          message: 'オプション',
+                          child: InkResponse(
+                            radius: 14,
+                            onTap: () =>
+                                _showActionMenu(context, disclosure),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 2.0, vertical: 2.0),
+                              child: Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: secondaryTextColor
+                                    .withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 3.5),
                     // 2行目: 開示タイトル
                     Text(
                       disclosure.title ?? '',
@@ -237,6 +207,53 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
           ),
         ),
         if (isDownloading) const CircularProgressIndicator(),
+      ],
+    );
+  }
+
+  void _showActionMenu(BuildContext context, Disclosure disclosure) {
+    final companyName = disclosure.company ?? '';
+    final code = disclosure.code ?? '';
+    final title = code.isNotEmpty ? '$companyName ($code)' : companyName;
+
+    showItemActionSheet(
+      context: context,
+      title: title.isNotEmpty ? title : '適時開示情報',
+      subtitle: disclosure.title,
+      items: [
+        ActionSheetItem(
+          icon: Icons.bookmark_add_outlined,
+          title: '保存',
+          onTap: () {
+            ref.read(savedDisclosuresActionProvider.notifier).save(disclosure);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('保存しました'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          },
+        ),
+        if (code.isNotEmpty || companyName.isNotEmpty)
+          ActionSheetItem(
+            icon: Icons.business_outlined,
+            title: code.isNotEmpty ? '$codeの適時開示情報' : '適時開示情報',
+            onTap: () async {
+              final companyCodeMap = ref.read(companyCodeMapProvider);
+              final company = await getCompany(
+                code: disclosure.code,
+                name: disclosure.company,
+                companyCodeMap: companyCodeMap,
+              );
+              if (context.mounted) {
+                Navigator.pushNamed(
+                  context,
+                  '/company-disclosures',
+                  arguments: company,
+                );
+              }
+            },
+          ),
       ],
     );
   }
