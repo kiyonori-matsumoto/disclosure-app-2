@@ -1,6 +1,7 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
 import 'package:disclosure_app_fl/widgets/content_view_count.dart';
@@ -55,7 +56,7 @@ class EdinetStreamingWidget extends ConsumerWidget {
   }
 }
 
-class EdinetListItem extends StatefulWidget {
+class EdinetListItem extends ConsumerStatefulWidget {
   const EdinetListItem({
     Key? key,
     required this.edinet,
@@ -66,10 +67,10 @@ class EdinetListItem extends StatefulWidget {
   final bool showDate;
 
   @override
-  _EdinetListItemState createState() => _EdinetListItemState();
+  ConsumerState<EdinetListItem> createState() => _EdinetListItemState();
 }
 
-class _EdinetListItemState extends State<EdinetListItem> {
+class _EdinetListItemState extends ConsumerState<EdinetListItem> {
   bool isDownloading = false;
 
   @override
@@ -83,7 +84,9 @@ class _EdinetListItemState extends State<EdinetListItem> {
     final docType = widget.edinet.docType;
     final hasViewCount =
         widget.edinet.viewCount != null && widget.edinet.viewCount! > 0;
-    final hasBottomRow = widget.edinet.forensic != null || docType.isNotEmpty;
+    final isForensicEnabled = ref.watch(isForensicEnabledProvider);
+    final showForensic = isForensicEnabled && widget.edinet.forensic != null;
+    final hasBottomRow = showForensic || docType.isNotEmpty;
     final companiesWithCode = widget.edinet.companies;
     final primaryCode =
         companiesWithCode.isNotEmpty ? companiesWithCode.first?.code : null;
@@ -190,7 +193,7 @@ class _EdinetListItemState extends State<EdinetListItem> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          if (widget.edinet.forensic != null) ...[
+                          if (showForensic) ...[
                             ForensicBadge(
                               forensic: widget.edinet.forensic,
                               companyName: widget.edinet.relatedCompaniesName,

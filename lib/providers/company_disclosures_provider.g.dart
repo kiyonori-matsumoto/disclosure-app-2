@@ -248,7 +248,7 @@ final class CompanyEdinetsProvider
   }
 }
 
-String _$companyEdinetsHash() => r'9b7705ae11db547edaafbea74dca6844dc4f65c8';
+String _$companyEdinetsHash() => r'f7de78dddd0e05c2d01f62f566aeed939bbefff4';
 
 /// 個別企業の EDINET 開示情報のページネーション取得・リフレッシュを管理する Notifier
 

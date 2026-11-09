@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/disclosure.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
+import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/providers/saved_disclosures_provider.dart';
 import 'package:disclosure_app_fl/utils/download_disclosure.dart';
 import 'package:disclosure_app_fl/utils/get_company.dart';
@@ -41,7 +42,9 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
     final tags = (disclosure.tags ?? []).where((t) => t.isNotEmpty).toList();
     final hasViewCount =
         disclosure.viewCount != null && disclosure.viewCount! > 0;
-    final hasBottomRow = disclosure.forensic != null || tags.isNotEmpty;
+    final isForensicEnabled = ref.watch(isForensicEnabledProvider);
+    final showForensic = isForensicEnabled && disclosure.forensic != null;
+    final hasBottomRow = showForensic || tags.isNotEmpty;
 
     return Stack(
       alignment: AlignmentDirectional.center,
@@ -191,7 +194,7 @@ class DisclosureListItemState extends ConsumerState<DisclosureListItem> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          if (disclosure.forensic != null) ...[
+                          if (showForensic) ...[
                             ForensicBadge(
                               forensic: disclosure.forensic,
                               companyName:
