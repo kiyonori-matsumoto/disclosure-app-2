@@ -113,6 +113,12 @@ class RemoteConfigService {
 
   /// 指定したユーザー（メールアドレスまたはUID）がフォレンジック機能を利用可能か判定
   bool isUserAllowedForForensic({String? email, String? uid}) {
+    // デバッグ実行時（エミュレータ・シミュレータ等）は未ログインでも自動で有効化して開発効率を向上
+    // （※ユニットテスト等で custom モックが明示的に渡された場合はその値を優先）
+    if (kDebugMode && _mockGloballyEnabled == null && _mockAllowedUsers == null) {
+      return true;
+    }
+
     if (isForensicGloballyEnabled) {
       return true;
     }

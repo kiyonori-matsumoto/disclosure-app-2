@@ -63,5 +63,18 @@ void main() {
         isFalse,
       );
     });
+
+    test('モック未指定かつデバッグモード実行時は自動で true を返す', () {
+      final service = RemoteConfigService();
+
+      expect(
+        service.isUserAllowedForForensic(email: 'any@example.com'),
+        isTrue,
+      );
+      expect(
+        service.isUserAllowedForForensic(),
+        isTrue,
+      );
+    });
   });
 }
