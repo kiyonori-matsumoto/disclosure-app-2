@@ -31,7 +31,7 @@ class DisclosureFilterHelper {
     required Map<String, dynamic> data,
     required Iterable<String> selectedFilterTitles,
     required bool hideDailyDisclosure,
-    required List<String> favoriteCompanyCodes,
+    required Set<String> favoriteCompanyCodes,
   }) {
     final rawTags = data['tags'];
     final tags = rawTags is Map ? rawTags : const {};

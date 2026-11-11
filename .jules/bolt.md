@@ -9,3 +9,7 @@
 ## 2025-02-18 - Avoid O(N) stream list search when O(1) map is available in BLoC
 **Learning:** In the disclosure app's architecture, when looking up companies (e.g. mapping codes to Company objects inside streams like those in `SettlementsList` and `AppBloc`), iterating over `companies` lists with methods like `firstWhere` (an O(N) operation) creates unnecessary performance bottlenecks, especially when triggered on every stream event. We already have `companyCodeMap$` and `companyMap$` specifically exposed to provide instant access.
 **Action:** When performing stream processing or list transformations that require company lookups, always utilize `companyCodeMap$` or `companyMap$` for O(1) map lookups instead of iterating over the `company$` list.
+
+## 2025-02-18 - Avoid O(N) list lookups in Array `.where` loop
+**Learning:** In Riverpod providers, such as `disclosures_provider.dart`, when filtering items based on an ID being in a list (e.g. `favoriteCompanyCodes.contains(code)` inside a `.where` loop over `feed.displayedDocs`), the `contains` operation on a List is O(N). This leads to O(M*N) performance where M is the number of documents and N is the number of favorite companies.
+**Action:** Always pre-compute a `Set` (e.g. `favorites.toSet()`) outside the loop, changing the `.contains()` check to O(1) inside the filtering function. This simple change avoids redundant iterations and provides significant performance improvements for large datasets.
