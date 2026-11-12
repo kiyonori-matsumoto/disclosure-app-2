@@ -226,38 +226,93 @@ class ForensicUiPresenter {
   String get headline {
     switch (result.riskLevel) {
       case ForensicRiskLevel.critical:
-        return '重大な注記・財務制限事項を検出';
+        return '財務指標・開示項目に【大幅な乖離】を検出';
       case ForensicRiskLevel.warning:
-        return '財務指標・定性トーンに関する特記事項を検出';
+        return '財務指標・開示トーンに【乖離】を検出';
       case ForensicRiskLevel.normal:
-        return '対象となる注記・特記事項は未検出';
+        return '通常の範囲内（乖離なし）';
     }
   }
 
   String get riskLevelLabel {
     switch (result.riskLevel) {
       case ForensicRiskLevel.critical:
-        return 'CRITICAL (重要注記・制限事項)';
+        return '大幅乖離 (顕著な変化・特異値)';
       case ForensicRiskLevel.warning:
-        return 'WARNING (特記事項・変動要因)';
+        return '乖離あり (留意事項・変動)';
       case ForensicRiskLevel.normal:
-        return 'NORMAL (未検出)';
+        return '通常 (乖離なし)';
     }
   }
 
   List<ForensicTagInfo> get tagInfos {
-    return result.tags.map((tagId) {
+    final list = result.tags.map((tagId) {
+      ForensicTagInfo baseInfo;
       if (knownTags.containsKey(tagId)) {
-        return knownTags[tagId]!;
+        baseInfo = knownTags[tagId]!;
+      } else {
+        baseInfo = ForensicTagInfo(
+          id: tagId,
+          displayName: '⚠️ $tagId',
+          severity: ForensicRiskLevel.warning,
+          templateText: '特記事項（$tagId）が検知されました。',
+          promptQuestion: '該当項目（$tagId）に関する記載・指標の検知',
+        );
       }
-      return ForensicTagInfo(
-        id: tagId,
-        displayName: '⚠️ $tagId',
-        severity: ForensicRiskLevel.warning,
-        templateText: '特記事項（$tagId）が検知されました。',
-        promptQuestion: '該当項目（$tagId）に関する記載・指標の検知',
-      );
+
+      // 動的 Severity 判定:
+      // 開示全体の riskLevel が critical の場合、そのタグが critical 要因であれば severity を critical に昇格
+      if (result.riskLevel == ForensicRiskLevel.critical) {
+        bool shouldPromoteToCritical = false;
+
+        if (tagId == 'inventory_receivable_surge') {
+          final calcs = result.metrics?.calculations;
+          final dsi = calcs?.dsiIndex ?? 0;
+          final dsri = calcs?.dsri ?? 0;
+          // DSI > 1.50 または DSRI > 1.465 で Critical (大幅乖離) 判定
+          if (dsi > 1.50 || dsri > 1.465) {
+            shouldPromoteToCritical = true;
+          } else {
+            // 他に Critical タグがない場合も、本タグが要因とみなして昇格
+            final hasOtherCriticalTag = result.tags.any(
+              (t) => t != tagId && knownTags[t]?.severity == ForensicRiskLevel.critical,
+            );
+            if (!hasOtherCriticalTag) {
+              shouldPromoteToCritical = true;
+            }
+          }
+        }
+
+        if (shouldPromoteToCritical && baseInfo.severity != ForensicRiskLevel.critical) {
+          final cleanName = baseInfo.displayName
+              .replaceFirst('⚠️ ', '')
+              .replaceFirst('❗ ', '');
+          return ForensicTagInfo(
+            id: baseInfo.id,
+            displayName: '❗ $cleanName',
+            severity: ForensicRiskLevel.critical,
+            templateText: baseInfo.templateText,
+            promptQuestion: baseInfo.promptQuestion,
+            isToneTag: baseInfo.isToneTag,
+          );
+        }
+      }
+
+      return baseInfo;
     }).toList();
+
+    // 重大度順（Critical -> Warning -> Normal）にソートして、大幅乖離タグを常に先頭に配置
+    list.sort((a, b) {
+      final aWeight = a.severity == ForensicRiskLevel.critical
+          ? 0
+          : (a.severity == ForensicRiskLevel.warning ? 1 : 2);
+      final bWeight = b.severity == ForensicRiskLevel.critical
+          ? 0
+          : (b.severity == ForensicRiskLevel.warning ? 1 : 2);
+      return aWeight.compareTo(bWeight);
+    });
+
+    return list;
   }
 
   List<String> get causeLabels {

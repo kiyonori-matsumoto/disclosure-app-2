@@ -28,7 +28,7 @@ void main() {
         ),
       ),
     );
-    expect(find.text('✓ 特記事項なし'), findsOneWidget);
+    expect(find.text('✓ 通常'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders critical badge with representative tag',
@@ -51,7 +51,7 @@ void main() {
     );
 
     // 代表タグ名 + 残り数 (+1) が表示されること
-    expect(find.text('🚨 事業継続の重要疑義 +1'), findsOneWidget);
+    expect(find.text('❗ 事業継続の重要疑義 +1'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders critical badge with quantitative tag',
@@ -71,7 +71,29 @@ void main() {
       ),
     );
 
-    expect(find.text('🚨 総資産アクルーアル乖離 +2'), findsOneWidget);
+    expect(find.text('❗ 総資産アクルーアル乖離 +2'), findsOneWidget);
+  });
+
+  testWidgets(
+      'ForensicBadge displays critical icon when document is critical even if tag is warning-like',
+      (tester) async {
+    const forensic = ForensicResult(
+      riskLevel: ForensicRiskLevel.critical,
+      tags: ['inventory_receivable_surge'],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ForensicBadge(
+            forensic: forensic,
+          ),
+        ),
+      ),
+    );
+
+    // ⚠️ ではなく ❗ で表示されること
+    expect(find.text('❗ 棚卸資産・売掛金急増'), findsOneWidget);
   });
 
   testWidgets('ForensicBadge renders warning badge with single tag',

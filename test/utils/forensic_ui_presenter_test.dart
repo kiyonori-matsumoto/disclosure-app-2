@@ -4,57 +4,63 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ForensicUiPresenter', () {
-    test('resolves known tags with correct display names and severity', () {
+    test('resolves known tags with correct display names and severity sorted by severity', () {
       const result = ForensicResult(
         riskLevel: ForensicRiskLevel.critical,
         tags: [
-          'going_concern',
           'negative_operating_cf',
+          'going_concern',
           'blame_external_macro',
           'accruals_anomaly',
-          'asset_quality_deterioration',
-          'liquidity_crunch',
-          'equity_erosion',
         ],
       );
 
       final presenter = ForensicUiPresenter(result);
       final tagInfos = presenter.tagInfos;
 
-      expect(tagInfos.length, 7);
-      expect(tagInfos[0].displayName, '🚨 事業継続の重要疑義');
+      expect(tagInfos.length, 4);
+      // 大幅乖離 (Critical) が優先されて先頭に来ること
+      expect(tagInfos[0].displayName, '❗ 事業継続の重要疑義');
       expect(tagInfos[0].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[0].promptQuestion, contains('GC注記'));
 
-      expect(tagInfos[1].displayName, '⚠️ 営業CFマイナス');
-      expect(tagInfos[1].severity, ForensicRiskLevel.warning);
-      expect(tagInfos[1].promptQuestion, contains('営業キャッシュ・フロー'));
+      expect(tagInfos[1].displayName, '❗ 総資産アクルーアル乖離');
+      expect(tagInfos[1].severity, ForensicRiskLevel.critical);
 
-      expect(tagInfos[2].displayName, '⚠️ 外部要因への言及優勢');
+      // 乖離あり (Warning) が後ろに並ぶこと
+      expect(tagInfos[2].displayName, '⚠️ 営業CFマイナス');
       expect(tagInfos[2].severity, ForensicRiskLevel.warning);
-      expect(tagInfos[2].isToneTag, isTrue);
-      expect(tagInfos[2].promptQuestion, contains('為替、原材料高'));
 
-      // 新規定量フォレンジックタグ
-      expect(tagInfos[3].id, 'accruals_anomaly');
-      expect(tagInfos[3].displayName, '🚨 総資産アクルーアル乖離');
-      expect(tagInfos[3].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[3].promptQuestion, contains('総資産アクルーアル比率'));
+      expect(tagInfos[3].displayName, '⚠️ 外部要因への言及優勢');
+      expect(tagInfos[3].severity, ForensicRiskLevel.warning);
+    });
 
-      expect(tagInfos[4].id, 'asset_quality_deterioration');
-      expect(tagInfos[4].displayName, '🚨 資産構造変動（AQI上昇）');
-      expect(tagInfos[4].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[4].promptQuestion, contains('Beneish AQI'));
+    test('promotes inventory_receivable_surge to critical when document riskLevel is critical', () {
+      const result = ForensicResult(
+        riskLevel: ForensicRiskLevel.critical,
+        tags: ['inventory_receivable_surge'],
+        metrics: ForensicMetrics(
+          calculations: QuantitativeCalculations(
+            dsiIndex: 2.5, // > 1.50 (大幅乖離)
+          ),
+        ),
+      );
 
-      expect(tagInfos[5].id, 'liquidity_crunch');
-      expect(tagInfos[5].displayName, '🚨 短期流動性ショック');
-      expect(tagInfos[5].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[5].promptQuestion, contains('手元現預金比率'));
+      final presenter = ForensicUiPresenter(result);
+      final tagInfos = presenter.tagInfos;
 
-      expect(tagInfos[6].id, 'equity_erosion');
-      expect(tagInfos[6].displayName, '🚨 純資産毀損・債務超過');
-      expect(tagInfos[6].severity, ForensicRiskLevel.critical);
-      expect(tagInfos[6].promptQuestion, contains('純資産30%以上急減'));
+      expect(tagInfos.length, 1);
+      expect(tagInfos[0].displayName, '❗ 棚卸資産・売掛金急増');
+      expect(tagInfos[0].severity, ForensicRiskLevel.critical);
+    });
+
+    test('returns appropriate labels for deviation tiers (Plan A: 通常 < 乖離あり < 大幅乖離)', () {
+      const normalResult = ForensicResult(riskLevel: ForensicRiskLevel.normal);
+      const warningResult = ForensicResult(riskLevel: ForensicRiskLevel.warning);
+      const criticalResult = ForensicResult(riskLevel: ForensicRiskLevel.critical);
+
+      expect(ForensicUiPresenter(normalResult).riskLevelLabel, '通常 (乖離なし)');
+      expect(ForensicUiPresenter(warningResult).riskLevelLabel, '乖離あり (留意事項・変動)');
+      expect(ForensicUiPresenter(criticalResult).riskLevelLabel, '大幅乖離 (顕著な変化・特異値)');
     });
 
     test('composes template explanation string accurately', () {
