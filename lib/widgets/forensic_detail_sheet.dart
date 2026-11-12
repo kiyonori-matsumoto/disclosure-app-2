@@ -50,7 +50,7 @@ class ForensicDetailSheet extends StatelessWidget {
       cardBgColor = theme.brightness == Brightness.dark
           ? Colors.red.shade900.withValues(alpha: 0.3)
           : Colors.red.shade50;
-      headerIcon = Icons.crisis_alert;
+      headerIcon = Icons.insights;
     } else if (isWarning) {
       primaryColor = Colors.orange.shade800;
       cardBgColor = theme.brightness == Brightness.dark

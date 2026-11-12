@@ -49,7 +49,8 @@ class _ForensicBadgeState extends State<ForensicBadge>
           vsync: this,
         )..repeat(reverse: true);
 
-        _pulseAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
+        // 控えめで落ち着いたフェードアニメーション
+        _pulseAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
           CurvedAnimation(
             parent: _pulseController!,
             curve: Curves.easeInOut,
@@ -83,16 +84,33 @@ class _ForensicBadgeState extends State<ForensicBadge>
     // バッジラベルの決定
     String label;
     if (presenter.tagInfos.isNotEmpty) {
-      final firstTag = presenter.tagInfos.first.displayName;
+      final firstTag = presenter.tagInfos.first;
+      String tagName = firstTag.displayName;
+
+      // アイコンと重大度の整合性ガード (案A: 通常 < 乖離あり ⚠️ < 大幅乖離 ❗)
+      if (isCritical) {
+        if (tagName.startsWith('⚠️ ')) {
+          tagName = '❗ ${tagName.substring(3)}';
+        } else if (tagName.startsWith('🚨 ')) {
+          tagName = '❗ ${tagName.substring(3)}';
+        }
+      } else if (isWarning) {
+        if (tagName.startsWith('❗ ')) {
+          tagName = '⚠️ ${tagName.substring(3)}';
+        } else if (tagName.startsWith('🚨 ')) {
+          tagName = '⚠️ ${tagName.substring(3)}';
+        }
+      }
+
       final extraCount = presenter.tagInfos.length - 1;
-      label = extraCount > 0 ? '$firstTag +$extraCount' : firstTag;
+      label = extraCount > 0 ? '$tagName +$extraCount' : tagName;
     } else {
       if (isCritical) {
-        label = '🚨 重要項目検知';
+        label = '❗ 大幅乖離';
       } else if (isWarning) {
-        label = '⚠️ 特記事項あり';
+        label = '⚠️ 乖離あり';
       } else {
-        label = '✓ 特記事項なし';
+        label = '✓ 通常';
       }
     }
 
