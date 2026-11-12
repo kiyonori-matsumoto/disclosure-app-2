@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:disclosure_app_fl/providers/theme_mode_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:disclosure_app_fl/providers/forensic_toggle_provider.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/auth_helper.dart';
 
@@ -65,6 +66,20 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
                 }
               },
               title: const Text('日々の開示情報を表示しない'),
+            );
+          },
+        ),
+        Consumer(
+          builder: (context, ref, child) {
+            final isForensicToggled = ref.watch(forensicToggleProvider);
+            return SwitchListTile(
+              secondary: const Icon(Icons.analytics_outlined),
+              title: const Text('財務フォレンジック機能（β）'),
+              subtitle: const Text('M-Score・粉飾リスク指標の表示（検証用）'),
+              value: isForensicToggled,
+              onChanged: (val) {
+                ref.read(forensicToggleProvider.notifier).setEnabled(val);
+              },
             );
           },
         ),

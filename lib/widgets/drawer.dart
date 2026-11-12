@@ -1,7 +1,5 @@
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
-import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -106,6 +104,7 @@ class AppDrawer extends ConsumerWidget {
             title: Text('設定'),
             onTap: () => Navigator.of(context).popAndPushNamed('/settings'),
           ),
+          /* スクリーンショット撮影およびクリーンなUI表示のためデバッグボタンは非表示
           if (kDebugMode)
             Consumer(
               builder: (context, ref, _) => ListTile(
@@ -125,6 +124,7 @@ class AppDrawer extends ConsumerWidget {
                 },
               ),
             ),
+          */
           ListTile(
             leading: const Icon(Icons.help_outline),
             title: const Text('サポートサイト'),
