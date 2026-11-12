@@ -49,11 +49,11 @@ void main() {
     expect(find.text('第31期 有価証券報告書'), findsOneWidget);
 
     // 総合判定見出し
-    expect(find.text('CRITICAL (重要注記・制限事項)'), findsOneWidget);
-    expect(find.text('重大な注記・財務制限事項を検出'), findsOneWidget);
+    expect(find.text('大幅乖離 (顕著な変化・特異値)'), findsOneWidget);
+    expect(find.text('財務指標・開示項目に【大幅な乖離】を検出'), findsOneWidget);
 
     // 検出タグ
-    expect(find.text('🚨 事業継続の重要疑義'), findsOneWidget);
+    expect(find.text('❗ 事業継続の重要疑義'), findsOneWidget);
     expect(find.text('⚠️ 営業CFマイナス'), findsOneWidget);
 
     // 診断解説文
@@ -143,8 +143,8 @@ void main() {
     expect(find.text('通期 (FY)'), findsOneWidget);
 
     // 新規定量タグ
-    expect(find.text('🚨 総資産アクルーアル乖離'), findsOneWidget);
-    expect(find.text('🚨 短期流動性ショック'), findsOneWidget);
+    expect(find.text('❗ 総資産アクルーアル乖離'), findsOneWidget);
+    expect(find.text('❗ 短期流動性ショック'), findsOneWidget);
 
     // 定量フォレンジック指標セクション
     expect(find.text('定量フォレンジック指標（財務モデル分析）'), findsOneWidget);
@@ -198,8 +198,8 @@ void main() {
       ),
     );
 
-    expect(find.text('NORMAL (未検出)'), findsOneWidget);
-    expect(find.text('対象となる注記・特記事項は未検出'), findsOneWidget);
+    expect(find.text('通常 (乖離なし)'), findsOneWidget);
+    expect(find.text('通常の範囲内（乖離なし）'), findsOneWidget);
     expect(
       find.text('本開示において、対象となる重要注記・財務制限事項や定性トーンの特記項目は検出されませんでした。'),
       findsOneWidget,

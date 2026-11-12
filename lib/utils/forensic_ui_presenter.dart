@@ -60,7 +60,7 @@ class ForensicUiPresenter {
     // 財務・注記リスクタグ (参照: backend functions/src/forensic/schemas/financial_anomaly.ts & financial_metrics_extractor.ts)
     'going_concern': ForensicTagInfo(
       id: 'going_concern',
-      displayName: '🚨 事業継続の重要疑義',
+      displayName: '❗ 事業継続の重要疑義',
       severity: ForensicRiskLevel.critical,
       templateText: '継続企業の前提に関する重要な疑義や不確実性に関する注記（GC注記）が記載されています。',
       promptQuestion:
@@ -68,14 +68,14 @@ class ForensicUiPresenter {
     ),
     'covenant_breach': ForensicTagInfo(
       id: 'covenant_breach',
-      displayName: '🚨 財務制限条項に抵触',
+      displayName: '❗ 財務制限条項に抵触',
       severity: ForensicRiskLevel.critical,
       templateText: '借入契約の財務制限条項への抵触またはその懸念が報告されています。',
       promptQuestion: '財務制限条項（コベナンツ）への抵触、または抵触懸念の記載がありますか？',
     ),
     'unsustainable_payout': ForensicTagInfo(
       id: 'unsustainable_payout',
-      displayName: '🚨 利益超過配当・FCF乖離',
+      displayName: '❗ 利益超過配当・FCF乖離',
       severity: ForensicRiskLevel.critical,
       templateText:
           '営業CF赤字下での配当実施、フリーキャッシュフロー（FCF）赤字下の配当維持、または当期純利益を超える配当（配当性向100%超）が算出されています。',
@@ -84,7 +84,7 @@ class ForensicUiPresenter {
     ),
     'accruals_anomaly': ForensicTagInfo(
       id: 'accruals_anomaly',
-      displayName: '🚨 総資産アクルーアル乖離',
+      displayName: '❗ 総資産アクルーアル乖離',
       severity: ForensicRiskLevel.critical,
       templateText:
           '当期純利益と営業キャッシュフローの大幅な乖離（総資産アクルーアル比率の基準超過）が算出され、営業CFを伴わない会計上利益の拡大が確認されます。',
@@ -93,7 +93,7 @@ class ForensicUiPresenter {
     ),
     'asset_quality_deterioration': ForensicTagInfo(
       id: 'asset_quality_deterioration',
-      displayName: '🚨 資産構造変動（AQI上昇）',
+      displayName: '❗ 資産構造変動（AQI上昇）',
       severity: ForensicRiskLevel.critical,
       templateText:
           '資産の質指数（AQI）の急上昇が算出され、総資産に占める流動資産・有形固定資産以外の非流動資産等の比率が前期比で拡大しています。',
@@ -102,7 +102,7 @@ class ForensicUiPresenter {
     ),
     'liquidity_crunch': ForensicTagInfo(
       id: 'liquidity_crunch',
-      displayName: '🚨 短期流動性ショック',
+      displayName: '❗ 短期流動性ショック',
       severity: ForensicRiskLevel.critical,
       templateText:
           '流動負債に対する手元現預金比率の低下または現預金残高の急減が算出され、短期流動性の急速な収縮が示されています。',
@@ -111,7 +111,7 @@ class ForensicUiPresenter {
     ),
     'equity_erosion': ForensicTagInfo(
       id: 'equity_erosion',
-      displayName: '🚨 純資産毀損・債務超過',
+      displayName: '❗ 純資産毀損・債務超過',
       severity: ForensicRiskLevel.critical,
       templateText:
           '純資産のマイナス（債務超過）、累積損失下での純資産前期比大幅減少、または自己資本比率10%未満の資本水準が算出されています。',

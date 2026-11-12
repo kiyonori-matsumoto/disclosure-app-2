@@ -242,15 +242,15 @@ void main() {
     test('headlines reflect riskLevel', () {
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.critical)).headline,
-        '重大な注記・財務制限事項を検出',
+        '財務指標・開示項目に【大幅な乖離】を検出',
       );
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.warning)).headline,
-        '財務指標・定性トーンに関する特記事項を検出',
+        '財務指標・開示トーンに【乖離】を検出',
       );
       expect(
         const ForensicUiPresenter(ForensicResult(riskLevel: ForensicRiskLevel.normal)).headline,
-        '対象となる注記・特記事項は未検出',
+        '通常の範囲内（乖離なし）',
       );
     });
   });

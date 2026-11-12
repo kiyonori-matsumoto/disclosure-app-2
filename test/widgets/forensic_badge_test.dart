@@ -144,7 +144,7 @@ void main() {
     expect(find.byType(ForensicDetailSheet), findsNothing);
 
     // バッジをタップ
-    await tester.tap(find.text('🚨 事業継続の重要疑義'));
+    await tester.tap(find.text('❗ 事業継続の重要疑義'));
     await tester.pumpAndSettle();
 
     // ボトムシートが開くこと
