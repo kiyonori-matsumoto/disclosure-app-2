@@ -1,5 +1,6 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
+import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
 import 'package:disclosure_app_fl/screens/favorite.dart';
@@ -8,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MockUser extends Fake implements User {
   @override
@@ -109,6 +111,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(mockAction.added, [('test_uid_123', '7203')]);
+  });
+
+  testWidgets('AppBarの並び替えメニューからソート順を切り替えられる',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final mockCodeMap = {
+      '7203': Company('7203', name: 'トヨタ自動車', nameKana: 'トヨタジドウシャ'),
+      '6758': Company('6758', name: 'ソニーグループ', nameKana: 'ソニーグループ'),
+    };
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          userDocStreamProvider.overrideWith((ref) => Stream.value({
+                'favorites': ['7203', '6758'],
+              })),
+          companyCodeMapProvider.overrideWithValue(mockCodeMap),
+        ],
+        child: const MaterialApp(
+          home: FavoriteScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // デフォルトは証券コード昇順 (6758 -> 7203)
+    var tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    expect((tiles[0].title as Text).data, '6758 ソニーグループ');
+    expect((tiles[1].title as Text).data, '7203 トヨタ自動車');
+
+    // 並び替えメニューを開き「登録順」を選択
+    await tester.tap(find.byIcon(Icons.sort));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(
+        CheckedPopupMenuItem<FavoriteSortOrder>,
+        FavoriteSortOrder.registered.label,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 登録順 (7203 -> 6758) に切り替わる
+    tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    expect((tiles[0].title as Text).data, '7203 トヨタ自動車');
+    expect((tiles[1].title as Text).data, '6758 ソニーグループ');
   });
 }
 

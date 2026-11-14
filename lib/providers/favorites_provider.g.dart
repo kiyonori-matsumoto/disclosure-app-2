@@ -8,6 +8,63 @@ part of 'favorites_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// お気に入り一覧の並び順を管理・永続化する Notifier
+
+@ProviderFor(FavoriteSortOrderNotifier)
+final favoriteSortOrderProvider = FavoriteSortOrderNotifierProvider._();
+
+/// お気に入り一覧の並び順を管理・永続化する Notifier
+final class FavoriteSortOrderNotifierProvider
+    extends $NotifierProvider<FavoriteSortOrderNotifier, FavoriteSortOrder> {
+  /// お気に入り一覧の並び順を管理・永続化する Notifier
+  FavoriteSortOrderNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'favoriteSortOrderProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoriteSortOrderNotifierHash();
+
+  @$internal
+  @override
+  FavoriteSortOrderNotifier create() => FavoriteSortOrderNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(FavoriteSortOrder value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<FavoriteSortOrder>(value),
+    );
+  }
+}
+
+String _$favoriteSortOrderNotifierHash() =>
+    r'caebbfc090eb5f79aeb00ce2bc83548a7ff13128';
+
+/// お気に入り一覧の並び順を管理・永続化する Notifier
+
+abstract class _$FavoriteSortOrderNotifier
+    extends $Notifier<FavoriteSortOrder> {
+  FavoriteSortOrder build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<FavoriteSortOrder, FavoriteSortOrder>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<FavoriteSortOrder, FavoriteSortOrder>,
+        FavoriteSortOrder,
+        Object?,
+        Object?>;
+    return element.handleCreate(ref, build);
+  }
+}
+
 /// ログインユーザーのお気に入り企業コード一覧を提供する Provider
 
 @ProviderFor(favorites)
@@ -99,7 +156,7 @@ final class FavoritesWithCompanyProvider
 }
 
 String _$favoritesWithCompanyHash() =>
-    r'60d4fab689ffbf9e6bd5cd03590fa6e99cc3f169';
+    r'7c2f53063c59a49680235dcfd2ed8dcb4a9937e3';
 
 /// 指定した企業コードがお気に入りに登録されているかを判定する Provider
 

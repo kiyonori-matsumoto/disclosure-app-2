@@ -11,10 +11,29 @@ class FavoriteScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final sortOrder = ref.watch(favoriteSortOrderProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("お気に入り"),
         actions: [
+          PopupMenuButton<FavoriteSortOrder>(
+            icon: const Icon(Icons.sort),
+            tooltip: '並び替え',
+            initialValue: sortOrder,
+            onSelected: (order) {
+              ref.read(favoriteSortOrderProvider.notifier).setSortOrder(order);
+            },
+            itemBuilder: (context) => FavoriteSortOrder.values
+                .map(
+                  (order) => CheckedPopupMenuItem<FavoriteSortOrder>(
+                    value: order,
+                    checked: order == sortOrder,
+                    child: Text(order.label),
+                  ),
+                )
+                .toList(),
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             tooltip: '会社検索',
