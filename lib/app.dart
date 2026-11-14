@@ -223,6 +223,7 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
     final routeObserver = MyRouteObserver();
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey,
       scaffoldMessengerKey: scaffoldMessengerKey,
       title: '適時開示(TDNet/Edinet) Notifier',

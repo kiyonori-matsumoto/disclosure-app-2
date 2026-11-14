@@ -8,7 +8,6 @@ import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -124,6 +123,7 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
         ],
       ),
       actions: <Widget>[
+        /* スクリーンショット撮影およびクリーンなUI表示のためデバッグボタンは非表示
         if (kDebugMode)
           IconButton(
             icon: const Icon(Icons.add_alert, color: Colors.amber),
@@ -152,6 +152,7 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
               }
             },
           ),
+        */
         IconButton(
           icon: const Icon(Icons.search),
           tooltip: '会社検索',

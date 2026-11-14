@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../services/remote_config_service.dart';
 import '../utils/version_comparator.dart';
 import 'auth_provider.dart';
+import 'forensic_toggle_provider.dart';
 
 part 'remote_config_provider.g.dart';
 
@@ -17,6 +18,12 @@ RemoteConfigService remoteConfigService(Ref ref) {
 /// 現在のユーザーがフォレンジック機能を利用できるかどうかを判定する Provider
 @Riverpod(keepAlive: true)
 bool isForensicEnabled(Ref ref) {
+  // 一時的なトグル（撮影用除外 & 精度検証切り替え）
+  final isToggled = ref.watch(forensicToggleProvider);
+  if (!isToggled) {
+    return false;
+  }
+
   final user = ref.watch(currentUserProvider);
   final service = ref.watch(remoteConfigServiceProvider);
 
