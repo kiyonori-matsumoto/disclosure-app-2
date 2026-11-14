@@ -242,17 +242,10 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 avatar: const Icon(Icons.favorite),
                 label: const Text('お気に入りのみ表示する'),
                 selected: showOnlyFavs,
-                onSelected: (val) {
-                  ref.read(showOnlyFavoritesProvider.notifier).set(val);
-                  if (val && ref.read(favoritesProvider).isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('お気に入りに登録されている銘柄がありません'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
+                onSelected: (val) => _onToggleFavoritesFilter(
+                  val,
+                  (v) => ref.read(showOnlyFavoritesProvider.notifier).set(v),
+                ),
               ),
             ),
           ],
@@ -300,22 +293,49 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 avatar: const Icon(Icons.favorite),
                 label: const Text('お気に入りのみ表示する'),
                 selected: showOnlyFavs,
-                onSelected: (val) {
-                  ref.read(edinetShowOnlyFavoritesProvider.notifier).set(val);
-                  if (val && ref.read(favoritesProvider).isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('お気に入りに登録されている銘柄がありません'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
+                onSelected: (val) => _onToggleFavoritesFilter(
+                  val,
+                  (v) =>
+                      ref.read(edinetShowOnlyFavoritesProvider.notifier).set(v),
+                ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _onToggleFavoritesFilter(bool val, void Function(bool) setFilter) {
+    if (val && ref.read(favoritesProvider).isEmpty) {
+      _showEmptyFavoritesDialog(context);
+      return;
+    }
+    setFilter(val);
+  }
+
+  Future<void> _showEmptyFavoritesDialog(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('お気に入りが登録されていません'),
+          content: const Text('お気に入りのみ表示するには、まず銘柄をお気に入りに登録してください。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).pushNamed('/companies');
+              },
+              child: const Text('銘柄を検索して登録'),
+            ),
+          ],
+        );
+      },
     );
   }
 
