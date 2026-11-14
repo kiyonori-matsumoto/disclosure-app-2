@@ -561,5 +561,46 @@ void main() {
 
       expect(find.text('EDINET'), findsOneWidget);
     });
+
+    testWidgets('initialTabIndex: 1 を指定すると最初から EDINET タブが開く',
+        (WidgetTester tester) async {
+      final edinet = Edinet(
+        docDescription: '有価証券報告書',
+        docId: 'S100INITIAL',
+        filerName: 'トヨタ自動車',
+        time: 123456789,
+        edinetCode: 'E02144',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith((ref) => MockUser()),
+            companyCodeMapProvider.overrideWith((ref) => {}),
+            isFavoriteProvider('7203').overrideWith((ref) => false),
+            favoritesActionProvider.overrideWith(() => MockFavoritesAction()),
+            companyDisclosuresProvider('7203').overrideWith(
+              () => FakeCompanyDisclosures(
+                const PaginatedDisclosuresState(docs: []),
+              ),
+            ),
+            companyEdinetsProvider('E02144').overrideWith(
+              () => FakeCompanyEdinets(
+                PaginatedEdinetsState(items: [edinet]),
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            home: DisclosureCompanyScreen(
+              company: Company('7203', name: 'トヨタ自動車', edinetCode: 'E02144'),
+              initialTabIndex: 1,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('有価証券報告書'), findsOneWidget);
+    });
   });
 }

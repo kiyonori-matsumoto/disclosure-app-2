@@ -89,15 +89,44 @@ void main() {
       expect(result, equals(const NoneDestination()));
     });
 
-    test('edinetCode のみがある場合は CompanyDestination を返す', () async {
+    test('edinetCode のみがある場合は CompanyDestination(initialTabIndex: 1) を返す',
+        () async {
       final result = await NotificationRouteHelper.resolveDestination({
         'edinetCode': 'E02144',
         'name': 'トヨタ自動車',
       });
       expect(result, isA<CompanyDestination>());
-      final company = (result as CompanyDestination).company;
-      expect(company.edinetCode, 'E02144');
-      expect(company.name, 'トヨタ自動車');
+      final dest = result as CompanyDestination;
+      expect(dest.company.edinetCode, 'E02144');
+      expect(dest.company.name, 'トヨタ自動車');
+      expect(dest.initialTabIndex, 1);
+    });
+
+    test('type == edinet または source == edinet または docID がある場合は initialTabIndex: 1 を返す',
+        () async {
+      final resType = await NotificationRouteHelper.resolveDestination({
+        'code': '7203',
+        'type': 'edinet',
+      });
+      expect((resType as CompanyDestination).initialTabIndex, 1);
+
+      final resSource = await NotificationRouteHelper.resolveDestination({
+        'code': '7203',
+        'source': 'EDINET',
+      });
+      expect((resSource as CompanyDestination).initialTabIndex, 1);
+
+      final resDocId = await NotificationRouteHelper.resolveDestination({
+        'code': '7203',
+        'docID': 'S100TEST',
+      });
+      expect((resDocId as CompanyDestination).initialTabIndex, 1);
+
+      final resTdnet = await NotificationRouteHelper.resolveDestination({
+        'code': '7203',
+        'name': 'トヨタ自動車',
+      });
+      expect((resTdnet as CompanyDestination).initialTabIndex, 0);
     });
   });
 
@@ -167,6 +196,45 @@ void main() {
       expect(navigated, isTrue);
       expect(routedPath, '/company-disclosures');
       expect(routedArguments, testCompany);
+    });
+
+    testWidgets(
+        'CompanyDestination(initialTabIndex: 1) の場合、CompanyRouteArguments で遷移する',
+        (WidgetTester tester) async {
+      final navigatorKey = GlobalKey<NavigatorState>();
+      String? routedPath;
+      Object? routedArguments;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigatorKey,
+          home: const Scaffold(body: Text('Home')),
+          onGenerateRoute: (settings) {
+            routedPath = settings.name;
+            routedArguments = settings.arguments;
+            return MaterialPageRoute<dynamic>(
+              settings: settings,
+              builder: (_) => Scaffold(body: Text(settings.name ?? '')),
+            );
+          },
+        ),
+      );
+
+      final testCompany =
+          Company('7203', name: 'トヨタ自動車', edinetCode: 'E02144');
+      final navigated = NotificationRouteHelper.navigateToDestination(
+        navigatorKey.currentState!,
+        CompanyDestination(testCompany, initialTabIndex: 1),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(navigated, isTrue);
+      expect(routedPath, '/company-disclosures');
+      expect(
+        routedArguments,
+        CompanyRouteArguments(company: testCompany, initialTabIndex: 1),
+      );
     });
 
     testWidgets('NoneDestination の場合、遷移せず false を返す',

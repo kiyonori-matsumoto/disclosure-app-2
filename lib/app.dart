@@ -248,11 +248,23 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
         final routeName = route.name;
         if (routeName != null) {
           if (routeName.startsWith('/company-disclosures')) {
-            final company =
-                route.arguments is Company ? route.arguments as Company : null;
+            final args = route.arguments;
+            final Company? company;
+            final int initialTabIndex;
+            if (args is CompanyRouteArguments) {
+              company = args.company;
+              initialTabIndex = args.initialTabIndex;
+            } else if (args is Company) {
+              company = args;
+              initialTabIndex = 0;
+            } else {
+              company = null;
+              initialTabIndex = 0;
+            }
             return MaterialPageRoute<dynamic>(
               builder: (context) => DisclosureCompanyScreen(
                 company: company,
+                initialTabIndex: initialTabIndex,
               ),
             );
           }
