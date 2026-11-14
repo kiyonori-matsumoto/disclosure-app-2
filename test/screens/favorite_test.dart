@@ -142,9 +142,17 @@ void main() {
     expect((tiles[0].title as Text).data, '6758 ソニーグループ');
     expect((tiles[1].title as Text).data, '7203 トヨタ自動車');
 
-    // 並び替えメニューを開き「登録順」を選択
+    // 並び替えメニューを開き「登録順」を選択（デフォルトの証券コード昇順にチェックがある）
     await tester.tap(find.byIcon(Icons.sort));
     await tester.pumpAndSettle();
+    final defaultItem = tester.widget<CheckedPopupMenuItem<FavoriteSortOrder>>(
+      find.widgetWithText(
+        CheckedPopupMenuItem<FavoriteSortOrder>,
+        FavoriteSortOrder.codeAsc.label,
+      ),
+    );
+    expect(defaultItem.checked, isTrue);
+
     await tester.tap(
       find.widgetWithText(
         CheckedPopupMenuItem<FavoriteSortOrder>,
@@ -157,6 +165,36 @@ void main() {
     tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
     expect((tiles[0].title as Text).data, '7203 トヨタ自動車');
     expect((tiles[1].title as Text).data, '6758 ソニーグループ');
+
+    // 「証券コード順（降順）」に切り替え
+    await tester.tap(find.byIcon(Icons.sort));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(
+        CheckedPopupMenuItem<FavoriteSortOrder>,
+        FavoriteSortOrder.codeDesc.label,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    expect((tiles[0].title as Text).data, '7203 トヨタ自動車');
+    expect((tiles[1].title as Text).data, '6758 ソニーグループ');
+
+    // 「企業名順」に切り替え (ソニーグループ -> トヨタ自動車)
+    await tester.tap(find.byIcon(Icons.sort));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(
+        CheckedPopupMenuItem<FavoriteSortOrder>,
+        FavoriteSortOrder.nameAsc.label,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    expect((tiles[0].title as Text).data, '6758 ソニーグループ');
+    expect((tiles[1].title as Text).data, '7203 トヨタ自動車');
   });
 }
 

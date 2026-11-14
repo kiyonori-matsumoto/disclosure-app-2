@@ -148,6 +148,33 @@ void main() {
         ['7203', '1301', '6758'],
       );
     });
+
+    test('企業名順で nameKana が空の場合は name にフォールバックし、同名時は code でタイブレークする',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final mockCodeMap = {
+        '9001': Company('9001', name: 'アイウエオ', nameKana: ''),
+        '8002': Company('8002', name: '同名企業A', nameKana: 'ドウメイ'),
+        '8001': Company('8001', name: '同名企業B', nameKana: 'ドウメイ'),
+        '7001': Company('7001', name: 'カキクケコ', nameKana: null),
+      };
+
+      final container = ProviderContainer(
+        overrides: [
+          favoritesProvider.overrideWithValue(['7001', '8002', '9001', '8001']),
+          companyCodeMapProvider.overrideWithValue(mockCodeMap),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(favoriteSortOrderProvider.notifier)
+          .setSortOrder(FavoriteSortOrder.nameAsc);
+      expect(
+        container.read(favoritesWithCompanyProvider).map((c) => c.code).toList(),
+        ['9001', '7001', '8001', '8002'],
+      );
+    });
   });
 
   group('isFavoriteProvider', () {
