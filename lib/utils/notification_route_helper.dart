@@ -185,4 +185,17 @@ class NotificationRouteHelper {
         return false;
     }
   }
+
+  /// Parses `route.arguments` for `/company-disclosures` into `(company, initialTabIndex)`.
+  static ({Company? company, int initialTabIndex}) parseCompanyRouteArguments(
+    Object? args,
+  ) {
+    if (args is CompanyRouteArguments) {
+      return (company: args.company, initialTabIndex: args.initialTabIndex);
+    }
+    if (args is Company) {
+      return (company: args, initialTabIndex: 0);
+    }
+    return (company: null, initialTabIndex: 0);
+  }
 }

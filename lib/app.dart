@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
@@ -248,23 +247,12 @@ class AppRootWidgetState extends ConsumerState<AppRootWidget> {
         final routeName = route.name;
         if (routeName != null) {
           if (routeName.startsWith('/company-disclosures')) {
-            final args = route.arguments;
-            final Company? company;
-            final int initialTabIndex;
-            if (args is CompanyRouteArguments) {
-              company = args.company;
-              initialTabIndex = args.initialTabIndex;
-            } else if (args is Company) {
-              company = args;
-              initialTabIndex = 0;
-            } else {
-              company = null;
-              initialTabIndex = 0;
-            }
+            final parsed =
+                NotificationRouteHelper.parseCompanyRouteArguments(route.arguments);
             return MaterialPageRoute<dynamic>(
               builder: (context) => DisclosureCompanyScreen(
-                company: company,
-                initialTabIndex: initialTabIndex,
+                company: parsed.company,
+                initialTabIndex: parsed.initialTabIndex,
               ),
             );
           }

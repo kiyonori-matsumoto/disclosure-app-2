@@ -602,5 +602,34 @@ void main() {
 
       expect(find.text('有価証券報告書'), findsOneWidget);
     });
+
+    testWidgets('edinetCode が無い企業に initialTabIndex: 1 が渡されても安全に TDNET タブへフォールバックする',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith((ref) => MockUser()),
+            companyCodeMapProvider.overrideWith((ref) => {}),
+            isFavoriteProvider('9999').overrideWith((ref) => false),
+            favoritesActionProvider.overrideWith(() => MockFavoritesAction()),
+            companyDisclosuresProvider('9999').overrideWith(
+              () => FakeCompanyDisclosures(
+                const PaginatedDisclosuresState(docs: []),
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            home: DisclosureCompanyScreen(
+              company: Company('9999', name: 'テスト企業'),
+              initialTabIndex: 1,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('TDNET'), findsOneWidget);
+      expect(find.text('EDINET'), findsNothing);
+    });
   });
 }

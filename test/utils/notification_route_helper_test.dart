@@ -128,6 +128,29 @@ void main() {
       });
       expect((resTdnet as CompanyDestination).initialTabIndex, 0);
     });
+
+    test('companyCodeMap ヒット時および companyResolver 経由時でも initialTabIndex: 1 が引き継がれる',
+        () async {
+      final mockMap = {
+        '7203': Company('7203', name: 'トヨタ自動車', edinetCode: 'E02144'),
+      };
+      final fromMap = await NotificationRouteHelper.resolveDestination(
+        {'code': '7203', 'type': 'edinet'},
+        companyCodeMap: mockMap,
+      );
+      expect(fromMap, isA<CompanyDestination>());
+      expect((fromMap as CompanyDestination).company.edinetCode, 'E02144');
+      expect(fromMap.initialTabIndex, 1);
+
+      final fromResolver = await NotificationRouteHelper.resolveDestination(
+        {'code': '6758', 'name': 'ソニーG', 'docId': 'S100DOC'},
+        companyResolver: (code, name) async =>
+            Company(code, name: name, edinetCode: 'E01777'),
+      );
+      expect(fromResolver, isA<CompanyDestination>());
+      expect((fromResolver as CompanyDestination).company.edinetCode, 'E01777');
+      expect(fromResolver.initialTabIndex, 1);
+    });
   });
 
   group('NotificationRouteHelper.navigateToDestination', () {
@@ -265,6 +288,48 @@ void main() {
 
       expect(navigated, isFalse);
       expect(routedPath, isNull);
+    });
+  });
+
+  group('NotificationRouteHelper.parseCompanyRouteArguments & CompanyRouteArguments',
+      () {
+    test('CompanyRouteArguments / Company / 不正な引数を正しくパースする', () {
+      final company = Company('7203', name: 'トヨタ自動車', edinetCode: 'E02144');
+      final args = CompanyRouteArguments(company: company, initialTabIndex: 1);
+
+      final parsedArgs =
+          NotificationRouteHelper.parseCompanyRouteArguments(args);
+      expect(parsedArgs.company, company);
+      expect(parsedArgs.initialTabIndex, 1);
+
+      final parsedCompany =
+          NotificationRouteHelper.parseCompanyRouteArguments(company);
+      expect(parsedCompany.company, company);
+      expect(parsedCompany.initialTabIndex, 0);
+
+      final parsedNull =
+          NotificationRouteHelper.parseCompanyRouteArguments(null);
+      expect(parsedNull.company, isNull);
+      expect(parsedNull.initialTabIndex, 0);
+
+      final parsedInvalid =
+          NotificationRouteHelper.parseCompanyRouteArguments('invalid');
+      expect(parsedInvalid.company, isNull);
+      expect(parsedInvalid.initialTabIndex, 0);
+    });
+
+    test('CompanyRouteArguments の等価性・hashCode が正しく動作する', () {
+      final c1 = Company('7203', name: 'トヨタ自動車');
+      final c2 = Company('6758', name: 'ソニーグループ');
+      final a1 = CompanyRouteArguments(company: c1, initialTabIndex: 1);
+      final a2 = CompanyRouteArguments(company: c1, initialTabIndex: 1);
+      final a3 = CompanyRouteArguments(company: c1, initialTabIndex: 0);
+      final a4 = CompanyRouteArguments(company: c2, initialTabIndex: 1);
+
+      expect(a1, equals(a2));
+      expect(a1.hashCode, equals(a2.hashCode));
+      expect(a1, isNot(equals(a3)));
+      expect(a1, isNot(equals(a4)));
     });
   });
 }
