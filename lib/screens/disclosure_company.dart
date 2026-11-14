@@ -12,8 +12,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DisclosureCompanyScreen extends ConsumerWidget {
   final Company? company;
+  final int initialTabIndex;
 
-  const DisclosureCompanyScreen({super.key, this.company});
+  const DisclosureCompanyScreen({
+    super.key,
+    this.company,
+    this.initialTabIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,6 +43,7 @@ class DisclosureCompanyScreen extends ConsumerWidget {
         : (matchedCompany?.edinetCode ?? '');
     final hasEdinet = edinetCode.isNotEmpty;
     final tabLength = hasEdinet ? 2 : 1;
+    final safeInitialIndex = initialTabIndex.clamp(0, tabLength - 1);
 
     final title = companyName.isNotEmpty
         ? (companyCode.isNotEmpty ? "$companyName ($companyCode)" : companyName)
@@ -45,6 +51,7 @@ class DisclosureCompanyScreen extends ConsumerWidget {
 
     return DefaultTabController(
       length: tabLength,
+      initialIndex: safeInitialIndex,
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
