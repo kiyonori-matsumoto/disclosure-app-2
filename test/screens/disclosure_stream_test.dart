@@ -220,7 +220,7 @@ void main() {
     });
 
     testWidgets(
-        'お気に入りが0件の時にお気に入りのみ表示ChipをタップするとフィルタはONにならずダイアログが表示され、銘柄検索画面へ遷移できる',
+        'お気に入りが0件の時にお気に入りのみ表示Chipをタップするとダイアログは出ず、リストに0件・登録案内が表示され銘柄検索画面へ遷移できる',
         (tester) async {
       await tester.pumpWidget(
         ProviderScope(
@@ -247,25 +247,19 @@ void main() {
       await tester.tap(chipFinder);
       await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('お気に入りが登録されていません'), findsOneWidget);
-      expect(tester.widget<ChoiceChip>(chipFinder).selected, isFalse);
-
-      // キャンセルでダイアログを閉じる
-      await tester.tap(find.text('キャンセル'));
-      await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.text('CompaniesRoute'), findsNothing);
+      expect(tester.widget<ChoiceChip>(chipFinder).selected, isTrue);
+      expect(find.text('お気に入りが0件です。\n銘柄をお気に入りに登録してください。'), findsOneWidget);
+      expect(find.text('銘柄を検索して登録'), findsOneWidget);
 
-      // 再度タップして「銘柄を検索して登録」で /companies へ遷移する
-      await tester.tap(chipFinder);
-      await tester.pumpAndSettle();
+      // 「銘柄を検索して登録」で /companies へ遷移する
       await tester.tap(find.text('銘柄を検索して登録'));
       await tester.pumpAndSettle();
       expect(find.text('CompaniesRoute'), findsOneWidget);
     });
 
-    testWidgets('お気に入りが0件でも既にフィルタONの場合はOFFへ解除できる', (tester) async {
+    testWidgets('お気に入りが0件でフィルタONの時にChipを再タップするとOFFへ解除され通常表示に戻る',
+        (tester) async {
       await tester.pumpWidget(
         createTestWidget(
           overrides: [
@@ -284,12 +278,14 @@ void main() {
 
       final chipFinder = find.widgetWithText(ChoiceChip, 'お気に入りのみ表示する');
       expect(tester.widget<ChoiceChip>(chipFinder).selected, isTrue);
+      expect(find.text('お気に入りが0件です。\n銘柄をお気に入りに登録してください。'), findsOneWidget);
 
       await tester.tap(chipFinder);
       await tester.pumpAndSettle();
 
       expect(tester.widget<ChoiceChip>(chipFinder).selected, isFalse);
       expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('選択した条件の適時開示は0件です'), findsOneWidget);
     });
 
     testWidgets('新着件数が1件以上の場合は「N NEW MESSAGE」FAB が表示される', (tester) async {
@@ -394,7 +390,8 @@ void main() {
       expect(find.byType(SimpleDialog), findsNothing);
     });
 
-    testWidgets('EDINET ツールバーでお気に入り0件時にお気に入りのみ表示ChipをタップするとフィルタはONにならずダイアログが表示される',
+    testWidgets(
+        'EDINET ツールバーでお気に入り0件時にお気に入りのみ表示Chipをタップするとダイアログは出ず、リストに0件・登録案内が表示される',
         (tester) async {
       await tester.pumpWidget(
         createTestWidget(
@@ -417,10 +414,11 @@ void main() {
       await tester.tap(chipFinder);
       await tester.pumpAndSettle();
 
-      // フィルタは OFF のままダイアログが表示されること
-      expect(tester.widget<ChoiceChip>(chipFinder).selected, isFalse);
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('お気に入りが登録されていません'), findsOneWidget);
+      // ダイアログは出ず、フィルタが ON になりリストに0件・登録案内が表示されること
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(tester.widget<ChoiceChip>(chipFinder).selected, isTrue);
+      expect(find.text('お気に入りが0件です。\n銘柄をお気に入りに登録してください。'), findsOneWidget);
+      expect(find.text('銘柄を検索して登録'), findsOneWidget);
     });
 
     testWidgets('EDINET 表示時に新着件数がある場合、「N NEW MESSAGE」FAB が表示される',

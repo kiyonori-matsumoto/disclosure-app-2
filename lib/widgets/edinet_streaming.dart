@@ -1,6 +1,7 @@
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/models/edinet.dart';
 import 'package:disclosure_app_fl/providers/edinet_disclosures_provider.dart';
+import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/remote_config_provider.dart';
 import 'package:disclosure_app_fl/utils/download_edinet.dart';
 import 'package:disclosure_app_fl/utils/time.dart';
@@ -38,8 +39,13 @@ class EdinetStreamingWidget extends ConsumerWidget {
       ),
       data: (edinets) {
         if (edinets.isEmpty) {
-          return const SliverFillRemaining(
-            child: NoDisclosures(),
+          final showOnlyFavs = ref.watch(edinetShowOnlyFavoritesProvider);
+          final isFavoritesEmpty =
+              showOnlyFavs && ref.watch(favoritesProvider).isEmpty;
+          return SliverFillRemaining(
+            child: isFavoritesEmpty
+                ? NoDisclosures.emptyFavorites(context)
+                : const NoDisclosures(),
           );
         }
 
