@@ -1,10 +1,25 @@
+import 'dart:async';
+
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_history_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
+import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+Future<void> _recordCompanyHistory(
+  WidgetRef ref,
+  String uid,
+  String code,
+) async {
+  try {
+    await ref.read(companyHistoryActionProvider.notifier).add(uid, code);
+  } catch (e, stack) {
+    reportNonFatalError(e, stack, reason: 'Failed to record company history');
+  }
+}
 
 class SearchCompanyScreen extends ConsumerStatefulWidget {
   const SearchCompanyScreen({super.key});
@@ -55,7 +70,7 @@ class _SearchCompanyScreenState extends ConsumerState<SearchCompanyScreen> {
 
             final uid = ref.read(currentUserProvider)?.uid;
             if (uid != null) {
-              ref.read(companyHistoryActionProvider.notifier).add(uid, trimmed);
+              unawaited(_recordCompanyHistory(ref, uid, trimmed));
             }
 
             _controller.clear();
@@ -150,7 +165,7 @@ class CompanyListView extends ConsumerWidget {
             final uid = ref.read(currentUserProvider)?.uid;
             final code = company.code;
             if (uid != null && code != null) {
-              ref.read(companyHistoryActionProvider.notifier).add(uid, code);
+              unawaited(_recordCompanyHistory(ref, uid, code));
             }
             Navigator.pushNamed(
               context,
@@ -165,17 +180,33 @@ class CompanyListView extends ConsumerWidget {
                 value: 'add_favorite',
               )
             ],
-            onSelected: (dynamic value) {
+            onSelected: (dynamic value) async {
               switch (value) {
                 case "add_favorite":
                   final uid = ref.read(currentUserProvider)?.uid;
                   final code = company.code;
-                  if (uid != null && code != null) {
-                    ref.read(favoritesActionProvider.notifier).add(uid, code);
+                  if (uid == null || code == null) break;
+                  try {
+                    await ref
+                        .read(favoritesActionProvider.notifier)
+                        .add(uid, code);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('${company.name}をお気に入りに追加しました'),
+                      ));
+                    }
+                  } catch (e, stack) {
+                    reportNonFatalError(
+                      e,
+                      stack,
+                      reason: 'Failed to add favorite from search',
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('お気に入りの追加に失敗しました')),
+                      );
+                    }
                   }
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('${company.name}をお気に入りに追加しました'),
-                  ));
                   break;
                 default:
               }

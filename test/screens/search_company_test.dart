@@ -16,24 +16,36 @@ class MockUser extends Fake implements User {
 
 class MockCompanyHistoryAction extends CompanyHistoryAction {
   final List<(String, String)> added = [];
+  final Object? errorToThrow;
+
+  MockCompanyHistoryAction({this.errorToThrow});
 
   @override
   void build() {}
 
   @override
   Future<void> add(String uid, String code) async {
+    if (errorToThrow != null) {
+      throw errorToThrow!;
+    }
     added.add((uid, code));
   }
 }
 
 class MockFavoritesAction extends FavoritesAction {
   final List<(String, String)> added = [];
+  final Object? errorToThrow;
+
+  MockFavoritesAction({this.errorToThrow});
 
   @override
   void build() {}
 
   @override
   Future<void> add(String uid, String code) async {
+    if (errorToThrow != null) {
+      throw errorToThrow!;
+    }
     added.add((uid, code));
   }
 }
@@ -266,5 +278,66 @@ void main() {
     expect(appBar.backgroundColor, equals(darkTheme.colorScheme.surface));
     expect(appBar.iconTheme?.color, equals(darkTheme.colorScheme.onSurface));
     expect(appBar.iconTheme?.color, isNot(equals(Colors.black)));
+  });
+
+  testWidgets('履歴追加が失敗しても画面遷移が継続される',
+      (WidgetTester tester) async {
+    final failingHistoryAction =
+        MockCompanyHistoryAction(errorToThrow: Exception('permission-denied'));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => MockUser()),
+          companiesStreamProvider.overrideWith((ref) => Stream.value(testCompanies)),
+          companyHistoryProvider.overrideWithValue([testCompanies.first]),
+          companyHistoryActionProvider.overrideWith(() => failingHistoryAction),
+        ],
+        child: MaterialApp(
+          routes: {
+            '/company-disclosures': (context) => const Scaffold(body: Text('個別企業画面')),
+          },
+          home: const SearchCompanyScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('トヨタ自動車'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('個別企業画面'), findsOneWidget);
+  });
+
+  testWidgets('お気に入り追加が失敗した場合にエラーSnackBarが表示される',
+      (WidgetTester tester) async {
+    final failingFavoritesAction =
+        MockFavoritesAction(errorToThrow: Exception('permission-denied'));
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          currentUserProvider.overrideWith((ref) => MockUser()),
+          companiesStreamProvider.overrideWith((ref) => Stream.value(testCompanies)),
+          companyHistoryProvider.overrideWithValue([testCompanies.first]),
+          favoritesActionProvider.overrideWith(() => failingFavoritesAction),
+        ],
+        child: const MaterialApp(
+          home: SearchCompanyScreen(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('お気に入りに追加'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('お気に入りの追加に失敗しました'), findsOneWidget);
+    expect(find.text('トヨタ自動車をお気に入りに追加しました'), findsNothing);
   });
 }

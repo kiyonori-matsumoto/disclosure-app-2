@@ -2,6 +2,7 @@ import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
 import 'package:disclosure_app_fl/widgets/dismissible_delete_background.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,23 +84,48 @@ class FavoriteScreen extends ConsumerWidget {
                               fav: fav,
                               key: fav.key,
                             ),
-                            onDismissed: (direction) {
+                            onDismissed: (direction) async {
                               final action =
                                   ref.read(favoritesActionProvider.notifier);
                               final uid = ref.read(currentUserProvider)?.uid;
                               final code = fav.code;
-                              if (uid != null && code != null) {
-                                action.remove(uid, code);
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(
+                              if (uid == null || code == null) return;
+                              final messenger = ScaffoldMessenger.of(context);
+                              try {
+                                await action.remove(uid, code);
+                                messenger.showSnackBar(SnackBar(
                                   content: const Text("削除しました"),
                                   action: SnackBarAction(
                                     label: "取り消す",
-                                    onPressed: () {
-                                      action.add(uid, code);
+                                    onPressed: () async {
+                                      try {
+                                        await action.add(uid, code);
+                                      } catch (e, stack) {
+                                        reportNonFatalError(
+                                          e,
+                                          stack,
+                                          reason: 'Failed to restore favorite',
+                                        );
+                                        messenger.showSnackBar(
+                                          const SnackBar(
+                                            content: Text('お気に入りの復元に失敗しました'),
+                                          ),
+                                        );
+                                      }
                                     },
                                   ),
                                 ));
+                              } catch (e, stack) {
+                                reportNonFatalError(
+                                  e,
+                                  stack,
+                                  reason: 'Failed to remove favorite',
+                                );
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('お気に入りの削除に失敗しました'),
+                                  ),
+                                );
                               }
                             },
                           );

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'company_history_provider.g.dart';
@@ -45,23 +46,42 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
   }
 
   /// 検索履歴に企業コードを追加する（最新を先頭に追加、重複排除、最大20件）
-  Future<void> add(String uid, String code) async {
+  Future<void> add(String uid, String code) => addWithWriter(uid, code);
+
+  @visibleForTesting
+  Future<void> addWithWriter(
+    String uid,
+    String code, {
+    Future<void> Function(String uid, List<String> updated)? onWrite,
+  }) async {
     final trimmed = code.trim().toUpperCase();
     if (trimmed.isEmpty) return;
 
-    final userDocRef =
-        FirebaseFirestore.instance.collection('users').doc(uid);
-
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userDocRef);
-      final current = (snapshot.data()?['cp_hist'] as List?) ?? [];
+    // userDocStreamProvider の初回読み込み完了前に空リストで上書きして履歴を消さないよう、
+    // 未取得時はストリームの解決を待ってから現在の履歴を取得する。
+    // 待機中に autoDispose されないよう keepAlive と listen で寿命を保持する。
+    // runTransaction はオフラインやバックグラウンド移行時に UNAVAILABLE で失敗するため使わない。
+    final link = ref.keepAlive();
+    final sub = ref.listen(userDocStreamProvider, (_, __) {});
+    try {
+      final userDoc = ref.read(userDocStreamProvider).value ??
+          await ref.read(userDocStreamProvider.future);
+      if (userDoc == null) return;
+      final current = (userDoc['cp_hist'] as List?) ?? const [];
       final updated = computeUpdatedHistory(current, trimmed);
 
-      transaction.set(
-        userDocRef,
-        {'cp_hist': updated},
-        SetOptions(merge: true),
-      );
-    });
+      if (onWrite != null) {
+        await onWrite(uid, updated);
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'cp_hist': updated}, SetOptions(merge: true));
+    } finally {
+      sub.close();
+      link.close();
+    }
   }
 }
