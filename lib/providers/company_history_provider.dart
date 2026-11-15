@@ -59,21 +59,29 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
 
     // userDocStreamProvider の初回読み込み完了前に空リストで上書きして履歴を消さないよう、
     // 未取得時はストリームの解決を待ってから現在の履歴を取得する。
+    // 待機中に autoDispose されないよう keepAlive と listen で寿命を保持する。
     // runTransaction はオフラインやバックグラウンド移行時に UNAVAILABLE で失敗するため使わない。
-    final userDoc = ref.read(userDocStreamProvider).value ??
-        await ref.read(userDocStreamProvider.future);
-    if (userDoc == null) return;
-    final current = (userDoc['cp_hist'] as List?) ?? const [];
-    final updated = computeUpdatedHistory(current, trimmed);
+    final link = ref.keepAlive();
+    final sub = ref.listen(userDocStreamProvider, (_, __) {});
+    try {
+      final userDoc = ref.read(userDocStreamProvider).value ??
+          await ref.read(userDocStreamProvider.future);
+      if (userDoc == null) return;
+      final current = (userDoc['cp_hist'] as List?) ?? const [];
+      final updated = computeUpdatedHistory(current, trimmed);
 
-    if (onWrite != null) {
-      await onWrite(uid, updated);
-      return;
+      if (onWrite != null) {
+        await onWrite(uid, updated);
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set({'cp_hist': updated}, SetOptions(merge: true));
+    } finally {
+      sub.close();
+      link.close();
     }
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({'cp_hist': updated}, SetOptions(merge: true));
   }
 }
