@@ -5,6 +5,7 @@ import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
+import 'package:disclosure_app_fl/widgets/delayed_login_prompt.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
@@ -79,6 +80,9 @@ class DisclosureCompanyScreen extends ConsumerWidget {
                             ? 'お気に入りを解除しました'
                             : 'お気に入りに追加しました'),
                       ));
+                      if (!isFavorite) {
+                        DelayedLoginPrompt.maybePrompt(context, ref);
+                      }
                     }
                   } catch (e, stack) {
                     reportNonFatalError(

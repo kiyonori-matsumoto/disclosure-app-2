@@ -12,6 +12,9 @@ import 'package:flutter_test/flutter_test.dart';
 class MockUser extends Fake implements User {
   @override
   String get uid => 'test_uid_search';
+
+  @override
+  List<UserInfo> get providerData => [];
 }
 
 class MockCompanyHistoryAction extends CompanyHistoryAction {

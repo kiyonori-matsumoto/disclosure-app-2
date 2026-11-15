@@ -6,6 +6,7 @@ import 'package:disclosure_app_fl/providers/company_history_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
 import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
+import 'package:disclosure_app_fl/widgets/delayed_login_prompt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -194,6 +195,7 @@ class CompanyListView extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text('${company.name}をお気に入りに追加しました'),
                       ));
+                      DelayedLoginPrompt.maybePrompt(context, ref);
                     }
                   } catch (e, stack) {
                     reportNonFatalError(
