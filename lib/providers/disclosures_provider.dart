@@ -10,13 +10,19 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'disclosures_provider.g.dart';
 
+const int kDisclosuresPageSize = 100;
+const int kDisclosuresDeltaLimit = 50;
+
 /// 開示一覧の日付管理 Notifier
 @riverpod
 class SelectedDate extends _$SelectedDate {
   @override
-  DateTime build() => DateTime.now();
+  DateTime build() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
 
-  void setDate(DateTime date) => state = date;
+  void setDate(DateTime date) => state = DateTime(date.year, date.month, date.day);
 }
 
 /// 開示一覧のソート順管理 Notifier（"最新" または "閲覧回数"）
@@ -85,23 +91,84 @@ int selectedFilterCount(Ref ref) {
   return ref.watch(selectedFiltersProvider).length;
 }
 
+/// Firestore から対象日の開示ドキュメント一覧を取得・購読する
+///
+/// メモリ（Android PigeonParser の OOM）および Firestore Read コストを抑えるため、
+/// 初回は上限付き `.get()` で取得し、当日分のみ最新時刻以降の新着差分だけを
+/// `.snapshots()` でリアルタイム監視する。過去日は `.get()` のみで終了する。
+Stream<List<DocumentSnapshot<Map<String, dynamic>>>> buildDisclosuresDayStream({
+  required FirebaseFirestore firestore,
+  required DateTime date,
+  DateTime? now,
+  int pageSize = kDisclosuresPageSize,
+  int deltaLimit = kDisclosuresDeltaLimit,
+}) async* {
+  final currentNow = now ?? DateTime.now();
+  final day = DateTime(date.year, date.month, date.day);
+  final today = DateTime(currentNow.year, currentNow.month, currentNow.day);
+  final start = day.millisecondsSinceEpoch;
+  final end = day.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+  final collection = firestore.collection('disclosures');
+  final initialSnapshot = await collection
+      .where('time', isGreaterThanOrEqualTo: start)
+      .where('time', isLessThan: end)
+      .orderBy('time', descending: true)
+      .limit(pageSize)
+      .get();
+
+  final initialDocs = initialSnapshot.docs;
+  yield initialDocs;
+
+  if (day != today) {
+    return;
+  }
+
+  final int? latestTime = initialDocs.isNotEmpty
+      ? (initialDocs.first.data()['time'] as num?)?.toInt()
+      : null;
+
+  final deltaQuery = latestTime != null
+      ? collection
+          .where('time', isGreaterThan: latestTime)
+          .where('time', isLessThan: end)
+          .orderBy('time', descending: true)
+          .limit(deltaLimit)
+      : collection
+          .where('time', isGreaterThanOrEqualTo: start)
+          .where('time', isLessThan: end)
+          .orderBy('time', descending: true)
+          .limit(pageSize);
+
+  final Map<String, DocumentSnapshot<Map<String, dynamic>>> deltaById = {};
+  final Set<String> initialIds = initialDocs.map((d) => d.id).toSet();
+
+  await for (final deltaSnap in deltaQuery.snapshots()) {
+    for (final doc in deltaSnap.docs) {
+      if (!initialIds.contains(doc.id)) {
+        deltaById[doc.id] = doc;
+      }
+    }
+    final mergedDelta = deltaById.values.toList()
+      ..sort((a, b) {
+        final timeA = (a.data()?['time'] as num?)?.toInt() ?? 0;
+        final timeB = (b.data()?['time'] as num?)?.toInt() ?? 0;
+        return timeB.compareTo(timeA);
+      });
+    yield [...mergedDelta, ...initialDocs];
+  }
+}
+
 /// Firestore から対象日の開示ドキュメント一覧をリアルタイム購読する StreamProvider
 @riverpod
 Stream<List<DocumentSnapshot<Map<String, dynamic>>>> disclosuresRawStream(
   Ref ref,
   DateTime date,
 ) {
-  final day = DateTime(date.year, date.month, date.day);
-  final start = day.millisecondsSinceEpoch;
-  final end = day.add(const Duration(days: 1)).millisecondsSinceEpoch;
-
-  return FirebaseFirestore.instance
-      .collection('disclosures')
-      .where('time', isGreaterThanOrEqualTo: start)
-      .where('time', isLessThan: end)
-      .orderBy('time', descending: true)
-      .snapshots()
-      .map((snapshot) => snapshot.docs);
+  return buildDisclosuresDayStream(
+    firestore: FirebaseFirestore.instance,
+    date: date,
+  );
 }
 
 /// 開示フィードの状態モデル（共通 FeedState のエイリアス）
@@ -112,6 +179,9 @@ typedef DisclosuresFeedState = FeedState<DocumentSnapshot<Map<String, dynamic>>>
 class DisclosuresFeed extends _$DisclosuresFeed {
   DateTime? _lastDate;
   DisclosuresFeedState? _previousState;
+  List<DocumentSnapshot<Map<String, dynamic>>> _olderDocs = [];
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
 
   @override
   DisclosuresFeedState build() {
@@ -124,11 +194,26 @@ class DisclosuresFeed extends _$DisclosuresFeed {
 
     if (dateChanged) {
       _previousState = null;
+      _olderDocs = [];
+      _hasMore = true;
+      _isLoadingMore = false;
     }
+
+    if (!rawAsync.isLoading && _olderDocs.isEmpty) {
+      _hasMore = rawDocs.length >= kDisclosuresPageSize;
+    }
+
+    final rawIds = rawDocs.map((d) => d.id).toSet();
+    final combinedDocs = _olderDocs.isEmpty
+        ? rawDocs
+        : [
+            ...rawDocs,
+            ..._olderDocs.where((d) => !rawIds.contains(d.id)),
+          ];
 
     final newState = FeedState.processNewItems<DocumentSnapshot<Map<String, dynamic>>>(
       previousState: _previousState,
-      newItems: rawDocs,
+      newItems: combinedDocs,
       idGetter: (d) => d.id,
       isLoading: rawAsync.isLoading,
       hasError: rawAsync.hasError,
@@ -137,6 +222,64 @@ class DisclosuresFeed extends _$DisclosuresFeed {
 
     _previousState = newState;
     return newState;
+  }
+
+  /// スクロール末尾到達時に過去の開示を追加取得する
+  Future<void> loadMore({FirebaseFirestore? firestore}) async {
+    if (_isLoadingMore || !_hasMore) return;
+    final currentDocs = state.latestDocs;
+    if (currentDocs.isEmpty) return;
+
+    final lastDoc = currentDocs.last;
+    if (lastDoc is DebugDummyDocumentSnapshot) return;
+
+    final date = _lastDate;
+    if (date == null) return;
+
+    _isLoadingMore = true;
+    try {
+      final day = DateTime(date.year, date.month, date.day);
+      final start = day.millisecondsSinceEpoch;
+      final end = day.add(const Duration(days: 1)).millisecondsSinceEpoch;
+
+      final db = firestore ?? FirebaseFirestore.instance;
+      final snapshot = await db
+          .collection('disclosures')
+          .where('time', isGreaterThanOrEqualTo: start)
+          .where('time', isLessThan: end)
+          .orderBy('time', descending: true)
+          .startAfterDocument(lastDoc)
+          .limit(kDisclosuresPageSize)
+          .get();
+
+      final newDocs = snapshot.docs;
+      _hasMore = newDocs.length >= kDisclosuresPageSize;
+
+      if (newDocs.isNotEmpty) {
+        final existingOlderIds = _olderDocs.map((d) => d.id).toSet();
+        _olderDocs = [
+          ..._olderDocs,
+          ...newDocs.where((d) => !existingOlderIds.contains(d.id)),
+        ];
+
+        final displayedIds = state.displayedItems.map((d) => d.id).toSet();
+        final latestIds = state.latestItems.map((d) => d.id).toSet();
+        final updated = state.copyWith(
+          displayedItems: [
+            ...state.displayedItems,
+            ...newDocs.where((d) => !displayedIds.contains(d.id)),
+          ],
+          latestItems: [
+            ...state.latestItems,
+            ...newDocs.where((d) => !latestIds.contains(d.id)),
+          ],
+        );
+        _previousState = updated;
+        state = updated;
+      }
+    } finally {
+      _isLoadingMore = false;
+    }
   }
 
   /// スクロール位置（最上部かどうか）の更新

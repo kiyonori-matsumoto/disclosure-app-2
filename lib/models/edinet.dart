@@ -14,6 +14,7 @@ class Edinet {
   Company? issuer;
   String? ordinanceCode;
   String? pdfFlag;
+  String? seq;
   int? seqNumber;
   String? subjectEdinetCode;
   Company? subject;
@@ -36,6 +37,7 @@ class Edinet {
     this.issuer,
     this.ordinanceCode,
     this.pdfFlag,
+    this.seq,
     this.seqNumber,
     this.subjectEdinetCode,
     this.subject,
@@ -58,6 +60,7 @@ class Edinet {
     issuerEdinetCode = item['issuerEdinetCode'];
     ordinanceCode = item['ordinanceCode'];
     pdfFlag = item['pdfFlag'];
+    seq = item['seq']?.toString();
     subjectEdinetCode = item['subjectEdinetCode'];
     subsidiaryEdinetCode = item['subsidiaryEdinetCode'];
     time = (item['time'] - 9 * 60 * 60) * 1000;

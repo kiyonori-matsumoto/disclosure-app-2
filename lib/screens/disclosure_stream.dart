@@ -74,6 +74,15 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     ref.read(edinetFeedProvider.notifier).updateScrollPosition(
           isAtTop: isAtTop,
         );
+
+    final position = sliverScrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 300) {
+      if (displayTarget == 'tdnet') {
+        ref.read(disclosuresFeedProvider.notifier).loadMore();
+      } else {
+        ref.read(edinetFeedProvider.notifier).loadMore();
+      }
+    }
   }
 
   @override
