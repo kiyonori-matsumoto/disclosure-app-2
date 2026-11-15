@@ -1,8 +1,10 @@
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/disclosures_provider.dart';
+import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
 import 'package:disclosure_app_fl/utils/url.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -11,18 +13,9 @@ class AppDrawer extends ConsumerWidget {
 
   Widget _avatar(String? url, ThemeData theme) {
     if (url != null && url.isNotEmpty) {
-      return CircleAvatar(
-        backgroundImage: NetworkImage(url),
-      );
+      return _NetworkAvatar(url: url, theme: theme);
     }
-    return CircleAvatar(
-      backgroundColor: theme.colorScheme.primary,
-      child: Icon(
-        Icons.person,
-        color: theme.colorScheme.onPrimary,
-        size: 40,
-      ),
-    );
+    return _fallbackAvatar(theme);
   }
 
   @override
@@ -143,6 +136,81 @@ class AppDrawer extends ConsumerWidget {
           )
         ],
       ),
+    );
+  }
+}
+
+Widget _fallbackAvatar(ThemeData theme) {
+  return CircleAvatar(
+    backgroundColor: theme.colorScheme.primary,
+    child: Icon(
+      Icons.person,
+      color: theme.colorScheme.onPrimary,
+      size: 40,
+    ),
+  );
+}
+
+/// ネットワーク上のプロフィール画像を読み込み、失敗時は非致命的エラーとして記録してフォールバックアイコンを表示する
+class _NetworkAvatar extends StatefulWidget {
+  const _NetworkAvatar({required this.url, required this.theme});
+
+  final String url;
+  final ThemeData theme;
+
+  @override
+  State<_NetworkAvatar> createState() => _NetworkAvatarState();
+}
+
+class _NetworkAvatarState extends State<_NetworkAvatar> {
+  bool _hasError = false;
+  bool _errorReported = false;
+
+  @override
+  void didUpdateWidget(covariant _NetworkAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      _hasError = false;
+      _errorReported = false;
+    }
+  }
+
+  void _markError() {
+    if (!mounted || _hasError) return;
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_hasError) {
+          setState(() {
+            _hasError = true;
+          });
+        }
+      });
+    } else {
+      setState(() {
+        _hasError = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_hasError) {
+      return _fallbackAvatar(widget.theme);
+    }
+    return CircleAvatar(
+      backgroundColor: widget.theme.colorScheme.primary,
+      backgroundImage: NetworkImage(widget.url),
+      onBackgroundImageError: (error, stackTrace) {
+        if (_errorReported) return;
+        _errorReported = true;
+        reportNonFatalError(
+          error,
+          stackTrace ?? StackTrace.current,
+          reason: 'Failed to load user avatar',
+        );
+        _markError();
+      },
     );
   }
 }
