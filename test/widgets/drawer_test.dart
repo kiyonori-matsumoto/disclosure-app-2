@@ -53,6 +53,37 @@ class MockGoogleUser extends Fake implements User {
   String? get photoURL => null;
 }
 
+class MockGoogleUserWithPhotoInfo extends Fake implements UserInfo {
+  @override
+  String get providerId => 'google.com';
+
+  @override
+  String get email => 'test@example.com';
+
+  @override
+  String get displayName => 'テストユーザー';
+
+  @override
+  String? get photoURL => 'https://lh3.googleusercontent.com/a/invalid-test-avatar=s96-c';
+}
+
+class MockGoogleUserWithPhoto extends Fake implements User {
+  @override
+  String get uid => 'google_uid_photo';
+
+  @override
+  List<UserInfo> get providerData => [MockGoogleUserWithPhotoInfo()];
+
+  @override
+  String? get email => 'test@example.com';
+
+  @override
+  String? get displayName => 'テストユーザー';
+
+  @override
+  String? get photoURL => 'https://lh3.googleusercontent.com/a/invalid-test-avatar=s96-c';
+}
+
 void main() {
   Widget createTestWidget({User? user}) {
     return ProviderScope(
@@ -133,5 +164,16 @@ void main() {
     expect(emailText.style?.color, isNotNull);
 
     expect(find.byType(CircleAvatar), findsWidgets);
+  });
+
+  testWidgets('プロフィール画像の読み込み失敗時にFlutterErrorを投げずフォールバックアイコンを表示する',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(createTestWidget(user: MockGoogleUserWithPhoto()));
+    final scaffoldState = tester.state<ScaffoldState>(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.person), findsOneWidget);
   });
 }

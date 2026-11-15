@@ -10,18 +10,25 @@ class AppDrawer extends ConsumerWidget {
   const AppDrawer({Key? key}) : super(key: key);
 
   Widget _avatar(String? url, ThemeData theme) {
-    if (url != null && url.isNotEmpty) {
-      return CircleAvatar(
-        backgroundImage: NetworkImage(url),
-      );
-    }
+    final fallback = Icon(
+      Icons.person,
+      color: theme.colorScheme.onPrimary,
+      size: 40,
+    );
+
     return CircleAvatar(
       backgroundColor: theme.colorScheme.primary,
-      child: Icon(
-        Icons.person,
-        color: theme.colorScheme.onPrimary,
-        size: 40,
-      ),
+      child: (url != null && url.isNotEmpty)
+          ? ClipOval(
+              child: SizedBox.expand(
+                child: Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => fallback,
+                ),
+              ),
+            )
+          : fallback,
     );
   }
 
