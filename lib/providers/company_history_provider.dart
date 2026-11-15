@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'company_history_provider.g.dart';
@@ -45,14 +46,29 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
   }
 
   /// 検索履歴に企業コードを追加する（最新を先頭に追加、重複排除、最大20件）
-  Future<void> add(String uid, String code) async {
+  Future<void> add(String uid, String code) => addWithWriter(uid, code);
+
+  @visibleForTesting
+  Future<void> addWithWriter(
+    String uid,
+    String code, {
+    Future<void> Function(String uid, List<String> updated)? onWrite,
+  }) async {
     final trimmed = code.trim().toUpperCase();
     if (trimmed.isEmpty) return;
 
-    // runTransaction はオフライン時やバックグラウンド移行時に UNAVAILABLE で失敗するため、
-    // ローカルキャッシュ済みの履歴から更新リストを構築して merge: true で書き込む
-    final current = ref.read(companyHistoryCodesProvider);
+    // userDocStreamProvider の初回読み込み完了前に空リストで上書きして履歴を消さないよう、
+    // 未取得時はストリームの解決を待ってから現在の履歴を取得する。
+    // runTransaction はオフラインやバックグラウンド移行時に UNAVAILABLE で失敗するため使わない。
+    final userDoc = ref.read(userDocStreamProvider).value ??
+        await ref.read(userDocStreamProvider.future);
+    final current = (userDoc['cp_hist'] as List?) ?? const [];
     final updated = computeUpdatedHistory(current, trimmed);
+
+    if (onWrite != null) {
+      await onWrite(uid, updated);
+      return;
+    }
 
     await FirebaseFirestore.instance
         .collection('users')

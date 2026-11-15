@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:disclosure_app_fl/models/company.dart';
 import 'package:disclosure_app_fl/providers/company_history_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
@@ -214,6 +216,39 @@ void main() {
         final updated = CompanyHistoryAction.computeUpdatedHistory(current, '9984');
 
         expect(updated, ['9984', '7203', '6758']);
+      });
+    });
+
+    group('add', () {
+      test('userDocStreamProvider が未解決でもロード完了を待ってから既存履歴を保持して書き込む', () async {
+        final controller = StreamController<Map<String, dynamic>>();
+        addTearDown(controller.close);
+
+        final container = ProviderContainer(
+          overrides: [
+            userDocStreamProvider.overrideWith((ref) => controller.stream),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        List<String>? written;
+        final future =
+            container.read(companyHistoryActionProvider.notifier).addWithWriter(
+              'uid_1',
+              '9984',
+              onWrite: (_, updated) async {
+                written = updated;
+              },
+            );
+
+        // まだ userDocStreamProvider が値を流していないので書き込みは行われない
+        await Future<void>.delayed(Duration.zero);
+        expect(written, isNull);
+
+        controller.add({'cp_hist': ['7203', '6758']});
+        await future;
+
+        expect(written, ['9984', '7203', '6758']);
       });
     });
   });
