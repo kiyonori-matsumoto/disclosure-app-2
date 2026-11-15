@@ -244,14 +244,6 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 selected: showOnlyFavs,
                 onSelected: (val) {
                   ref.read(showOnlyFavoritesProvider.notifier).set(val);
-                  if (val && ref.read(favoritesProvider).isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('お気に入りに登録されている銘柄がありません'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
                 },
               ),
             ),
@@ -302,14 +294,6 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
                 selected: showOnlyFavs,
                 onSelected: (val) {
                   ref.read(edinetShowOnlyFavoritesProvider.notifier).set(val);
-                  if (val && ref.read(favoritesProvider).isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('お気に入りに登録されている銘柄がありません'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
                 },
               ),
             ),
@@ -341,8 +325,13 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
       ),
       data: (docs) {
         if (docs.isEmpty) {
-          return const SliverFillRemaining(
-            child: NoDisclosures(),
+          final showOnlyFavs = ref.watch(showOnlyFavoritesProvider);
+          final isFavoritesEmpty =
+              showOnlyFavs && ref.watch(favoritesProvider).isEmpty;
+          return SliverFillRemaining(
+            child: isFavoritesEmpty
+                ? NoDisclosures.emptyFavorites(context)
+                : const NoDisclosures(),
           );
         }
 
