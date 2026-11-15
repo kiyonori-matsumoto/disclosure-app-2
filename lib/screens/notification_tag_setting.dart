@@ -2,6 +2,7 @@ import 'package:disclosure_app_fl/models/filter.dart';
 import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/notification_tags_provider.dart';
 import 'package:disclosure_app_fl/providers/user_settings_provider.dart';
+import 'package:disclosure_app_fl/widgets/delayed_login_prompt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -61,6 +62,9 @@ class NotificationTagSettingScreen extends ConsumerWidget {
                           ref
                               .read(notificationTagsActionProvider.notifier)
                               .toggle(uid, tag, isSelected: isSelected);
+                          if (!isSelected) {
+                            DelayedLoginPrompt.maybePrompt(context, ref);
+                          }
                         }
                       },
                     ),

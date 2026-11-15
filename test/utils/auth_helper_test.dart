@@ -227,6 +227,74 @@ void main() {
     });
 
     test(
+        'aborts switch when confirmAccountSwitch returns false on credential-already-in-use',
+        () async {
+      fakePlatform.authenticateResult = testAuthResults;
+
+      AuthCredential? signInCred;
+      bool linkAttempted = false;
+      bool switchPrompted = false;
+
+      final helper = AuthHelper();
+      final result = await helper.handleGoogleSignIn(
+        onLinkWithCredential: (cred) async {
+          linkAttempted = true;
+          throw FirebaseAuthException(
+            code: 'credential-already-in-use',
+            message: 'Account already exists with different credential.',
+          );
+        },
+        onSignInWithCredential: (cred) async {
+          signInCred = cred;
+          return null;
+        },
+        confirmAccountSwitch: () async {
+          switchPrompted = true;
+          return false;
+        },
+      );
+
+      expect(linkAttempted, isTrue);
+      expect(switchPrompted, isTrue);
+      expect(signInCred, isNull);
+      expect(result, isNull);
+    });
+
+    test(
+        'proceeds with switch when confirmAccountSwitch returns true on credential-already-in-use',
+        () async {
+      fakePlatform.authenticateResult = testAuthResults;
+
+      AuthCredential? signInCred;
+      bool linkAttempted = false;
+      bool switchPrompted = false;
+
+      final helper = AuthHelper();
+      await helper.handleGoogleSignIn(
+        onLinkWithCredential: (cred) async {
+          linkAttempted = true;
+          throw FirebaseAuthException(
+            code: 'credential-already-in-use',
+            message: 'Account already exists with different credential.',
+          );
+        },
+        onSignInWithCredential: (cred) async {
+          signInCred = cred;
+          return null;
+        },
+        confirmAccountSwitch: () async {
+          switchPrompted = true;
+          return true;
+        },
+      );
+
+      expect(linkAttempted, isTrue);
+      expect(switchPrompted, isTrue);
+      expect(signInCred, isNotNull);
+      expect(signInCred?.signInMethod, equals('google.com'));
+    });
+
+    test(
         'falls back to signInWithCredential when linkWithCredential throws provider-already-linked',
         () async {
       fakePlatform.authenticateResult = testAuthResults;

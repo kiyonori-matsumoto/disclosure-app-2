@@ -18,11 +18,17 @@ class MockGuestUser extends Fake implements User {
 class MockGoogleUserInfo extends Fake implements UserInfo {
   @override
   String get providerId => 'google.com';
+
+  @override
+  String? get email => 'test@example.com';
 }
 
 class MockGoogleUser extends Fake implements User {
   @override
   String get uid => 'google_uid';
+
+  @override
+  String? get email => 'test@example.com';
 
   @override
   List<UserInfo> get providerData => [MockGoogleUserInfo()];
@@ -53,14 +59,17 @@ void main() {
     expect(find.text('テーマ設定'), findsWidgets);
     expect(find.text('カスタムタグ設定'), findsOneWidget);
     expect(find.text('アカウント設定'), findsOneWidget);
-    expect(find.text('GOOGLE連携'), findsOneWidget);
+    expect(find.text('Googleアカウントと連携'), findsOneWidget);
   });
 
-  testWidgets('Google 連携時は「GOOGLE連携を解除」ボタンが表示される',
+  testWidgets(
+      'Google 連携時は「Google連携済み」と「アカウントを削除」が表示され、連携解除ボタンは存在しない',
       (WidgetTester tester) async {
     await tester.pumpWidget(createTestWidget(user: MockGoogleUser()));
     await tester.pumpAndSettle();
 
-    expect(find.text('GOOGLE連携を解除'), findsOneWidget);
+    expect(find.text('Google連携済み'), findsOneWidget);
+    expect(find.text('アカウントを削除'), findsOneWidget);
+    expect(find.text('GOOGLE連携を解除'), findsNothing);
   });
 }

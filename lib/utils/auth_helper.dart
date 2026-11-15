@@ -67,13 +67,16 @@ class AuthHelper {
   /// Google アカウントの連携・サインイン処理
   ///
   /// Google認証を行い、現在のユーザーに連携（link）を試みる。
-  /// すでに別のFirebaseアカウントに紐付いている場合や連携済みの場合は、そのアカウントでサインインする。
+  /// すでに別のFirebaseアカウントに紐付いている場合や連携済みの場合は、
+  /// [confirmAccountSwitch] が指定されていれば確認ダイアログ等の判定を行い、
+  /// true の場合のみ既存アカウントでサインイン（切り替え）する。
   Future<User?> handleGoogleSignIn({
     @Deprecated('fetchSignInMethodsForEmail is removed in firebase_auth 5+')
     Future<List<String>> Function(String email)? onFetchSignInMethods,
     Future<User?> Function(AuthCredential credential)? onSignInWithCredential,
     Future<User?> Function(AuthCredential credential)? onLinkWithCredential,
     Future<void> Function(User user)? onReloadUser,
+    Future<bool> Function()? confirmAccountSwitch,
   }) async {
     final signInWithCred = onSignInWithCredential ??
         (cred) async {
@@ -107,7 +110,13 @@ class AuthHelper {
       } on FirebaseAuthException catch (e) {
         if (e.code == 'credential-already-in-use' ||
             e.code == 'provider-already-linked') {
-          debugPrint("${e.code}, signing in instead");
+          debugPrint("${e.code}, prompting account switch");
+          if (confirmAccountSwitch != null) {
+            final shouldSwitch = await confirmAccountSwitch();
+            if (!shouldSwitch) {
+              return null;
+            }
+          }
           user = await signInWithCred(credential);
         } else {
           rethrow;
