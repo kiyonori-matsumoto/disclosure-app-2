@@ -23,10 +23,33 @@ class TagDestination extends NotificationDestination {
   String toString() => 'TagDestination(tag: $tag)';
 }
 
+/// Route arguments for `/company-disclosures` when extra options are needed.
+class CompanyRouteArguments {
+  final Company company;
+  final int initialTabIndex;
+
+  const CompanyRouteArguments({
+    required this.company,
+    this.initialTabIndex = 0,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CompanyRouteArguments &&
+          runtimeType == other.runtimeType &&
+          company == other.company &&
+          initialTabIndex == other.initialTabIndex;
+
+  @override
+  int get hashCode => Object.hash(company, initialTabIndex);
+}
+
 /// Navigation target for company-based disclosures.
 class CompanyDestination extends NotificationDestination {
   final Company company;
-  const CompanyDestination(this.company);
+  final int initialTabIndex;
+  const CompanyDestination(this.company, {this.initialTabIndex = 0});
 
   @override
   bool operator ==(Object other) =>
@@ -35,14 +58,16 @@ class CompanyDestination extends NotificationDestination {
           runtimeType == other.runtimeType &&
           company.code == other.company.code &&
           company.edinetCode == other.company.edinetCode &&
-          company.name == other.company.name;
+          company.name == other.company.name &&
+          initialTabIndex == other.initialTabIndex;
 
   @override
-  int get hashCode => Object.hash(company.code, company.edinetCode, company.name);
+  int get hashCode =>
+      Object.hash(company.code, company.edinetCode, company.name, initialTabIndex);
 
   @override
   String toString() =>
-      'CompanyDestination(company: ${company.code}, ${company.name})';
+      'CompanyDestination(company: ${company.code}, ${company.name}, initialTabIndex: $initialTabIndex)';
 }
 
 /// No navigation target (invalid or unrecognized payload).
@@ -97,22 +122,42 @@ class NotificationRouteHelper {
       return const NoneDestination();
     }
 
+    final initialTabIndex = _resolveInitialTabIndex(data, rawEdinetCode);
+
     if (companyResolver != null && hasCode) {
       final company = await companyResolver(rawCode, rawName);
-      return CompanyDestination(company);
+      return CompanyDestination(company, initialTabIndex: initialTabIndex);
     }
 
     if (companyCodeMap != null && hasCode) {
       final cachedCompany = companyCodeMap[rawCode] ??
           (rawCode.length > 4 ? companyCodeMap[rawCode.substring(0, 4)] : null);
       if (cachedCompany != null) {
-        return CompanyDestination(cachedCompany);
+        return CompanyDestination(
+          cachedCompany,
+          initialTabIndex: initialTabIndex,
+        );
       }
     }
 
     return CompanyDestination(
       Company(rawCode, edinetCode: rawEdinetCode, name: rawName),
+      initialTabIndex: initialTabIndex,
     );
+  }
+
+  static int _resolveInitialTabIndex(
+    Map<String, dynamic> data,
+    String? rawEdinetCode,
+  ) {
+    final type = data['type']?.toString().trim().toLowerCase();
+    final source = data['source']?.toString().trim().toLowerCase();
+    final docId = (data['docID'] ?? data['docId'])?.toString().trim();
+    final isEdinet = type == 'edinet' ||
+        source == 'edinet' ||
+        (rawEdinetCode != null && rawEdinetCode.isNotEmpty) ||
+        (docId != null && docId.isNotEmpty);
+    return isEdinet ? 1 : 0;
   }
 
   /// Triggers navigation to the resolved [destination] using the given [navigator].
@@ -125,11 +170,32 @@ class NotificationRouteHelper {
       case TagDestination(:final tag):
         navigator.pushNamed('/tag-disclosures', arguments: tag);
         return true;
-      case CompanyDestination(:final company):
-        navigator.pushNamed('/company-disclosures', arguments: company);
+      case CompanyDestination(:final company, :final initialTabIndex):
+        navigator.pushNamed(
+          '/company-disclosures',
+          arguments: initialTabIndex == 0
+              ? company
+              : CompanyRouteArguments(
+                  company: company,
+                  initialTabIndex: initialTabIndex,
+                ),
+        );
         return true;
       case NoneDestination():
         return false;
     }
+  }
+
+  /// Parses `route.arguments` for `/company-disclosures` into `(company, initialTabIndex)`.
+  static ({Company? company, int initialTabIndex}) parseCompanyRouteArguments(
+    Object? args,
+  ) {
+    if (args is CompanyRouteArguments) {
+      return (company: args.company, initialTabIndex: args.initialTabIndex);
+    }
+    if (args is Company) {
+      return (company: args, initialTabIndex: 0);
+    }
+    return (company: null, initialTabIndex: 0);
   }
 }
