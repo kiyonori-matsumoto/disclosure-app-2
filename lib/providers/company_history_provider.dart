@@ -62,6 +62,7 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
     // runTransaction はオフラインやバックグラウンド移行時に UNAVAILABLE で失敗するため使わない。
     final userDoc = ref.read(userDocStreamProvider).value ??
         await ref.read(userDocStreamProvider.future);
+    if (userDoc == null) return;
     final current = (userDoc['cp_hist'] as List?) ?? const [];
     final updated = computeUpdatedHistory(current, trimmed);
 
