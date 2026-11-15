@@ -12,6 +12,7 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'services/remote_config_service.dart';
+import 'utils/crashlytics_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,8 +50,10 @@ void main() async {
   FlutterError.onError = (errorDetails) {
     if (kDebugMode) {
       FlutterError.dumpErrorToConsole(errorDetails);
-    } else {
+    } else if (isFatalError(errorDetails.exception, details: errorDetails)) {
       FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    } else {
+      FirebaseCrashlytics.instance.recordFlutterError(errorDetails);
     }
   };
 
@@ -59,7 +62,11 @@ void main() async {
       debugPrint("PlatformDispatcher error: $error");
       debugPrint(stack.toString());
     } else {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      FirebaseCrashlytics.instance.recordError(
+        error,
+        stack,
+        fatal: isFatalError(error),
+      );
     }
     return true;
   };
