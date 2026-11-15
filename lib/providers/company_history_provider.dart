@@ -49,19 +49,14 @@ class CompanyHistoryAction extends _$CompanyHistoryAction {
     final trimmed = code.trim().toUpperCase();
     if (trimmed.isEmpty) return;
 
-    final userDocRef =
-        FirebaseFirestore.instance.collection('users').doc(uid);
+    // runTransaction はオフライン時やバックグラウンド移行時に UNAVAILABLE で失敗するため、
+    // ローカルキャッシュ済みの履歴から更新リストを構築して merge: true で書き込む
+    final current = ref.read(companyHistoryCodesProvider);
+    final updated = computeUpdatedHistory(current, trimmed);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snapshot = await transaction.get(userDocRef);
-      final current = (snapshot.data()?['cp_hist'] as List?) ?? [];
-      final updated = computeUpdatedHistory(current, trimmed);
-
-      transaction.set(
-        userDocRef,
-        {'cp_hist': updated},
-        SetOptions(merge: true),
-      );
-    });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set({'cp_hist': updated}, SetOptions(merge: true));
   }
 }

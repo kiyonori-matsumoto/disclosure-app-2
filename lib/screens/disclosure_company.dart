@@ -3,6 +3,7 @@ import 'package:disclosure_app_fl/providers/auth_provider.dart';
 import 'package:disclosure_app_fl/providers/company_disclosures_provider.dart';
 import 'package:disclosure_app_fl/providers/company_provider.dart';
 import 'package:disclosure_app_fl/providers/favorites_provider.dart';
+import 'package:disclosure_app_fl/utils/crashlytics_helper.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
@@ -57,18 +58,32 @@ class DisclosureCompanyScreen extends ConsumerWidget {
                       : Icons.star_border,
                 ),
                 tooltip: 'お気に入り',
-                onPressed: () {
+                onPressed: () async {
                   final uid = ref.read(currentUserProvider)?.uid;
                   final isFavorite = ref.read(isFavoriteProvider(companyCode));
-                  if (uid != null) {
-                    ref
+                  if (uid == null) return;
+                  try {
+                    await ref
                         .read(favoritesActionProvider.notifier)
                         .toggle(uid, companyCode, isFavorite: isFavorite);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(isFavorite
-                          ? 'お気に入りを解除しました'
-                          : 'お気に入りに追加しました'),
-                    ));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(isFavorite
+                            ? 'お気に入りを解除しました'
+                            : 'お気に入りに追加しました'),
+                      ));
+                    }
+                  } catch (e, stack) {
+                    reportNonFatalError(
+                      e,
+                      stack,
+                      reason: 'Failed to toggle favorite',
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('お気に入りの更新に失敗しました')),
+                      );
+                    }
                   }
                 },
               ),
