@@ -17,14 +17,20 @@ FirebaseFirestore edinetFirestore(Ref ref) {
   return FirebaseFirestore.instance;
 }
 
+const int kEdinetsPageSize = 100;
+const int kEdinetsDeltaLimit = 50;
+
 /// EDINET 選択日付 Notifier (デフォルト: 当日)
 @riverpod
 class EdinetSelectedDate extends _$EdinetSelectedDate {
   @override
-  DateTime build() => DateTime.now();
+  DateTime build() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
 
   void setDate(DateTime date) {
-    state = date;
+    state = DateTime(date.year, date.month, date.day);
   }
 }
 
@@ -58,21 +64,78 @@ class EdinetShowOnlyFavorites extends _$EdinetShowOnlyFavorites {
   }
 }
 
+/// EDINET Firestore 取得・購読ストリームを構築する
+///
+/// メモリおよび Firestore Read コストを抑えるため、初回は上限付き `.get()` で取得し、
+/// 当日分のみ最新 `seq` 以降の新着差分だけを `.snapshots()` で監視する。
+Stream<List<Edinet>> buildEdinetsDayStream({
+  required FirebaseFirestore firestore,
+  required DateTime date,
+  DateTime? now,
+  int pageSize = kEdinetsPageSize,
+  int deltaLimit = kEdinetsDeltaLimit,
+}) async* {
+  final currentNow = now ?? DateTime.now();
+  final day = DateTime(date.year, date.month, date.day);
+  final today = DateTime(currentNow.year, currentNow.month, currentNow.day);
+  final start = edinetDateFormatter.format(day);
+  final end = edinetDateFormatter.format(day.add(const Duration(days: 1)));
+
+  final collection = firestore.collection('edinets');
+  final initialSnapshot = await collection
+      .where('seq', isGreaterThanOrEqualTo: start)
+      .where('seq', isLessThan: end)
+      .orderBy('seq', descending: true)
+      .limit(pageSize)
+      .get();
+
+  final initialItems = initialSnapshot.docs
+      .map((doc) => Edinet.fromDocumentSnapshot(doc))
+      .toList();
+  yield initialItems;
+
+  if (day != today) {
+    return;
+  }
+
+  final String? latestSeq =
+      initialItems.isNotEmpty ? initialItems.first.seq : null;
+
+  final deltaQuery = latestSeq != null
+      ? collection
+          .where('seq', isGreaterThan: latestSeq)
+          .where('seq', isLessThan: end)
+          .orderBy('seq', descending: true)
+          .limit(deltaLimit)
+      : collection
+          .where('seq', isGreaterThanOrEqualTo: start)
+          .where('seq', isLessThan: end)
+          .orderBy('seq', descending: true)
+          .limit(pageSize);
+
+  final Map<String, Edinet> deltaById = {};
+  final Set<String> initialIds =
+      initialItems.map((e) => e.docId ?? '').where((id) => id.isNotEmpty).toSet();
+
+  await for (final deltaSnap in deltaQuery.snapshots()) {
+    for (final doc in deltaSnap.docs) {
+      final item = Edinet.fromDocumentSnapshot(doc);
+      final id = item.docId ?? doc.id;
+      if (!initialIds.contains(id)) {
+        deltaById[id] = item;
+      }
+    }
+    final mergedDelta = deltaById.values.toList()
+      ..sort((a, b) => (b.seq ?? '').compareTo(a.seq ?? ''));
+    yield [...mergedDelta, ...initialItems];
+  }
+}
+
 /// EDINET Firestore 生ストリーム Provider (日付別)
 @riverpod
 Stream<List<Edinet>> edinetsRawStream(Ref ref, DateTime date) {
   final firestore = ref.watch(edinetFirestoreProvider);
-  final start = edinetDateFormatter.format(date);
-  final end = edinetDateFormatter.format(date.add(const Duration(days: 1)));
-
-  return firestore
-      .collection('edinets')
-      .where('seq', isGreaterThanOrEqualTo: start)
-      .where('seq', isLessThan: end)
-      .orderBy('seq', descending: true)
-      .snapshots()
-      .map((snapshot) =>
-          snapshot.docs.map((doc) => Edinet.fromDocumentSnapshot(doc)).toList());
+  return buildEdinetsDayStream(firestore: firestore, date: date);
 }
 
 /// EDINET フィード状態の型エイリアス
@@ -83,6 +146,9 @@ typedef EdinetFeedState = FeedState<Edinet>;
 class EdinetFeed extends _$EdinetFeed {
   DateTime? _lastDate;
   EdinetFeedState? _previousState;
+  List<Edinet> _olderItems = [];
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
 
   @override
   EdinetFeedState build() {
@@ -95,11 +161,26 @@ class EdinetFeed extends _$EdinetFeed {
 
     if (dateChanged) {
       _previousState = null;
+      _olderItems = [];
+      _hasMore = true;
+      _isLoadingMore = false;
     }
+
+    if (!rawAsync.isLoading && _olderItems.isEmpty) {
+      _hasMore = rawDocs.length >= kEdinetsPageSize;
+    }
+
+    final rawIds = rawDocs.map((e) => e.docId ?? '').toSet();
+    final combinedItems = _olderItems.isEmpty
+        ? rawDocs
+        : [
+            ...rawDocs,
+            ..._olderItems.where((e) => !rawIds.contains(e.docId ?? '')),
+          ];
 
     final newState = FeedState.processNewItems<Edinet>(
       previousState: _previousState,
-      newItems: rawDocs,
+      newItems: combinedItems,
       idGetter: (e) => e.docId ?? '',
       isLoading: rawAsync.isLoading,
       hasError: rawAsync.hasError,
@@ -108,6 +189,68 @@ class EdinetFeed extends _$EdinetFeed {
 
     _previousState = newState;
     return newState;
+  }
+
+  /// スクロール末尾到達時に過去の EDINET 開示を追加取得する
+  Future<void> loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+    final currentItems = state.latestItems;
+    if (currentItems.isEmpty) return;
+
+    final lastSeq = currentItems.last.seq;
+    if (lastSeq == null || lastSeq.isEmpty) return;
+
+    final date = _lastDate;
+    if (date == null) return;
+
+    _isLoadingMore = true;
+    try {
+      final day = DateTime(date.year, date.month, date.day);
+      final start = edinetDateFormatter.format(day);
+      final end = edinetDateFormatter.format(day.add(const Duration(days: 1)));
+
+      final firestore = ref.read(edinetFirestoreProvider);
+      final snapshot = await firestore
+          .collection('edinets')
+          .where('seq', isGreaterThanOrEqualTo: start)
+          .where('seq', isLessThan: end)
+          .orderBy('seq', descending: true)
+          .startAfter([lastSeq])
+          .limit(kEdinetsPageSize)
+          .get();
+
+      final newItems = snapshot.docs
+          .map((doc) => Edinet.fromDocumentSnapshot(doc))
+          .toList();
+      _hasMore = newItems.length >= kEdinetsPageSize;
+
+      if (newItems.isNotEmpty) {
+        final existingOlderIds =
+            _olderItems.map((e) => e.docId ?? '').toSet();
+        _olderItems = [
+          ..._olderItems,
+          ...newItems.where((e) => !existingOlderIds.contains(e.docId ?? '')),
+        ];
+
+        final displayedIds =
+            state.displayedItems.map((e) => e.docId ?? '').toSet();
+        final latestIds = state.latestItems.map((e) => e.docId ?? '').toSet();
+        final updated = state.copyWith(
+          displayedItems: [
+            ...state.displayedItems,
+            ...newItems.where((e) => !displayedIds.contains(e.docId ?? '')),
+          ],
+          latestItems: [
+            ...state.latestItems,
+            ...newItems.where((e) => !latestIds.contains(e.docId ?? '')),
+          ],
+        );
+        _previousState = updated;
+        state = updated;
+      }
+    } finally {
+      _isLoadingMore = false;
+    }
   }
 
   /// スクロール位置（最上部かどうか）の更新

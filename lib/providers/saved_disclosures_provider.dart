@@ -22,6 +22,7 @@ Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> savedDisclosuresStream
       .doc(authUser.uid)
       .collection('disclosures')
       .orderBy('add_at', descending: true)
+      .limit(200)
       .snapshots()
       .map((snapshot) => snapshot.docs);
 }

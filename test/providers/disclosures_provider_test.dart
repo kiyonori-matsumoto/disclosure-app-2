@@ -451,6 +451,221 @@ void main() {
       expect(result, isEmpty);
     });
   });
+
+  group('buildDisclosuresDayStream & SelectedDate 正規化', () {
+    test('SelectedDate は初期値と setDate を00:00:00に正規化する', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final initial = container.read(selectedDateProvider);
+      expect(initial.hour, 0);
+      expect(initial.minute, 0);
+      expect(initial.second, 0);
+      expect(initial.millisecond, 0);
+
+      container
+          .read(selectedDateProvider.notifier)
+          .setDate(DateTime(2026, 11, 13, 15, 35, 10));
+      expect(container.read(selectedDateProvider), DateTime(2026, 11, 13));
+    });
+
+    test('過去日の場合は limit 付き get() のみを呼び snapshots() を購読しない', () async {
+      final pastDoc = FakeQueryDocumentSnapshot('past1', {
+        'title': '過去の開示',
+        'time': DateTime(2026, 11, 12, 15, 0).millisecondsSinceEpoch,
+      });
+      final fakeFirestore = _FakeFirestore(initialDocs: [pastDoc]);
+
+      final emissions = await buildDisclosuresDayStream(
+        firestore: fakeFirestore,
+        date: DateTime(2026, 11, 12, 18, 0),
+        now: DateTime(2026, 11, 13, 15, 35),
+        pageSize: 100,
+      ).toList();
+
+      expect(fakeFirestore.getCallCount, 1);
+      expect(fakeFirestore.snapshotsCallCount, 0);
+      expect(fakeFirestore.recordedLimits, [100]);
+      expect(emissions.length, 1);
+      expect(emissions.first.map((d) => d.id), ['past1']);
+    });
+
+    test('当日の場合は初回 get() の後に最新時刻以降の差分のみ limit 付き snapshots() で購読する',
+        () async {
+      final initialTime = DateTime(2026, 11, 13, 15, 0).millisecondsSinceEpoch;
+      final newTime = DateTime(2026, 11, 13, 15, 32).millisecondsSinceEpoch;
+
+      final initialDoc = FakeQueryDocumentSnapshot('doc1', {
+        'title': '初期開示',
+        'time': initialTime,
+      });
+      final deltaController =
+          StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+
+      final fakeFirestore = _FakeFirestore(
+        initialDocs: [initialDoc],
+        deltaStream: deltaController.stream,
+      );
+
+      final received = <List<String>>[];
+      final sub = buildDisclosuresDayStream(
+        firestore: fakeFirestore,
+        date: DateTime(2026, 11, 13, 10, 58),
+        now: DateTime(2026, 11, 13, 15, 35),
+        pageSize: 100,
+        deltaLimit: 50,
+      ).listen((docs) {
+        received.add(docs.map((d) => d.id).toList());
+      });
+
+      await Future<void>.delayed(Duration.zero);
+      expect(fakeFirestore.getCallCount, 1);
+      expect(fakeFirestore.snapshotsCallCount, 1);
+      expect(fakeFirestore.recordedLimits, [100, 50]);
+      expect(fakeFirestore.recordedGreaterThanValues, [initialTime]);
+      expect(received, [
+        ['doc1']
+      ]);
+
+      final newDoc = FakeQueryDocumentSnapshot('doc2', {
+        'title': '新着開示',
+        'time': newTime,
+      });
+      deltaController.add(_FakeQuerySnapshot([newDoc]));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(received.last, ['doc2', 'doc1']);
+      await deltaController.close();
+      await sub.cancel();
+    });
+  });
+}
+
+// ignore: subtype_of_sealed_class
+class FakeQueryDocumentSnapshot extends Fake
+    implements QueryDocumentSnapshot<Map<String, dynamic>> {
+  final String _id;
+  final Map<String, dynamic> _data;
+
+  FakeQueryDocumentSnapshot(this._id, this._data);
+
+  @override
+  String get id => _id;
+
+  @override
+  Map<String, dynamic> data() => _data;
+
+  @override
+  dynamic operator [](Object? key) => _data[key];
+
+  @override
+  bool get exists => true;
+}
+
+class _FakeQuerySnapshot extends Fake
+    implements QuerySnapshot<Map<String, dynamic>> {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> _docs;
+  _FakeQuerySnapshot(this._docs);
+
+  @override
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> get docs => _docs;
+}
+
+class _FakeFirestore extends Fake implements FirebaseFirestore {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> initialDocs;
+  final Stream<QuerySnapshot<Map<String, dynamic>>>? deltaStream;
+  int getCallCount = 0;
+  int snapshotsCallCount = 0;
+  final List<int> recordedLimits = [];
+  final List<Object?> recordedGreaterThanValues = [];
+
+  _FakeFirestore({required this.initialDocs, this.deltaStream});
+
+  @override
+  CollectionReference<Map<String, dynamic>> collection(String collectionPath) {
+    return _FakeCollectionReference(this);
+  }
+}
+
+// ignore: subtype_of_sealed_class
+class _FakeCollectionReference extends Fake
+    implements CollectionReference<Map<String, dynamic>> {
+  final _FakeFirestore _firestore;
+  _FakeCollectionReference(this._firestore);
+
+  @override
+  Query<Map<String, dynamic>> where(
+    Object field, {
+    Object? isEqualTo,
+    Object? isNotEqualTo,
+    Object? isLessThan,
+    Object? isLessThanOrEqualTo,
+    Object? isGreaterThan,
+    Object? isGreaterThanOrEqualTo,
+    Object? arrayContains,
+    Iterable<Object?>? arrayContainsAny,
+    Iterable<Object?>? whereIn,
+    Iterable<Object?>? whereNotIn,
+    bool? isNull,
+  }) {
+    if (isGreaterThan != null) {
+      _firestore.recordedGreaterThanValues.add(isGreaterThan);
+    }
+    return _FakeQuery(_firestore);
+  }
+}
+
+// ignore: subtype_of_sealed_class
+class _FakeQuery extends Fake implements Query<Map<String, dynamic>> {
+  final _FakeFirestore _firestore;
+  _FakeQuery(this._firestore);
+
+  @override
+  Query<Map<String, dynamic>> where(
+    Object field, {
+    Object? isEqualTo,
+    Object? isNotEqualTo,
+    Object? isLessThan,
+    Object? isLessThanOrEqualTo,
+    Object? isGreaterThan,
+    Object? isGreaterThanOrEqualTo,
+    Object? arrayContains,
+    Iterable<Object?>? arrayContainsAny,
+    Iterable<Object?>? whereIn,
+    Iterable<Object?>? whereNotIn,
+    bool? isNull,
+  }) {
+    if (isGreaterThan != null) {
+      _firestore.recordedGreaterThanValues.add(isGreaterThan);
+    }
+    return this;
+  }
+
+  @override
+  Query<Map<String, dynamic>> orderBy(Object field, {bool descending = false}) {
+    return this;
+  }
+
+  @override
+  Query<Map<String, dynamic>> limit(int limit) {
+    _firestore.recordedLimits.add(limit);
+    return this;
+  }
+
+  @override
+  Future<QuerySnapshot<Map<String, dynamic>>> get([GetOptions? options]) async {
+    _firestore.getCallCount++;
+    return _FakeQuerySnapshot(_firestore.initialDocs);
+  }
+
+  @override
+  Stream<QuerySnapshot<Map<String, dynamic>>> snapshots({
+    bool includeMetadataChanges = false,
+    ListenSource source = ListenSource.defaultSource,
+  }) {
+    _firestore.snapshotsCallCount++;
+    return _firestore.deltaStream ?? const Stream.empty();
+  }
 }
 
 class _TestSelectedDate extends SelectedDate {
