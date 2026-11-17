@@ -1,5 +1,17 @@
 # Changelog
 
+## [v2.8.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.2...v2.8.0) - 2026-11-17
+
+- fix(forensic): フォレンジック可視化の表現を「通常 / 乖離あり / 大幅乖離」に刷新しアイコン不整合を解消 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/121
+- ⚡ Bolt: [performance improvement] Pre-compute favorites Set for O(1) filtering by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/119
+- feat(favorites): お気に入り銘柄一覧の並び替え機能を追加 (#125) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/126
+- feat(notification): EDINET通知タップ時に最初からEDINETタブを開く (#118) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/127
+- feat(filter): お気に入り0件時はフィルタをONにせず登録誘導ダイアログを表示 (#16) by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/128
+- fix(crashlytics): CompanyHistoryAction の runTransaction 廃止と Firestore 書き込みエラーのハンドリング改善 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/130
+- feat(auth): コンテキスト駆動の遅延Google連携誘導（案D）と設定画面UI改善 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/131
+- fix(crashlytics): AppDrawer のプロフィール画像読み込み失敗時の致命的エラーを修正 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/132
+- fix(firestore): Firestore スナップショットの上限設定と差分監視・ページネーション導入による OOM 対策と Read コスト削減 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/133
+
 ## [v2.7.2](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.1...v2.7.2) - 2026-11-09
 
 - feat(remote-config): Firebase Remote Config によるフォレンジック機能の限定公開および強制アップデート基盤の導入 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/115
