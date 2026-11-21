@@ -218,6 +218,8 @@ class DisclosuresFeed extends _$DisclosuresFeed {
       isLoading: rawAsync.isLoading,
       hasError: rawAsync.hasError,
       error: rawAsync.error,
+      isLoadingMore: _isLoadingMore,
+      hasMore: _hasMore,
     );
 
     _previousState = newState;
@@ -237,6 +239,9 @@ class DisclosuresFeed extends _$DisclosuresFeed {
     if (date == null) return;
 
     _isLoadingMore = true;
+    final loadingState = state.copyWith(isLoadingMore: true);
+    _previousState = loadingState;
+    state = loadingState;
     try {
       final day = DateTime(date.year, date.month, date.day);
       final start = day.millisecondsSinceEpoch;
@@ -251,6 +256,8 @@ class DisclosuresFeed extends _$DisclosuresFeed {
           .startAfterDocument(lastDoc)
           .limit(kDisclosuresPageSize)
           .get();
+
+      if (_lastDate != date) return;
 
       final newDocs = snapshot.docs;
       _hasMore = newDocs.length >= kDisclosuresPageSize;
@@ -273,12 +280,21 @@ class DisclosuresFeed extends _$DisclosuresFeed {
             ...state.latestItems,
             ...newDocs.where((d) => !latestIds.contains(d.id)),
           ],
+          hasMore: _hasMore,
         );
         _previousState = updated;
         state = updated;
       }
     } finally {
-      _isLoadingMore = false;
+      if (_lastDate == date) {
+        _isLoadingMore = false;
+        final finishedState = state.copyWith(
+          isLoadingMore: false,
+          hasMore: _hasMore,
+        );
+        _previousState = finishedState;
+        state = finishedState;
+      }
     }
   }
 

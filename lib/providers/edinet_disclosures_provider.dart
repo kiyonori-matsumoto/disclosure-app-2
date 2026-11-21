@@ -185,6 +185,8 @@ class EdinetFeed extends _$EdinetFeed {
       isLoading: rawAsync.isLoading,
       hasError: rawAsync.hasError,
       error: rawAsync.error,
+      isLoadingMore: _isLoadingMore,
+      hasMore: _hasMore,
     );
 
     _previousState = newState;
@@ -204,6 +206,9 @@ class EdinetFeed extends _$EdinetFeed {
     if (date == null) return;
 
     _isLoadingMore = true;
+    final loadingState = state.copyWith(isLoadingMore: true);
+    _previousState = loadingState;
+    state = loadingState;
     try {
       final day = DateTime(date.year, date.month, date.day);
       final start = edinetDateFormatter.format(day);
@@ -218,6 +223,8 @@ class EdinetFeed extends _$EdinetFeed {
           .startAfter([lastSeq])
           .limit(kEdinetsPageSize)
           .get();
+
+      if (_lastDate != date) return;
 
       final newItems = snapshot.docs
           .map((doc) => Edinet.fromDocumentSnapshot(doc))
@@ -244,12 +251,21 @@ class EdinetFeed extends _$EdinetFeed {
             ...state.latestItems,
             ...newItems.where((e) => !latestIds.contains(e.docId ?? '')),
           ],
+          hasMore: _hasMore,
         );
         _previousState = updated;
         state = updated;
       }
     } finally {
-      _isLoadingMore = false;
+      if (_lastDate == date) {
+        _isLoadingMore = false;
+        final finishedState = state.copyWith(
+          isLoadingMore: false,
+          hasMore: _hasMore,
+        );
+        _previousState = finishedState;
+        state = finishedState;
+      }
     }
   }
 
