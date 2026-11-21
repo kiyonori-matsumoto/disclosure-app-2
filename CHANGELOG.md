@@ -1,5 +1,9 @@
 # Changelog
 
+## [v2.8.1](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.8.0...v2.8.1) - 2026-11-21
+
+- fix(scroll): NestedScrollView 内の無限スクロール修正と読み込み・末尾フッター追加 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/134
+
 ## [v2.8.0](https://github.com/kiyonori-matsumoto/disclosure-app-2/compare/v2.7.2...v2.8.0) - 2026-11-17
 
 - fix(forensic): フォレンジック可視化の表現を「通常 / 乖離あり / 大幅乖離」に刷新しアイコン不整合を解消 by @kiyonori-matsumoto in https://github.com/kiyonori-matsumoto/disclosure-app-2/pull/121
