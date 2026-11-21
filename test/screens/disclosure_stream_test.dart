@@ -475,15 +475,227 @@ void main() {
       );
       expect(chipFinder, findsOneWidget);
     });
+
+    testWidgets('TDNET リスト末尾付近までスクロールすると loadMore が呼ばれること',
+        (tester) async {
+      final mockFeed = _MockDisclosuresFeed(
+        const FeedState<DocumentSnapshot<Map<String, dynamic>>>(),
+      );
+      final docs = List.generate(
+        30,
+        (i) => FakeDocumentSnapshot('doc_$i', {
+          'title': 'テスト適時開示 $i',
+          'code': '7203',
+          'company': 'トヨタ自動車',
+          'time': 1730700000000 - i * 1000,
+          'view_count': 1,
+        }),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            disclosuresFeedProvider.overrideWith(() => mockFeed),
+            filteredDisclosuresProvider
+                .overrideWith((ref) => AsyncData(docs)),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 初期表示時はまだ loadMore は呼ばれていない
+      expect(mockFeed.loadMoreCallCount, 0);
+
+      // 少しだけ下にスクロール（SliverAppBar が動くだけ）では loadMore は呼ばれない
+      await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -150));
+      await tester.pumpAndSettle();
+      expect(mockFeed.loadMoreCallCount, 0);
+
+      // 最下部付近まで大きくスクロールすると loadMore が呼ばれる
+      for (var i = 0; i < 6; i++) {
+        await tester.drag(
+          find.byType(CustomScrollView).first,
+          const Offset(0, -800),
+        );
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+
+      expect(mockFeed.loadMoreCallCount, greaterThan(0));
+    });
+
+    testWidgets('EDINET リスト末尾付近までスクロールすると loadMore が呼ばれること',
+        (tester) async {
+      final mockEdinetFeed = _MockEdinetFeed(
+        const FeedState<Edinet>(),
+      );
+      final items = List.generate(
+        30,
+        (i) => Edinet(
+          docId: 'edinet_$i',
+          docDescription: 'テストEDINET書類 $i',
+          filerName: 'テスト株式会社',
+          docTypeCode: '140',
+          time: 1730700000000 - i * 1000,
+          viewCount: 1,
+        ),
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            edinetFeedProvider.overrideWith(() => mockEdinetFeed),
+            filteredEdinetsProvider.overrideWith((ref) => AsyncData(items)),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // EDINET タブに切り替え
+      await tester.tap(find.text('EDINET'));
+      await tester.pumpAndSettle();
+
+      expect(mockEdinetFeed.loadMoreCallCount, 0);
+
+      // 最下部付近まで大きくスクロールすると loadMore が呼ばれる
+      for (var i = 0; i < 6; i++) {
+        await tester.drag(
+          find.byType(CustomScrollView).first,
+          const Offset(0, -800),
+        );
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+
+      expect(mockEdinetFeed.loadMoreCallCount, greaterThan(0));
+    });
+
+    testWidgets('TDNET 追加読み込み中は「読み込み中...」が表示される', (tester) async {
+      final doc1 = FakeDocumentSnapshot('doc1', {
+        'title': 'テスト適時開示 1',
+        'code': '7203',
+        'company': 'トヨタ自動車',
+        'time': 1730700000000,
+        'view_count': 1,
+      });
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            disclosuresFeedProvider.overrideWith(() => _MockDisclosuresFeed(
+                  const FeedState<DocumentSnapshot<Map<String, dynamic>>>(
+                    isLoadingMore: true,
+                    hasMore: true,
+                  ),
+                )),
+            filteredDisclosuresProvider
+                .overrideWith((ref) => AsyncData([doc1])),
+          ],
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('読み込み中...'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('すべて表示しました'), findsNothing);
+    });
+
+    testWidgets('TDNET 最終ページ到達時は「すべて表示しました」が表示される',
+        (tester) async {
+      final doc1 = FakeDocumentSnapshot('doc1', {
+        'title': 'テスト適時開示 1',
+        'code': '7203',
+        'company': 'トヨタ自動車',
+        'time': 1730700000000,
+        'view_count': 1,
+      });
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            disclosuresFeedProvider.overrideWith(() => _MockDisclosuresFeed(
+                  const FeedState<DocumentSnapshot<Map<String, dynamic>>>(
+                    isLoadingMore: false,
+                    hasMore: false,
+                  ),
+                )),
+            filteredDisclosuresProvider
+                .overrideWith((ref) => AsyncData([doc1])),
+          ],
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('すべて表示しました'), findsOneWidget);
+      expect(find.text('読み込み中...'), findsNothing);
+    });
+
+    testWidgets('EDINET 最終ページ到達時は「すべて表示しました」が表示される',
+        (tester) async {
+      final edinet1 = Edinet(
+        docId: 'edinet_1',
+        docDescription: 'テストEDINET書類 1',
+        filerName: 'テスト株式会社',
+        docTypeCode: '140',
+        time: 1730700000000,
+        viewCount: 1,
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          overrides: [
+            filteredDisclosuresProvider
+                .overrideWith((ref) => const AsyncData([])),
+            edinetFeedProvider.overrideWith(() => _MockEdinetFeed(
+                  const FeedState<Edinet>(
+                    isLoadingMore: false,
+                    hasMore: false,
+                  ),
+                )),
+            filteredEdinetsProvider.overrideWith((ref) => AsyncData([edinet1])),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('EDINET'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('すべて表示しました'), findsOneWidget);
+      expect(find.text('読み込み中...'), findsNothing);
+    });
   });
+}
+
+class _MockDisclosuresFeed extends DisclosuresFeed {
+  final FeedState<DocumentSnapshot<Map<String, dynamic>>> _initial;
+  int loadMoreCallCount = 0;
+
+  _MockDisclosuresFeed(this._initial);
+
+  @override
+  FeedState<DocumentSnapshot<Map<String, dynamic>>> build() => _initial;
+
+  @override
+  Future<void> loadMore({FirebaseFirestore? firestore}) async {
+    loadMoreCallCount++;
+  }
 }
 
 class _MockEdinetFeed extends EdinetFeed {
   final FeedState<Edinet> _initial;
+  int loadMoreCallCount = 0;
   _MockEdinetFeed(this._initial);
 
   @override
   FeedState<Edinet> build() => _initial;
+
+  @override
+  Future<void> loadMore() async {
+    loadMoreCallCount++;
+  }
 }
 
 class _TestSelectedDate extends SelectedDate {

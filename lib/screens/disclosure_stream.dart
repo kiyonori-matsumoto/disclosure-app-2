@@ -7,6 +7,7 @@ import 'package:disclosure_app_fl/utils/sliver_appbar_delegate.dart';
 import 'package:disclosure_app_fl/widgets/banner_ad.dart';
 import 'package:disclosure_app_fl/widgets/disclosure_list_item.dart';
 import 'package:disclosure_app_fl/widgets/edinet_streaming.dart';
+import 'package:disclosure_app_fl/widgets/feed_pagination_footer.dart';
 import 'package:disclosure_app_fl/widgets/no_disclosures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -74,15 +75,30 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
     ref.read(edinetFeedProvider.notifier).updateScrollPosition(
           isAtTop: isAtTop,
         );
+  }
 
-    final position = sliverScrollController.position;
-    if (position.pixels >= position.maxScrollExtent - 300) {
-      if (displayTarget == 'tdnet') {
+  bool _handleScrollNotification(
+    ScrollNotification notification, {
+    required String target,
+  }) {
+    if (notification.depth != 0) return false;
+    if (notification.metrics.axis != Axis.vertical) return false;
+    if (notification is! ScrollUpdateNotification &&
+        notification is! OverscrollNotification &&
+        notification is! ScrollEndNotification) {
+      return false;
+    }
+
+    final metrics = notification.metrics;
+    if (metrics.maxScrollExtent > 0 &&
+        metrics.pixels >= metrics.maxScrollExtent - 300) {
+      if (target == 'tdnet') {
         ref.read(disclosuresFeedProvider.notifier).loadMore();
       } else {
         ref.read(edinetFeedProvider.notifier).loadMore();
       }
     }
+    return false;
   }
 
   @override
@@ -182,17 +198,27 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
         body: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            CustomScrollView(
-              slivers: <Widget>[
-                filterToolbar(formatter),
-                tdnetList(),
-              ],
+            NotificationListener<ScrollNotification>(
+              onNotification: (notification) =>
+                  _handleScrollNotification(notification, target: 'tdnet'),
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  filterToolbar(formatter),
+                  tdnetList(),
+                  tdnetFooter(),
+                ],
+              ),
             ),
-            CustomScrollView(
-              slivers: <Widget>[
-                edinetFilterToolbar(formatter),
-                const EdinetStreamingWidget(),
-              ],
+            NotificationListener<ScrollNotification>(
+              onNotification: (notification) =>
+                  _handleScrollNotification(notification, target: 'edinet'),
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  edinetFilterToolbar(formatter),
+                  const EdinetStreamingWidget(),
+                  edinetFooter(),
+                ],
+              ),
             ),
           ],
         ),
@@ -354,6 +380,32 @@ class DisclosureStreamScreenState extends ConsumerState<DisclosureStreamScreen>
           ),
         );
       },
+    );
+  }
+
+  /// TDNET 一覧末尾の読み込み中・末尾到達フッター
+  Widget tdnetFooter() {
+    final feed = ref.watch(disclosuresFeedProvider);
+    final docs = ref.watch(filteredDisclosuresProvider).value ?? const [];
+    return SliverToBoxAdapter(
+      child: FeedPaginationFooter(
+        isLoadingMore: feed.isLoadingMore,
+        hasMore: feed.hasMore,
+        hasItems: docs.isNotEmpty,
+      ),
+    );
+  }
+
+  /// EDINET 一覧末尾の読み込み中・末尾到達フッター
+  Widget edinetFooter() {
+    final feed = ref.watch(edinetFeedProvider);
+    final edinets = ref.watch(filteredEdinetsProvider).value ?? const [];
+    return SliverToBoxAdapter(
+      child: FeedPaginationFooter(
+        isLoadingMore: feed.isLoadingMore,
+        hasMore: feed.hasMore,
+        hasItems: edinets.isNotEmpty,
+      ),
     );
   }
 

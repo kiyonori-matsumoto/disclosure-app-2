@@ -15,6 +15,12 @@ class FeedState<T> {
   /// データ読み込み中フラグ
   final bool isLoading;
 
+  /// 追加ページ読み込み中フラグ
+  final bool isLoadingMore;
+
+  /// さらに過去のページが存在するかどうかのフラグ
+  final bool hasMore;
+
   /// エラー発生フラグ
   final bool hasError;
 
@@ -27,6 +33,8 @@ class FeedState<T> {
     this.newCount = 0,
     this.isAtTop = true,
     this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = true,
     this.hasError = false,
     this.error,
   });
@@ -41,6 +49,8 @@ class FeedState<T> {
     int? newCount,
     bool? isAtTop,
     bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
     bool? hasError,
     Object? error,
     // 互換性のための引数
@@ -53,6 +63,8 @@ class FeedState<T> {
       newCount: newCount ?? this.newCount,
       isAtTop: isAtTop ?? this.isAtTop,
       isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
       hasError: hasError ?? this.hasError,
       error: error ?? this.error,
     );
@@ -69,8 +81,12 @@ class FeedState<T> {
     required bool isLoading,
     required bool hasError,
     required Object? error,
+    bool? isLoadingMore,
+    bool? hasMore,
   }) {
     final prev = previousState;
+    final resolvedIsLoadingMore = isLoadingMore ?? prev?.isLoadingMore ?? false;
+    final resolvedHasMore = hasMore ?? prev?.hasMore ?? true;
 
     if (prev == null || prev.isAtTop) {
       // 初回、日付変更、または最上部にいる場合は即座に最新を画面へ反映
@@ -80,6 +96,8 @@ class FeedState<T> {
         newCount: 0,
         isAtTop: prev?.isAtTop ?? true,
         isLoading: isLoading && newItems.isEmpty,
+        isLoadingMore: resolvedIsLoadingMore,
+        hasMore: resolvedHasMore,
         hasError: hasError,
         error: error,
       );
@@ -94,6 +112,8 @@ class FeedState<T> {
         latestItems: newItems,
         newCount: newItemsCount,
         isLoading: isLoading && prev.displayedItems.isEmpty,
+        isLoadingMore: resolvedIsLoadingMore,
+        hasMore: resolvedHasMore,
         hasError: hasError,
         error: error,
       );
